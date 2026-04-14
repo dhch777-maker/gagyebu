@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // /admin 접근 시 관리자 역할 확인
-  if (user && path.startsWith('/admin') && user.user_metadata?.role !== 'admin') {
+  if (user && path.startsWith('/admin') && user.app_metadata?.role !== 'admin') {
     return NextResponse.redirect(new URL('/gallery', request.url))
   }
 
@@ -44,5 +44,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/gallery/:path*', '/admin/:path*'],
+  matcher: ['/', '/gallery', '/gallery/:path*', '/admin', '/admin/:path*'],
 }
