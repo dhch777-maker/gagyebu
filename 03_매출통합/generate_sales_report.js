@@ -48,10 +48,26 @@ const year = yearMatch ? yearMatch[1] : new Date().getFullYear();
 
 if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
+// 파일이 열려있으면(EBUSY) 타임스탬프 suffix 추가
+function safeFilePath(dir, name, ext) {
+  const base = path.join(dir, `${name}${ext}`);
+  if (!fs.existsSync(base)) return base;
+  try {
+    // 잠김 여부 확인: 쓰기 플래그로 열어봄
+    const fd = fs.openSync(base, 'r+');
+    fs.closeSync(fd);
+    return base;  // 열 수 있으면 덮어쓰기 가능
+  } catch {
+    // EBUSY → 타임스탬프 붙인 새 파일
+    const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    return path.join(dir, `${name}_${ts}${ext}`);
+  }
+}
+
 // 출력 파일 경로
-const unifiedXlsx   = path.join(outputDir, `${year}_연간매출_통합.xlsx`);
-const dashboardXlsx = path.join(outputDir, `${year}_연간매출_대시보드.xlsx`);
-const reportPptx    = path.join(outputDir, `${year}_연간매출_보고서.pptx`);
+const unifiedXlsx   = safeFilePath(outputDir, `${year}_연간매출_통합`,    '.xlsx');
+const dashboardXlsx = safeFilePath(outputDir, `${year}_연간매출_대시보드`, '.xlsx');
+const reportPptx    = safeFilePath(outputDir, `${year}_연간매출_보고서`,   '.pptx');
 
 const scriptsDir = __dirname;
 const env = {
