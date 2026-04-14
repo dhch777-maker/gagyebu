@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 연간 매출 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f8ef7;
+    --accent2: #34d399;
+    --accent3: #f97316;
+    --accent4: #a78bfa;
+    --danger: #f43f5e;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --card-radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* ── 헤더 ── */
+  header {
+    background: linear-gradient(135deg, #1a237e 0%, #0d47a1 50%, #1565c0 100%);
+    padding: 28px 36px 24px;
+    border-bottom: 1px solid #1e3a8a;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+  header h1 span { color: #93c5fd; font-size: 15px; font-weight: 400; margin-left: 12px; }
+  header .meta { font-size: 12px; color: #94a3b8; text-align: right; line-height: 1.8; }
+
+  /* ── 레이아웃 ── */
+  main { padding: 28px 32px; max-width: 1600px; margin: 0 auto; }
+  section { margin-bottom: 36px; }
+  .section-title {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--muted); margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::before {
+    content: ''; display: block;
+    width: 4px; height: 16px; border-radius: 2px;
+    background: var(--accent);
+  }
+
+  /* ── KPI 카드 ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 22px 24px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s;
+  }
+  .kpi-card:hover { transform: translateY(-2px); }
+  .kpi-card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  .kpi-card.blue::before { background: var(--accent); }
+  .kpi-card.green::before { background: var(--accent2); }
+  .kpi-card.orange::before { background: var(--accent3); }
+  .kpi-card.purple::before { background: var(--accent4); }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; }
+  .kpi-value { font-size: 30px; font-weight: 700; margin: 8px 0 6px; line-height: 1; }
+  .kpi-card.blue .kpi-value { color: var(--accent); }
+  .kpi-card.green .kpi-value { color: var(--accent2); }
+  .kpi-card.orange .kpi-value { color: var(--accent3); }
+  .kpi-card.purple .kpi-value { color: var(--accent4); }
+  .kpi-sub { font-size: 12px; color: var(--muted); }
+  .kpi-badge {
+    position: absolute; top: 18px; right: 18px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px; padding: 6px 10px;
+    font-size: 22px;
+  }
+
+  /* ── 차트 카드 ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--card-radius);
+    padding: 22px 24px;
+  }
+  .card-title {
+    font-size: 14px; font-weight: 600; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-sub { font-size: 11px; color: var(--muted); margin-bottom: 18px; }
+  .chart-wrap { position: relative; }
+
+  /* ── 그리드 레이아웃 ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-65-35 { display: grid; grid-template-columns: 65fr 35fr; gap: 20px; }
+  .grid-35-65 { display: grid; grid-template-columns: 35fr 65fr; gap: 20px; }
+
+  /* ── 인사이트 박스 ── */
+  .insight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .insight-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .insight-card .ic-title {
+    font-size: 11px; font-weight: 600; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .insight-card .ic-body { font-size: 12.5px; color: #c5cedd; line-height: 1.7; }
+  .insight-card .ic-body strong { color: var(--text); }
+  .tag {
+    display: inline-block; padding: 2px 8px; border-radius: 4px;
+    font-size: 10px; font-weight: 600; margin-left: 4px;
+    vertical-align: middle;
+  }
+  .tag-up { background: rgba(52,211,153,0.15); color: var(--accent2); }
+  .tag-warn { background: rgba(249,115,22,0.15); color: var(--accent3); }
+  .tag-info { background: rgba(79,142,247,0.15); color: var(--accent); }
+
+  /* ── 히트맵 ── */
+  .heatmap-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .heatmap-table th {
+    padding: 7px 10px; text-align: center; font-weight: 500;
+    color: var(--muted); font-size: 11px; border-bottom: 1px solid var(--border);
+  }
+  .heatmap-table td {
+    padding: 8px 6px; text-align: center;
+    border-radius: 4px; font-weight: 600; font-size: 11px;
+    transition: transform 0.15s;
+  }
+  .heatmap-table td:hover { transform: scale(1.1); cursor: default; }
+  .heatmap-table .row-label {
+    text-align: left; padding-left: 12px; font-weight: 600;
+    color: var(--text); font-size: 12px; white-space: nowrap;
+    border-bottom: none;
+  }
+
+  /* ── 회귀 요약 ── */
+  .reg-stats {
+    display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap;
+  }
+  .reg-stat {
+    background: var(--surface2); border-radius: 8px;
+    padding: 10px 16px; flex: 1; min-width: 120px;
+  }
+  .reg-stat .rs-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .reg-stat .rs-value { font-size: 18px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+
+  /* ── 스크롤바 ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── 반응형 ── */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 800px) {
+    .grid-2, .grid-65-35, .grid-35-65 { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .insight-grid { grid-template-columns: 1fr; }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>2025 연간 매출 대시보드 <span>· 5개 부서 · 12개월 · 300건</span></h1>
+    <div style="margin-top:8px;font-size:12px;color:#94a3b8;">데이터 기간: 2025년 1월 – 12월 &nbsp;|&nbsp; 분석일: 2026-04-14</div>
+  </div>
+  <div class="meta">
+    매출합계 &nbsp;<strong style="color:#93c5fd;font-size:18px;">141.4억</strong><br>
+    이익합계 &nbsp;<strong style="color:#6ee7b7;font-size:18px;">50.0억</strong>
+  </div>
+</header>
+
+<main>
+
+<!-- ── KPI ── -->
+<section>
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-badge">💰</div>
+      <div class="kpi-label">연간 총 매출</div>
+      <div class="kpi-value">141.4억</div>
+      <div class="kpi-sub">월 평균 11.8억 &nbsp;|&nbsp; 300건 거래</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-badge">📈</div>
+      <div class="kpi-label">연간 총 이익</div>
+      <div class="kpi-value">50.0억</div>
+      <div class="kpi-sub">이익률 35.4% &nbsp;|&nbsp; 비용 91.4억</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-badge">🚀</div>
+      <div class="kpi-label">최고 매출월</div>
+      <div class="kpi-value">12월</div>
+      <div class="kpi-sub">15.8억 &nbsp;|&nbsp; 이익률 37.3% (연중 최고)</div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-badge">🎯</div>
+      <div class="kpi-label">매출 성장률</div>
+      <div class="kpi-value">+61.2%</div>
+      <div class="kpi-sub">1월 9.8억 → 12월 15.8억 &nbsp;|&nbsp; 회귀 R²=0.46</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 인사이트 ── -->
+<section>
+  <div class="section-title">핵심 인사이트</div>
+  <div class="insight-grid">
+    <div class="insight-card">
+      <div class="ic-title">📊 매출 트렌드</div>
+      <div class="ic-body">
+        연간 매출은 <strong>우상향 추세</strong>가 뚜렷합니다. 선형회귀 기울기 월 <strong>+4,080만원</strong>. 단, R²=0.46으로 변동성이 있어 7~8월 여름 비수기 패턴이 존재합니다. <span class="tag tag-warn">비수기 대응 필요</span>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title">🏆 부서 성과</div>
+      <div class="ic-body">
+        매출 1위는 <strong>해외사업부(29.4억)</strong>이지만, 이익률 1위는 <strong>마케팅팀(36.0%)</strong>. 영업1팀 이익률 33.96%로 최저 — 비용 구조 점검이 필요합니다. <span class="tag tag-warn">영업1팀 개선 필요</span>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title">👤 담당자 집중도</div>
+      <div class="ic-body">
+        <strong>임도현</strong>(16.6억)이 전체 매출의 11.7%를 단독 담당. 상위 3명이 전체의 32% 차지 → 핵심 인력 의존도 리스크. <span class="tag tag-warn">인력 분산 검토</span>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title">💎 고수익 품목</div>
+      <div class="ic-body">
+        <strong>브랜딩 컨설팅(38.1%)</strong>·<strong>일본 수출(38.0%)</strong>·<strong>엔터프라이즈(37.8%)</strong>가 이익률 상위. 반면 <strong>싱가포르 프로젝트(32.9%)</strong>는 최저 — 단가 재검토 필요. <span class="tag tag-up">고마진 확대 권장</span>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title">🤝 거래처 집중</div>
+      <div class="ic-body">
+        <strong>케이에스테크</strong>가 최대 거래처(14.8억, 10.5%). 이익률 최고는 <strong>다온인터내셔널(37.3%)</strong>. 한빛솔루션(33.3%) 이익률 최저로 계약 조건 재협상 여지 있음. <span class="tag tag-info">다온 거래 확대 기회</span>
+      </div>
+    </div>
+    <div class="insight-card">
+      <div class="ic-title">🔮 2026년 전망</div>
+      <div class="ic-body">
+        선형 추세 기준 2026년 1월 예측 <strong>14.4억</strong>, 2월 <strong>14.8억</strong>. 단, 계절성(7~8월 저점)을 감안하면 실제 예측은 트렌드보다 ±15% 오차 범위 고려 필요. <span class="tag tag-up">성장세 지속 예상</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 월별 매출/비용/이익 ── -->
+<section>
+  <div class="section-title">월별 매출 추이</div>
+  <div class="card">
+    <div class="card-title">
+      월별 매출 · 비용 · 이익 (단위: 백만원)
+      <span style="font-size:11px;color:var(--muted);font-weight:400;">복합 차트 (Bar + Line)</span>
+    </div>
+    <div class="card-sub">상반기 고점(6월 1,344M) → 여름 저점(8월 919M) → 하반기 강한 반등. 12월 1,576M으로 연중 최고.</div>
+    <div class="chart-wrap" style="height:300px;">
+      <canvas id="chartMonthly"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ── 회귀분석 + 이익률 ── -->
+<section>
+  <div class="section-title">선형 회귀 분석 & 이익률 트렌드</div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">매출액 선형 회귀 분석</div>
+      <div class="card-sub">실제 매출(파랑)과 회귀선(주황 점선). R²=0.46 → 선형 트렌드 외 계절성 요인 존재.</div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="chartRegression"></canvas>
+      </div>
+      <div class="reg-stats">
+        <div class="reg-stat">
+          <div class="rs-label">월 증가액 (기울기)</div>
+          <div class="rs-value">+4,080만</div>
+        </div>
+        <div class="reg-stat">
+          <div class="rs-label">결정계수 R²</div>
+          <div class="rs-value">0.459</div>
+        </div>
+        <div class="reg-stat">
+          <div class="rs-label">2026-01 예측</div>
+          <div class="rs-value">14.4억</div>
+        </div>
+        <div class="reg-stat">
+          <div class="rs-label">2026-02 예측</div>
+          <div class="rs-value">14.8억</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">월별 이익률 추이 (%)</div>
+      <div class="card-sub">7~8월 일시 하락 후 하반기 회복. 12월 37.3%로 이익률 최고점 기록.</div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="chartProfitRate"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 부서별 분석 ── -->
+<section>
+  <div class="section-title">부서별 성과 분석</div>
+  <div class="grid-65-35">
+    <div class="card">
+      <div class="card-title">부서별 매출 vs 이익 (단위: 백만원)</div>
+      <div class="card-sub">매출 1위 해외사업부 vs 이익률 1위 마케팅팀. 영업1팀 이익률 최저(34.0%).</div>
+      <div class="chart-wrap" style="height:260px;">
+        <canvas id="chartDept"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">부서별 이익률 레이더</div>
+      <div class="card-sub">5개 부서 이익률 비교. 마케팅팀 선두.</div>
+      <div class="chart-wrap" style="height:260px;">
+        <canvas id="chartRadar"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 담당자 성과 ── -->
+<section>
+  <div class="section-title">담당자 성과 분석</div>
+  <div class="grid-65-35">
+    <div class="card">
+      <div class="card-title">담당자별 매출액 vs 이익률 (버블 크기 = 거래 건수)</div>
+      <div class="card-sub">이상적 포지션: 우상단(고매출·고이익률). 임도현은 최고 매출이지만 이익률은 중간.</div>
+      <div class="chart-wrap" style="height:300px;">
+        <canvas id="chartBubble"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">담당자별 매출 순위</div>
+      <div class="card-sub">임도현 독주 체제. 상위 3명이 전체 32% 담당.</div>
+      <div class="chart-wrap" style="height:300px;">
+        <canvas id="chartManager"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 항목별 + 거래처별 ── -->
+<section>
+  <div class="section-title">매출 항목 & 거래처 분석</div>
+  <div class="grid-35-65">
+    <div class="card">
+      <div class="card-title">품목별 매출 비중 (도넛)</div>
+      <div class="card-sub">제품A 판매(8.7%)·유지보수(7.2%)가 TOP 2.</div>
+      <div class="chart-wrap" style="height:310px;">
+        <canvas id="chartDonut"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">거래처별 매출 & 이익률 (단위: 백만원)</div>
+      <div class="card-sub">케이에스테크 압도적 1위. 다온인터내셔널 이익률 37.3%로 최고 효율 거래처.</div>
+      <div class="chart-wrap" style="height:310px;">
+        <canvas id="chartClient"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 이익률 분포 + 히트맵 ── -->
+<section>
+  <div class="section-title">이익률 분포 & 부서×월 히트맵</div>
+  <div class="grid-35-65">
+    <div class="card">
+      <div class="card-title">거래 건별 이익률 분포 (히스토그램)</div>
+      <div class="card-sub">대부분 30~42% 구간 집중. 평균 35.4%, 정규분포에 가까운 형태.</div>
+      <div class="chart-wrap" style="height:280px;">
+        <canvas id="chartHist"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">부서 × 월별 매출 히트맵 (단위: 백만원)</div>
+      <div class="card-sub">진할수록 고매출. 온라인사업부 6월(336M)·12월(349M) 두드러짐. 영업1팀 4월 저점(152M) 주목.</div>
+      <div id="heatmapWrap" style="overflow-x:auto;margin-top:8px;"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 품목별 이익률 순위 ── -->
+<section>
+  <div class="section-title">품목별 이익률 순위</div>
+  <div class="card">
+    <div class="card-title">품목별 이익률 비교 (전체 23개 품목)</div>
+    <div class="card-sub">브랜딩 컨설팅(38.1%)·일본 수출(38.0%)·엔터프라이즈(37.8%)가 고마진 품목. 싱가포르 프로젝트(32.9%) 최저.</div>
+    <div class="chart-wrap" style="height:320px;">
+      <canvas id="chartItemRate"></canvas>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ── 데이터 ──────────────────────────────────────────────────
+const D = {"summary":{"totalRevenue":14141637913,"totalProfit":5000605099,"totalCost":9141032814,"totalCount":300,"profitRate":35.36,"avgMonthRevenue":1178469826},"regression":{"slope":40800867,"r2":0.4588,"pred13":1443675460,"pred14":1484476327},"monthly":{"labels":["01월","02월","03월","04월","05월","06월","07월","08월","09월","10월","11월","12월"],"revenue":[978,932,1143,1041,1284,1344,970,919,1174,1374,1406,1576],"cost":[633,611,739,673,850,884,621,580,765,900,896,988],"profit":[345,320,404,368,434,460,349,339,409,474,510,588],"rate":[35.29,34.38,35.35,35.32,33.78,34.23,36.01,36.87,34.85,34.49,36.28,37.31],"regLine":[954,995,1036,1076,1117,1158,1199,1240,1280,1321,1362,1403]},"dept":{"labels":["마케팅팀","영업1팀","영업2팀","온라인사업부","해외사업부"],"revenue":[2779,2816,2705,2902,2939],"profit":[1001,956,965,1043,1035],"rate":[36.02,33.96,35.67,35.95,35.22]},"manager":{"labels":["임도현","윤재혁","조은비","송하영","강민지","배현우","박소연","정해준","김민수","한서연","이지현","최영호","오수진"],"revenue":[1660,1482,1420,1280,1185,1116,957,942,932,902,890,689,686],"rate":[35.09,35.89,36.01,35.38,33.29,35.12,36.2,35.05,35.48,35.95,36.38,33.63,36.21],"count":[35,30,30,25,21,24,20,23,20,18,20,16,18]},"item":{"labels":["제품A 판매","유지보수 계약","SaaS 구독","제품B 판매","제품C 판매","베트남 수출","API 이용료","싱가포르 프로젝트","프리미엄 플랜","현지 기술지원","이벤트 기획","태국 수출","미디어 바잉","브랜딩 컨설팅","SI 프로젝트","커스텀 개발","일본 수출","광고 대행","기술지원 서비스","콘텐츠 제작","엔터프라이즈","컨설팅","교육서비스"],"revenue":[1224,1011,652,647,628,620,610,605,597,594,586,582,580,572,562,542,537,537,528,504,501,461,460],"rate":[35.32,34.18,34.87,34.08,34.06,36.23,36.6,32.94,35.48,33.17,34.4,36.08,36.6,38.06,35.53,35.32,37.95,37.31,34.53,33.53,37.78,33.91,37.11]},"client":{"labels":["케이에스테크","미래테크","넥스트웨어","블루오션","에이치엔솔루션","동아시스템즈","퍼스트원","코리아로지스틱스","세종공업","메가소프트","대명건설","한빛솔루션","스마트팩토리","다온인터내셔널","그린에너지"],"revenue":[1483,1148,1121,1038,1023,1009,1007,992,864,851,793,755,724,689,644],"rate":[36,33.84,34.43,35.04,35.94,36.57,34.1,35.51,36.25,35.04,36.57,33.31,35.49,37.26,35.64]},"histogram":{"bins":["20-22%","22-24%","24-26%","26-28%","28-30%","30-32%","32-34%","34-36%","36-38%","38-40%","40-42%","42-44%","44-46%","46-48%"],"counts":[0,0,7,35,22,33,27,34,27,38,33,34,10,0]},"heatmap":{"depts":["마케팅팀","영업1팀","영업2팀","온라인사업부","해외사업부"],"months":["01월","02월","03월","04월","05월","06월","07월","08월","09월","10월","11월","12월"],"data":[[189,202,247,225,261,218,214,176,239,219,289,301],[239,206,166,152,314,283,194,197,204,267,234,361],[130,144,273,231,205,230,206,181,298,260,251,297],[283,148,254,196,170,336,148,158,217,323,320,349],[137,232,204,237,334,277,207,207,217,306,314,268]],"max":361}};
+
+// ── 공통 설정 ──────────────────────────────────────────────
+Chart.defaults.color = '#8892a4';
+Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+Chart.defaults.font.size = 11;
+
+const gridColor = 'rgba(46,51,80,0.8)';
+const tooltipStyle = {
+  backgroundColor: '#1a1d27',
+  borderColor: '#2e3350',
+  borderWidth: 1,
+  titleColor: '#e2e8f0',
+  bodyColor: '#8892a4',
+  padding: 12,
+  cornerRadius: 8,
+};
+const COLORS = {
+  blue: '#4f8ef7', green: '#34d399', orange: '#f97316',
+  purple: '#a78bfa', pink: '#f43f5e', yellow: '#fbbf24',
+  cyan: '#22d3ee', lime: '#84cc16',
+};
+const DEPT_COLORS = ['#4f8ef7','#34d399','#f97316','#a78bfa','#f43f5e'];
+const MGR_COLORS = [
+  '#4f8ef7','#34d399','#f97316','#a78bfa','#f43f5e',
+  '#fbbf24','#22d3ee','#84cc16','#f472b6','#60a5fa',
+  '#6ee7b7','#fb923c','#c084fc',
+];
+
+// ── 1. 월별 복합 차트 ───────────────────────────────────────
+new Chart(document.getElementById('chartMonthly'), {
+  data: {
+    labels: D.monthly.labels,
+    datasets: [
+      {
+        type: 'bar', label: '매출액', data: D.monthly.revenue,
+        backgroundColor: 'rgba(79,142,247,0.7)', borderColor: COLORS.blue,
+        borderWidth: 1, yAxisID: 'y', order: 2,
+      },
+      {
+        type: 'bar', label: '비용', data: D.monthly.cost,
+        backgroundColor: 'rgba(244,63,94,0.6)', borderColor: COLORS.pink,
+        borderWidth: 1, yAxisID: 'y', order: 2,
+      },
+      {
+        type: 'line', label: '이익', data: D.monthly.profit,
+        borderColor: COLORS.green, backgroundColor: 'rgba(52,211,153,0.1)',
+        borderWidth: 2.5, pointBackgroundColor: COLORS.green,
+        pointRadius: 5, pointHoverRadius: 7,
+        fill: true, tension: 0.35, yAxisID: 'y', order: 1,
+      },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' }, tooltip: tooltipStyle },
+    scales: {
+      y: { grid: { color: gridColor }, ticks: { callback: v => v+'M' } },
+      x: { grid: { color: 'transparent' } },
+    },
+  },
+});
+
+// ── 2. 회귀 분석 차트 ──────────────────────────────────────
+new Chart(document.getElementById('chartRegression'), {
+  data: {
+    labels: [...D.monthly.labels, '2026-01', '2026-02'],
+    datasets: [
+      {
+        type: 'bar', label: '실제 매출', data: [...D.monthly.revenue, null, null],
+        backgroundColor: 'rgba(79,142,247,0.65)', borderColor: COLORS.blue,
+        borderWidth: 1, yAxisID: 'y',
+      },
+      {
+        type: 'line', label: '회귀선',
+        data: [...D.monthly.regLine, Math.round(1443.7), Math.round(1484.5)],
+        borderColor: COLORS.orange, borderWidth: 2,
+        borderDash: [6, 4], pointRadius: 4, pointHoverRadius: 6,
+        backgroundColor: 'transparent', yAxisID: 'y',
+        pointBackgroundColor: (ctx) => ctx.dataIndex >= 12 ? COLORS.yellow : COLORS.orange,
+      },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw}M` } },
+    },
+    scales: {
+      y: { grid: { color: gridColor }, ticks: { callback: v => v+'M' } },
+      x: { grid: { color: 'transparent' } },
+    },
+  },
+});
+
+// ── 3. 이익률 트렌드 ────────────────────────────────────────
+new Chart(document.getElementById('chartProfitRate'), {
+  type: 'line',
+  data: {
+    labels: D.monthly.labels,
+    datasets: [{
+      label: '이익률', data: D.monthly.rate,
+      borderColor: COLORS.purple, backgroundColor: 'rgba(167,139,250,0.15)',
+      borderWidth: 2.5, fill: true, tension: 0.4,
+      pointBackgroundColor: D.monthly.rate.map(v => v === Math.max(...D.monthly.rate) ? COLORS.yellow : COLORS.purple),
+      pointRadius: 5, pointHoverRadius: 7,
+    }],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ` 이익률: ${ctx.raw}%` } },
+    },
+    scales: {
+      y: {
+        grid: { color: gridColor },
+        min: 32, max: 39,
+        ticks: { callback: v => v+'%' },
+      },
+      x: { grid: { color: 'transparent' } },
+    },
+  },
+});
+
+// ── 4. 부서별 매출·이익 ─────────────────────────────────────
+new Chart(document.getElementById('chartDept'), {
+  type: 'bar',
+  data: {
+    labels: D.dept.labels,
+    datasets: [
+      {
+        label: '매출액', data: D.dept.revenue,
+        backgroundColor: DEPT_COLORS.map(c => c+'aa'),
+        borderColor: DEPT_COLORS, borderWidth: 1.5,
+      },
+      {
+        label: '이익', data: D.dept.profit,
+        backgroundColor: DEPT_COLORS.map(c => c+'44'),
+        borderColor: DEPT_COLORS, borderWidth: 1.5,
+        borderDash: [4, 2],
+      },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' }, tooltip: tooltipStyle },
+    scales: {
+      y: { grid: { color: gridColor }, ticks: { callback: v => v+'M' } },
+      x: { grid: { color: 'transparent' } },
+    },
+  },
+});
+
+// ── 5. 부서 이익률 레이더 ───────────────────────────────────
+new Chart(document.getElementById('chartRadar'), {
+  type: 'radar',
+  data: {
+    labels: D.dept.labels,
+    datasets: [{
+      label: '이익률(%)',
+      data: D.dept.rate,
+      borderColor: COLORS.cyan,
+      backgroundColor: 'rgba(34,211,238,0.15)',
+      borderWidth: 2,
+      pointBackgroundColor: COLORS.cyan,
+      pointRadius: 5,
+    }],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: tooltipStyle },
+    scales: {
+      r: {
+        min: 33, max: 37,
+        grid: { color: gridColor },
+        angleLines: { color: gridColor },
+        ticks: { color: '#8892a4', callback: v => v+'%', backdropColor: 'transparent', stepSize: 1 },
+        pointLabels: { color: '#e2e8f0', font: { size: 12 } },
+      },
+    },
+  },
+});
+
+// ── 6. 담당자 버블 ─────────────────────────────────────────
+new Chart(document.getElementById('chartBubble'), {
+  type: 'bubble',
+  data: {
+    datasets: D.manager.labels.map((name, i) => ({
+      label: name,
+      data: [{
+        x: D.manager.revenue[i],
+        y: D.manager.rate[i],
+        r: Math.sqrt(D.manager.count[i]) * 3.5,
+      }],
+      backgroundColor: MGR_COLORS[i] + '99',
+      borderColor: MGR_COLORS[i],
+      borderWidth: 1.5,
+    })),
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
+      tooltip: {
+        ...tooltipStyle,
+        callbacks: {
+          label: ctx => {
+            const i = D.manager.labels.indexOf(ctx.dataset.label);
+            return [
+              ` ${ctx.dataset.label}`,
+              ` 매출: ${ctx.parsed.x}M`,
+              ` 이익률: ${ctx.parsed.y}%`,
+              ` 건수: ${D.manager.count[i]}건`,
+            ];
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: gridColor },
+        title: { display: true, text: '매출액 (백만원)', color: '#8892a4' },
+        ticks: { callback: v => v+'M' },
+      },
+      y: {
+        grid: { color: gridColor },
+        title: { display: true, text: '이익률 (%)', color: '#8892a4' },
+        min: 32.5, max: 37,
+        ticks: { callback: v => v+'%' },
+      },
+    },
+  },
+});
+
+// ── 7. 담당자 수평 막대 ─────────────────────────────────────
+new Chart(document.getElementById('chartManager'), {
+  type: 'bar',
+  data: {
+    labels: D.manager.labels,
+    datasets: [{
+      label: '매출액 (백만원)',
+      data: D.manager.revenue,
+      backgroundColor: MGR_COLORS.map(c => c + 'bb'),
+      borderColor: MGR_COLORS,
+      borderWidth: 1.5,
+    }],
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ` ${ctx.raw}M` } },
+    },
+    scales: {
+      x: { grid: { color: gridColor }, ticks: { callback: v => v+'M' } },
+      y: { grid: { color: 'transparent' } },
+    },
+  },
+});
+
+// ── 8. 품목 도넛 ────────────────────────────────────────────
+const donutColors = [
+  '#4f8ef7','#34d399','#f97316','#a78bfa','#f43f5e',
+  '#fbbf24','#22d3ee','#84cc16','#f472b6','#60a5fa',
+  '#6ee7b7','#fb923c','#c084fc','#e879f9','#38bdf8',
+  '#a3e635','#fdba74','#86efac','#fca5a5','#c4b5fd',
+  '#93c5fd','#6d28d9','#10b981',
+];
+new Chart(document.getElementById('chartDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: D.item.labels,
+    datasets: [{
+      data: D.item.revenue,
+      backgroundColor: donutColors,
+      borderColor: '#1a1d27',
+      borderWidth: 2,
+      hoverOffset: 8,
+    }],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right', labels: { boxWidth: 10, font: { size: 9 }, padding: 6 } },
+      tooltip: {
+        ...tooltipStyle,
+        callbacks: {
+          label: ctx => {
+            const total = D.item.revenue.reduce((a,b)=>a+b,0);
+            const pct = (ctx.raw/total*100).toFixed(1);
+            return ` ${ctx.raw}M (${pct}%)`;
+          },
+        },
+      },
+    },
+  },
+});
+
+// ── 9. 거래처 매출 + 이익률 ─────────────────────────────────
+new Chart(document.getElementById('chartClient'), {
+  data: {
+    labels: D.client.labels,
+    datasets: [
+      {
+        type: 'bar', label: '매출액 (M)',
+        data: D.client.revenue,
+        backgroundColor: 'rgba(79,142,247,0.7)',
+        borderColor: COLORS.blue, borderWidth: 1,
+        yAxisID: 'y',
+      },
+      {
+        type: 'line', label: '이익률 (%)',
+        data: D.client.rate,
+        borderColor: COLORS.yellow, borderWidth: 2,
+        pointBackgroundColor: COLORS.yellow,
+        pointRadius: 5, tension: 0.3,
+        backgroundColor: 'transparent',
+        yAxisID: 'y2',
+      },
+    ],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'top' }, tooltip: tooltipStyle },
+    scales: {
+      y:  { grid: { color: gridColor }, position: 'left',  ticks: { callback: v => v+'M' } },
+      y2: { grid: { color: 'transparent' }, position: 'right',
+            min: 32, max: 39, ticks: { callback: v => v+'%' } },
+      x:  { grid: { color: 'transparent' } },
+    },
+  },
+});
+
+// ── 10. 이익률 히스토그램 ──────────────────────────────────
+new Chart(document.getElementById('chartHist'), {
+  type: 'bar',
+  data: {
+    labels: D.histogram.bins,
+    datasets: [{
+      label: '거래 건수',
+      data: D.histogram.counts,
+      backgroundColor: D.histogram.counts.map((v, i) => {
+        const max = Math.max(...D.histogram.counts);
+        const alpha = 0.3 + 0.7 * (v / max);
+        return `rgba(167,139,250,${alpha.toFixed(2)})`;
+      }),
+      borderColor: COLORS.purple,
+      borderWidth: 1.5,
+    }],
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ` ${ctx.raw}건` } },
+    },
+    scales: {
+      y: { grid: { color: gridColor }, ticks: { stepSize: 5 } },
+      x: { grid: { color: 'transparent' }, ticks: { font: { size: 10 } } },
+    },
+  },
+});
+
+// ── 11. 품목별 이익률 수평 막대 ────────────────────────────
+const sortedItemIdxs = D.item.rate
+  .map((v,i)=>({v,i}))
+  .sort((a,b)=>b.v-a.v);
+const sortedItemLabels = sortedItemIdxs.map(x=>D.item.labels[x.i]);
+const sortedItemRates  = sortedItemIdxs.map(x=>x.v);
+
+new Chart(document.getElementById('chartItemRate'), {
+  type: 'bar',
+  data: {
+    labels: sortedItemLabels,
+    datasets: [{
+      label: '이익률 (%)',
+      data: sortedItemRates,
+      backgroundColor: sortedItemRates.map(v =>
+        v >= 37 ? 'rgba(52,211,153,0.8)'
+        : v >= 35 ? 'rgba(79,142,247,0.7)'
+        : 'rgba(244,63,94,0.6)'
+      ),
+      borderColor: sortedItemRates.map(v =>
+        v >= 37 ? COLORS.green : v >= 35 ? COLORS.blue : COLORS.pink
+      ),
+      borderWidth: 1.5,
+    }],
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { ...tooltipStyle, callbacks: { label: ctx => ` ${ctx.raw}%` } },
+    },
+    scales: {
+      x: { grid: { color: gridColor }, min: 31, max: 39.5, ticks: { callback: v => v+'%' } },
+      y: { grid: { color: 'transparent' }, ticks: { font: { size: 11 } } },
+    },
+  },
+});
+
+// ── 12. 히트맵 (Canvas 없이 HTML Table) ────────────────────
+(function buildHeatmap() {
+  const { depts, months, data, max } = D.heatmap;
+  const wrap = document.getElementById('heatmapWrap');
+
+  // 색상 계산: 낮은값=어둡, 높은값=밝은 파랑
+  function cellColor(v) {
+    const t = v / max;
+    const r = Math.round(15 + t * (79 - 15));
+    const g = Math.round(17 + t * (142 - 17));
+    const b = Math.round(27 + t * (247 - 27));
+    return `rgb(${r},${g},${b})`;
+  }
+  function textColor(v) { return v / max > 0.5 ? '#fff' : '#8892a4'; }
+
+  let html = '<table class="heatmap-table"><thead><tr><th></th>';
+  months.forEach(m => { html += `<th>${m}</th>`; });
+  html += '</tr></thead><tbody>';
+
+  depts.forEach((dept, di) => {
+    html += `<tr><td class="row-label">${dept}</td>`;
+    data[di].forEach(v => {
+      const bg = cellColor(v);
+      const fc = textColor(v);
+      html += `<td style="background:${bg};color:${fc}" title="${v}M">${v}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+})();
+</script>
+</body>
+</html>
