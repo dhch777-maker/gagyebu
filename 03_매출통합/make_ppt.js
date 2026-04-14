@@ -3,8 +3,8 @@ const PptxGenJS = require('../node_modules/pptxgenjs');
 const { ChartJSNodeCanvas } = require('../node_modules/chartjs-node-canvas');
 const path = require('path');
 
-const SRC  = path.join(__dirname, '2025_연간매출_통합.xlsx');
-const DEST = path.join(__dirname, '2025_연간매출_보고서.pptx');
+const SRC  = process.env.UNIFIED_XLSX  || path.join(__dirname, '2025_연간매출_통합.xlsx');
+const DEST = process.env.REPORT_PPTX   || path.join(__dirname, '2025_연간매출_보고서.pptx');
 
 // ── 데이터 로드 ────────────────────────────────────────────
 const rawWb = XLSX.readFile(SRC);

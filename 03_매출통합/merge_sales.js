@@ -3,8 +3,8 @@ const ExcelJS = require('../node_modules/exceljs');
 const fs = require('fs');
 const path = require('path');
 
-const folder = path.join(__dirname, '월간매출');
-const outputPath = path.join(__dirname, '2025_연간매출_통합.xlsx');
+const folder = process.env.MONTHLY_DIR || path.join(__dirname, '월간매출');
+const outputPath = process.env.UNIFIED_XLSX || path.join(__dirname, '2025_연간매출_통합.xlsx');
 
 // 헤더 매핑: 각 파일의 다양한 헤더명 → 표준 컬럼명
 const HEADER_MAP = {

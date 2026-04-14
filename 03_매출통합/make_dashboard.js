@@ -3,8 +3,8 @@ const ExcelJS = require('../node_modules/exceljs');
 const { ChartJSNodeCanvas } = require('../node_modules/chartjs-node-canvas');
 const path = require('path');
 
-const SRC  = path.join(__dirname, '2025_연간매출_통합.xlsx');
-const DEST = path.join(__dirname, '2025_연간매출_대시보드.xlsx');
+const SRC  = process.env.UNIFIED_XLSX    || path.join(__dirname, '2025_연간매출_통합.xlsx');
+const DEST = process.env.DASHBOARD_XLSX  || path.join(__dirname, '2025_연간매출_대시보드.xlsx');
 
 // ── 데이터 로드 ────────────────────────────────────────────
 const rawWb = XLSX.readFile(SRC);
