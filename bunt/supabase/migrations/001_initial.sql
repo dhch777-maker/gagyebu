@@ -104,4 +104,5 @@ CREATE POLICY "parents can view own student artworks"
 -- service_role은 모든 스토리지 작업 가능 (이미지 업로드 등)
 CREATE POLICY "service role full access"
   ON storage.objects
-  USING (auth.role() = 'service_role');
+  USING (auth.role() = 'service_role')
+  WITH CHECK (auth.role() = 'service_role');
