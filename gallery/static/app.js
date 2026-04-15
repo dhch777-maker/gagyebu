@@ -141,11 +141,14 @@ function uploadFile(file) {
 
 // --- Manual Crop ---
 
+var manualMousePos = null; // Track mouse position for preview lines
+
 function startManualCrop() {
     preview.hidden = true;
     failMessage.hidden = true;
     manualSection.hidden = false;
     manualPoints = [];
+    manualMousePos = null;
     manualApplyBtn.disabled = true;
     manualSource = "original";
     srcOriginalBtn.classList.add("active");
@@ -189,9 +192,10 @@ function updateManualHint() {
 function drawManualCanvas() {
     manualCtx.drawImage(manualImg, 0, 0, manualCanvas.width, manualCanvas.height);
 
-    // Draw lines between points
+    // Draw solid lines between confirmed points
     if (manualPoints.length > 1) {
         manualCtx.beginPath();
+        manualCtx.setLineDash([]);
         manualCtx.moveTo(manualPoints[0].cx, manualPoints[0].cy);
         for (var i = 1; i < manualPoints.length; i++) {
             manualCtx.lineTo(manualPoints[i].cx, manualPoints[i].cy);
@@ -202,6 +206,40 @@ function drawManualCanvas() {
         manualCtx.strokeStyle = "rgba(74, 144, 217, 0.9)";
         manualCtx.lineWidth = 2;
         manualCtx.stroke();
+    }
+
+    // Draw dashed preview lines to mouse position
+    if (manualMousePos && manualPoints.length > 0 && manualPoints.length < 4) {
+        var last = manualPoints[manualPoints.length - 1];
+        manualCtx.beginPath();
+        manualCtx.setLineDash([6, 4]);
+        manualCtx.strokeStyle = "rgba(74, 144, 217, 0.5)";
+        manualCtx.lineWidth = 2;
+
+        // Last point → mouse position
+        manualCtx.moveTo(last.cx, last.cy);
+        manualCtx.lineTo(manualMousePos.cx, manualMousePos.cy);
+
+        // Mouse position → first point (closing preview, when 2+ points exist)
+        if (manualPoints.length >= 2) {
+            manualCtx.moveTo(manualMousePos.cx, manualMousePos.cy);
+            manualCtx.lineTo(manualPoints[0].cx, manualPoints[0].cy);
+        }
+
+        manualCtx.stroke();
+        manualCtx.setLineDash([]);
+    }
+
+    // Semi-transparent fill when 4 points completed
+    if (manualPoints.length === 4) {
+        manualCtx.beginPath();
+        manualCtx.moveTo(manualPoints[0].cx, manualPoints[0].cy);
+        for (var i = 1; i < manualPoints.length; i++) {
+            manualCtx.lineTo(manualPoints[i].cx, manualPoints[i].cy);
+        }
+        manualCtx.closePath();
+        manualCtx.fillStyle = "rgba(74, 144, 217, 0.15)";
+        manualCtx.fill();
     }
 
     // Draw points
@@ -244,6 +282,19 @@ manualCanvas.addEventListener("click", function(e) {
     if (manualPoints.length === 4) {
         manualApplyBtn.disabled = false;
     }
+});
+
+// Mouse tracking for preview lines
+manualCanvas.addEventListener("mousemove", function(e) {
+    if (manualPoints.length === 0 || manualPoints.length >= 4) return;
+    var rect = manualCanvas.getBoundingClientRect();
+    manualMousePos = { cx: e.clientX - rect.left, cy: e.clientY - rect.top };
+    drawManualCanvas();
+});
+
+manualCanvas.addEventListener("mouseleave", function() {
+    manualMousePos = null;
+    drawManualCanvas();
 });
 
 // Source toggle
