@@ -213,7 +213,7 @@ function drawManualCanvas() {
         var last = manualPoints[manualPoints.length - 1];
         manualCtx.beginPath();
         manualCtx.setLineDash([6, 4]);
-        manualCtx.strokeStyle = "rgba(74, 144, 217, 0.5)";
+        manualCtx.strokeStyle = "rgba(220, 30, 30, 0.8)";
         manualCtx.lineWidth = 2;
 
         // Last point → mouse position
@@ -238,7 +238,7 @@ function drawManualCanvas() {
             manualCtx.lineTo(manualPoints[i].cx, manualPoints[i].cy);
         }
         manualCtx.closePath();
-        manualCtx.fillStyle = "rgba(74, 144, 217, 0.15)";
+        manualCtx.fillStyle = "rgba(220, 30, 30, 0.25)";
         manualCtx.fill();
     }
 
