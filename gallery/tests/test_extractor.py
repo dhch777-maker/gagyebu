@@ -69,3 +69,13 @@ def test_process_photo_end_to_end():
     assert result is not None, "Should return processed image"
     h, w = result.shape[:2]
     assert h == 500 and w == 500, "Should be 500x500, got {}x{}".format(w, h)
+
+
+def test_manual_crop_with_given_corners():
+    from extractor import manual_crop
+    img = make_test_image()
+    corners = np.array([[200, 150], [600, 150], [600, 450], [200, 450]], dtype=np.float32)
+    result = manual_crop(img, corners, output_size=500)
+    assert result is not None
+    h, w = result.shape[:2]
+    assert h == 500 and w == 500, "Expected 500x500, got {}x{}".format(w, h)

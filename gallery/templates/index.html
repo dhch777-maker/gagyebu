@@ -40,7 +40,15 @@
 
         <div id="failMessage" class="fail-message" hidden>
             <p id="failText"></p>
-            <button id="failRetryBtn" class="btn-retry">다른 사진으로 다시하기</button>
+            <p class="manual-hint">원본 이미지에서 작품의 네 꼭짓점을 클릭해주세요 (좌상 → 우상 → 우하 → 좌하)</p>
+            <div class="manual-crop-area">
+                <canvas id="cropCanvas"></canvas>
+            </div>
+            <div class="actions">
+                <button id="cropConfirmBtn" class="btn-confirm" hidden>이 영역으로 크롭</button>
+                <button id="cropResetBtn" class="btn-retry" hidden>점 다시 찍기</button>
+                <button id="failRetryBtn" class="btn-retry">다른 사진으로 다시하기</button>
+            </div>
         </div>
     </div>
 

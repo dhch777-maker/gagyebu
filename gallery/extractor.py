@@ -105,3 +105,13 @@ def process_photo(img, output_size=1080):
     square = crop_square(corrected)
     resized = cv2.resize(square, (output_size, output_size), interpolation=cv2.INTER_LANCZOS4)
     return resized
+
+
+def manual_crop(img, corners, output_size=1080):
+    # type: (np.ndarray, np.ndarray, int) -> np.ndarray
+    """Process with manually specified corners (fallback when auto-detection fails)."""
+    ordered = _order_points(corners.astype(np.float32))
+    corrected = correct_perspective(img, ordered)
+    square = crop_square(corrected)
+    resized = cv2.resize(square, (output_size, output_size), interpolation=cv2.INTER_LANCZOS4)
+    return resized
