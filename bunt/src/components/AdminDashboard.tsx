@@ -69,7 +69,7 @@ export default function AdminDashboard() {
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>학생 이름</label>
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
-              placeholder="김민준" required style={inputStyle} />
+              placeholder="최동해" required style={inputStyle} />
           </div>
           <div style={{ marginBottom: 14 }}>
             <label style={labelStyle}>학부모 계정 (이메일)</label>
