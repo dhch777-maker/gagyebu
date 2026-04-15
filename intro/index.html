@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>차아림 — 동양화 작가 · 분트쿤스트슐레 원장</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --white: #FFFFFF;
+            --black: #111111;
+            --gray: #888888;
+            --light-gray: #E5E5E5;
+            --bg: #FAFAFA;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--black);
+            background: var(--white);
+            line-height: 1.7;
+            font-weight: 300;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── Navigation ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 100;
+            padding: 1.5rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        nav.scrolled {
+            border-bottom-color: var(--light-gray);
+        }
+
+        nav .logo {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        nav .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        nav .nav-links a {
+            text-decoration: none;
+            color: var(--gray);
+            font-size: 0.85rem;
+            font-weight: 400;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: color 0.3s;
+        }
+
+        nav .nav-links a:hover {
+            color: var(--black);
+        }
+
+        /* ── Hero ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .hero h1 {
+            font-family: 'Noto Serif KR', serif;
+            font-size: clamp(3rem, 8vw, 6rem);
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero .subtitle {
+            font-size: 1rem;
+            color: var(--gray);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            font-weight: 400;
+        }
+
+        .hero .divider {
+            width: 40px;
+            height: 1px;
+            background: var(--black);
+            margin: 2rem auto;
+        }
+
+        .hero .scroll-hint {
+            position: absolute;
+            bottom: 2.5rem;
+            font-size: 0.75rem;
+            color: var(--gray);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(6px); }
+        }
+
+        /* ── Section Common ── */
+        section {
+            padding: 8rem 3rem;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 0.75rem;
+            color: var(--gray);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-bottom: 3rem;
+            font-weight: 400;
+        }
+
+        /* ── About ── */
+        .about p {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1.35rem;
+            line-height: 2;
+            font-weight: 400;
+        }
+
+        .about .education {
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .about .education h3 {
+            font-size: 0.75rem;
+            color: var(--gray);
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .about .edu-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .about .edu-item:last-child {
+            border-bottom: none;
+        }
+
+        .about .edu-name {
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .about .edu-detail {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        /* ── Career ── */
+        .career .tracks {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+        }
+
+        .career .track h3 {
+            font-family: 'Noto Serif KR', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--black);
+        }
+
+        .career .track p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            line-height: 1.9;
+        }
+
+        .career .track .highlight {
+            color: var(--black);
+            font-weight: 500;
+        }
+
+        /* ── Contact ── */
+        .contact {
+            text-align: center;
+            padding: 10rem 3rem;
+        }
+
+        .contact h2 {
+            font-family: 'Noto Serif KR', serif;
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 700;
+            margin-bottom: 2rem;
+        }
+
+        .contact p {
+            color: var(--gray);
+            font-size: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .contact .email-link {
+            display: inline-block;
+            color: var(--black);
+            text-decoration: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            padding-bottom: 2px;
+            border-bottom: 1px solid var(--black);
+            transition: color 0.3s, border-color 0.3s;
+        }
+
+        .contact .email-link:hover {
+            color: var(--gray);
+            border-color: var(--gray);
+        }
+
+        /* ── Footer ── */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.75rem;
+            color: var(--gray);
+            letter-spacing: 0.1em;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        /* ── Scroll Reveal ── */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 1.5rem;
+            }
+
+            nav .nav-links {
+                gap: 1.2rem;
+            }
+
+            nav .nav-links a {
+                font-size: 0.75rem;
+            }
+
+            section {
+                padding: 5rem 1.5rem;
+            }
+
+            .about p {
+                font-size: 1.1rem;
+            }
+
+            .about .edu-item {
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+
+            .career .tracks {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .contact {
+                padding: 6rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="logo">차아림</div>
+        <ul class="nav-links">
+            <li><a href="#about">About</a></li>
+            <li><a href="#career">Career</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <h1>차아림</h1>
+        <div class="divider"></div>
+        <p class="subtitle">동양화 작가 · 분트쿤스트슐레 원장</p>
+        <span class="scroll-hint">Scroll</span>
+    </section>
+
+    <!-- About -->
+    <section class="about" id="about">
+        <p class="section-label reveal">About</p>
+        <p class="reveal">
+            동양화를 전공하며 전통 회화의 정신과 조형 언어를 깊이 탐구해 왔습니다.
+            선화예술고등학교에서 시작된 예술적 여정은 숙명여자대학교 회화과와
+            동대학원 조형예술학과를 거치며 자신만의 시선을 확립하는 시간이었습니다.
+            현재는 작가 활동과 함께 분트쿤스트슐레 마곡원에서
+            다음 세대의 예술적 감각을 키워가고 있습니다.
+        </p>
+
+        <div class="education reveal">
+            <h3>Education</h3>
+            <div class="edu-item">
+                <span class="edu-name">숙명여자대학교 대학원</span>
+                <span class="edu-detail">조형예술학과 석사 졸업</span>
+            </div>
+            <div class="edu-item">
+                <span class="edu-name">숙명여자대학교</span>
+                <span class="edu-detail">회화과 (동양화 전공)</span>
+            </div>
+            <div class="edu-item">
+                <span class="edu-name">선화예술고등학교</span>
+                <span class="edu-detail">미술과</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Career -->
+    <section class="career" id="career">
+        <p class="section-label reveal">Career</p>
+        <div class="tracks reveal">
+            <div class="track">
+                <h3>작가</h3>
+                <p>
+                    <span class="highlight">동양화</span>를 기반으로
+                    전통과 현대 사이의 접점을 모색하는 작업을 이어가고 있습니다.
+                    먹과 한지가 지닌 고유한 물성을 통해
+                    동시대적 감각을 담아냅니다.
+                </p>
+            </div>
+            <div class="track">
+                <h3>교육</h3>
+                <p>
+                    <span class="highlight">분트쿤스트슐레 마곡원</span> 원장으로서
+                    미술을 통한 창의적 사고와 표현력 성장을 돕고 있습니다.
+                    각자의 시선으로 세상을 바라보고
+                    자기만의 언어로 표현할 수 있도록 안내합니다.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="contact" id="contact">
+        <p class="section-label reveal">Contact</p>
+        <h2 class="reveal">함께 이야기 나누고 싶으시다면</h2>
+        <p class="reveal">전시 협업, 수업 문의 등 편하게 연락해 주세요.</p>
+        <a href="mailto:dhch777@gmail.com" class="email-link reveal">dhch777@gmail.com</a>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        &copy; 2026 차아림. All rights reserved.
+    </footer>
+
+    <script>
+        // Nav scroll effect
+        const nav = document.querySelector('nav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        // Scroll reveal
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15 });
+
+        reveals.forEach(el => observer.observe(el));
+    </script>
+
+</body>
+</html>
