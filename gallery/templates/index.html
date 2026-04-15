@@ -2,118 +2,68 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>작품 추출기</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>갤러리 작품 추출기</title>
+    <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 <body>
-    <div class="app">
-        <div id="progressBar" class="progress-bar" hidden>
-            <div class="progress-steps">
-                <div class="progress-step active" data-step="1"></div>
-                <div class="progress-step" data-step="2"></div>
-                <div class="progress-step" data-step="3"></div>
-            </div>
-            <span id="progressLabel" class="progress-label">1/3</span>
+    <div class="container">
+        <h1>작품 사진 추출기</h1>
+        <p class="subtitle">폰으로 찍은 사진을 올리면, 작품만 깔끔하게 추출해드려요</p>
+
+        <div id="dropzone" class="dropzone">
+            <input type="file" id="fileInput" accept="image/*" hidden>
+            <p>사진을 여기에 드래그하거나<br><button id="selectBtn" class="btn-select">파일 선택</button></p>
         </div>
 
-        <div id="step1" class="step">
-            <h1>작품 사진 추출기</h1>
-            <p class="subtitle">사진을 찍으면 작품만 깔끔하게 추출해드려요</p>
-            <div class="upload-area">
-                <input type="file" id="fileInput" accept="image/*" capture="environment" hidden>
-                <button id="cameraBtn" class="btn-camera">
-                    <span class="camera-icon">📷</span>
-                    사진 촬영
-                </button>
-                <button id="galleryBtn" class="btn-gallery">앨범에서 선택</button>
-                <input type="file" id="galleryInput" accept="image/*" hidden>
-            </div>
+        <div id="spinner" class="spinner" hidden>
+            <p>AI가 작품을 감지하고 보정 중이에요... (첫 실행 시 좀 걸려요)</p>
         </div>
 
-        <div id="loadingView" class="step" hidden>
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <p id="loadingText" class="loading-text">AI가 작품을 감지하고 있어요...</p>
-                <div class="loading-steps">
-                    <div id="lsDetect" class="loading-step">회화 영역 검출</div>
-                    <div id="lsTransform" class="loading-step">원근 보정</div>
-                    <div id="lsHand" class="loading-step">손 자동 감지</div>
-                    <div id="lsFinish" class="loading-step">마무리</div>
+        <div id="preview" class="preview" hidden>
+            <div class="preview-images">
+                <div class="preview-card">
+                    <h3>원본</h3>
+                    <img id="originalImg" src="" alt="원본 사진">
                 </div>
+                <div class="preview-card">
+                    <h3>추출 결과</h3>
+                    <img id="processedImg" src="" alt="추출된 작품">
+                </div>
+            </div>
+            <div id="message" class="message"></div>
+            <div class="actions">
+                <button id="confirmBtn" class="btn-confirm">확인 — 이대로 저장</button>
+                <button id="manualBtn" class="btn-manual">수동 지정</button>
+                <button id="retryBtn" class="btn-retry">다시하기</button>
             </div>
         </div>
 
-        <div id="step2" class="step" hidden>
-            <div class="review-image-container">
-                <img id="reviewImg" src="" alt="결과">
-                <div id="handBadge" class="badge" hidden>✋ 손 자동 보정됨</div>
-                <div id="confidenceBadge" class="badge confidence-badge" hidden></div>
-            </div>
-            <div id="reviewMessage" class="review-message"></div>
-            <div class="actions-bottom">
-                <button id="confirmBtn" class="btn-primary">이대로 저장</button>
-                <div class="actions-secondary">
-                    <button id="adjustCornersBtn" class="btn-secondary">꼭지점 수정</button>
-                    <button id="touchupBtn" class="btn-secondary">추가 보정</button>
-                    <button id="retryBtn" class="btn-text">다시 촬영</button>
-                </div>
+        <div id="failMessage" class="fail-message" hidden>
+            <p id="failText"></p>
+            <div class="actions">
+                <button id="failManualBtn" class="btn-manual">수동으로 지정하기</button>
+                <button id="failRetryBtn" class="btn-retry">다른 사진으로 다시하기</button>
             </div>
         </div>
 
-        <div id="step2fail" class="step" hidden>
-            <div class="fail-content">
-                <p class="fail-icon">😥</p>
-                <p id="failText" class="fail-text">작품을 자동으로 찾지 못했어요</p>
-                <div class="actions-bottom">
-                    <button id="failManualBtn" class="btn-primary">직접 꼭지점 지정</button>
-                    <button id="failRetryBtn" class="btn-text">다시 촬영</button>
-                </div>
+        <div id="manualSection" class="manual-section" hidden>
+            <div class="source-toggle">
+                <button id="srcOriginalBtn" class="src-btn active">원본 사진</button>
+                <button id="srcProcessedBtn" class="src-btn">수정본</button>
             </div>
-        </div>
-
-        <div id="step3" class="step" hidden>
-            <div class="adjust-tabs">
-                <button id="tabCorners" class="tab-btn active">📐 꼭지점</button>
-                <button id="tabBrush" class="tab-btn">🖌️ 브러시</button>
+            <p id="manualHint" class="manual-hint">그림의 꼭지점 4개를 클릭하세요</p>
+            <div class="manual-crop-area">
+                <canvas id="manualCanvas"></canvas>
             </div>
-            <div id="cornerMode" class="adjust-mode">
-                <p class="adjust-hint" id="cornerHint">그림의 꼭지점 4개를 터치하세요</p>
-                <div class="canvas-container">
-                    <canvas id="cornerCanvas"></canvas>
-                </div>
-                <div class="actions-bottom">
-                    <button id="cornerApplyBtn" class="btn-primary" disabled>적용</button>
-                    <button id="cornerResetBtn" class="btn-secondary">초기화</button>
-                    <button id="cornerCancelBtn" class="btn-text">취소</button>
-                </div>
-            </div>
-            <div id="brushMode" class="adjust-mode" hidden>
-                <p class="adjust-hint">제거할 부분을 터치로 칠해주세요</p>
-                <div class="brush-controls">
-                    <label>브러시:</label>
-                    <input type="range" id="brushSize" min="10" max="80" value="30">
-                    <span id="brushSizeLabel">30px</span>
-                </div>
-                <div class="canvas-container">
-                    <canvas id="brushCanvas"></canvas>
-                </div>
-                <div class="actions-bottom">
-                    <button id="brushUndoBtn" class="btn-secondary" disabled>되돌리기</button>
-                    <button id="brushDoneBtn" class="btn-primary">완료</button>
-                    <button id="brushCancelBtn" class="btn-text">취소</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="savedView" class="step" hidden>
-            <div class="saved-content">
-                <p class="saved-icon">✅</p>
-                <p class="saved-text">저장 완료!</p>
-                <button id="newPhotoBtn" class="btn-primary">새 사진 촬영</button>
+            <div class="actions">
+                <button id="manualApplyBtn" class="btn-confirm" disabled>적용</button>
+                <button id="manualResetBtn" class="btn-retry">점 초기화</button>
+                <button id="manualCancelBtn" class="btn-retry">취소</button>
             </div>
         </div>
     </div>
-    <script src="/static/app.js?v=5"></script>
+
+    <script src="/static/app.js?v=3"></script>
 </body>
 </html>
