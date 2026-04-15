@@ -12,16 +12,24 @@ var failMessage = document.getElementById("failMessage");
 var failText = document.getElementById("failText");
 var failRetryBtn = document.getElementById("failRetryBtn");
 
+// Prevent browser from opening dropped files
+document.addEventListener("dragover", function(e) { e.preventDefault(); });
+document.addEventListener("drop", function(e) { e.preventDefault(); });
+
 // Drag and drop
 dropzone.addEventListener("dragover", function(e) {
     e.preventDefault();
+    e.stopPropagation();
     dropzone.classList.add("dragover");
 });
-dropzone.addEventListener("dragleave", function() {
+dropzone.addEventListener("dragleave", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
     dropzone.classList.remove("dragover");
 });
 dropzone.addEventListener("drop", function(e) {
     e.preventDefault();
+    e.stopPropagation();
     dropzone.classList.remove("dragover");
     if (e.dataTransfer.files.length > 0) {
         uploadFile(e.dataTransfer.files[0]);
