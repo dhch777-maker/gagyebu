@@ -2,7 +2,10 @@ import os
 import uuid
 from flask import Flask, request, jsonify, render_template, send_from_directory
 import cv2
-from extractor import process_photo, manual_process
+from extractor import process_photo, manual_process, inpaint_region
+from PIL import Image
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -103,6 +106,43 @@ def manual_crop():
     return jsonify({
         "processed": f"/files/processed/{processed_name}",
         "message": "수동 보정 완료!",
+    })
+
+
+@app.route("/inpaint", methods=["POST"])
+def inpaint():
+    data = request.get_json()
+    image_b64 = data.get("image")
+    mask_b64 = data.get("mask")
+    file_id = data.get("file_id")
+
+    if not image_b64 or not mask_b64 or not file_id:
+        return jsonify({"error": "image, mask, file_id가 필요합니다"}), 400
+
+    # Decode base64 images
+    img_data = base64.b64decode(image_b64.split(",")[1] if "," in image_b64 else image_b64)
+    mask_data = base64.b64decode(mask_b64.split(",")[1] if "," in mask_b64 else mask_b64)
+
+    img = Image.open(BytesIO(img_data)).convert("RGB")
+    mask = Image.open(BytesIO(mask_data)).convert("L")
+
+    # Run inpainting
+    result = inpaint_region(img, mask)
+
+    # Save to processed directory
+    processed_name = f"{file_id}_cropped.jpg"
+    processed_path = os.path.join(PROCESSED_DIR, processed_name)
+    result.save(processed_path, "JPEG", quality=92)
+
+    # Return as base64
+    buf = BytesIO()
+    result.save(buf, format="JPEG", quality=92)
+    result_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+    return jsonify({
+        "result_image": "data:image/jpeg;base64," + result_b64,
+        "processed": f"/files/processed/{processed_name}",
+        "message": "부분 보정 완료!",
     })
 
 

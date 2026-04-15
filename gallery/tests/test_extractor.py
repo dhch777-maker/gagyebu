@@ -98,3 +98,23 @@ def test_manual_process_with_given_corners():
     assert result is not None
     h, w = result.shape[:2]
     assert h == 500 and w == 500, "Expected 500x500, got {}x{}".format(w, h)
+
+
+def test_inpaint_region_fills_masked_area():
+    from extractor import inpaint_region
+    from PIL import Image
+
+    # Create a 200x200 red image
+    img = Image.new("RGB", (200, 200), (200, 100, 100))
+
+    # Create mask: white circle in center (area to inpaint)
+    mask = Image.new("L", (200, 200), 0)
+    from PIL import ImageDraw
+    draw = ImageDraw.Draw(mask)
+    draw.ellipse([80, 80, 120, 120], fill=255)
+
+    result = inpaint_region(img, mask)
+
+    assert isinstance(result, Image.Image), "Should return PIL Image"
+    assert result.size == (200, 200), "Should preserve original size, got {}".format(result.size)
+    assert result.mode == "RGB", "Should return RGB image"

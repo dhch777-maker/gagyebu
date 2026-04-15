@@ -16,6 +16,17 @@ var failText = document.getElementById("failText");
 var failManualBtn = document.getElementById("failManualBtn");
 var failRetryBtn = document.getElementById("failRetryBtn");
 
+// Inpainting elements
+var inpaintBtn = document.getElementById("inpaintBtn");
+var inpaintSection = document.getElementById("inpaintSection");
+var inpaintCanvas = document.getElementById("inpaintCanvas");
+var inpaintCtx = inpaintCanvas.getContext("2d");
+var brushSize = document.getElementById("brushSize");
+var brushSizeLabel = document.getElementById("brushSizeLabel");
+var inpaintUndoBtn = document.getElementById("inpaintUndoBtn");
+var inpaintDoneBtn = document.getElementById("inpaintDoneBtn");
+var inpaintCancelBtn = document.getElementById("inpaintCancelBtn");
+
 // Manual crop elements
 var manualSection = document.getElementById("manualSection");
 var manualHint = document.getElementById("manualHint");
@@ -37,6 +48,14 @@ var manualSource = "original"; // "original" or "processed"
 var manualPoints = [];
 var manualImg = null;
 var manualScale = 1;
+
+// Inpainting state
+var inpaintImg = null;
+var inpaintScale = 1;
+var inpaintDrawing = false;
+var inpaintMaskCanvas = null;
+var inpaintMaskCtx = null;
+var inpaintHistory = [];
 
 // Prevent browser from opening dropped files
 document.addEventListener("dragover", function(e) { e.preventDefault(); });
@@ -83,11 +102,15 @@ function resetUI() {
     fileInput.value = "";
     confirmBtn.hidden = false;
     manualBtn.hidden = false;
+    inpaintBtn.hidden = false;
     retryBtn.textContent = "다시하기";
     currentFileId = null;
     currentOriginalUrl = null;
     currentProcessedUrl = null;
     manualPoints = [];
+    inpaintSection.hidden = true;
+    inpaintHistory = [];
+    inpaintUndoBtn.disabled = true;
 }
 
 function uploadFile(file) {
@@ -126,6 +149,7 @@ function uploadFile(file) {
                 message.style.color = "#2a7d2a";
                 confirmBtn.hidden = false;
                 manualBtn.hidden = false;
+                inpaintBtn.hidden = false;
                 preview.hidden = false;
             } else {
                 failText.textContent = result.data.message;
@@ -384,11 +408,221 @@ failManualBtn.addEventListener("click", startManualCrop);
 retryBtn.addEventListener("click", resetUI);
 failRetryBtn.addEventListener("click", resetUI);
 
+// --- Inpainting Mode ---
+
+function startInpaint() {
+    preview.hidden = true;
+    failMessage.hidden = true;
+    manualSection.hidden = true;
+    inpaintSection.hidden = false;
+    inpaintHistory = [];
+    inpaintUndoBtn.disabled = true;
+    loadInpaintImage();
+}
+
+function loadInpaintImage() {
+    var url = currentProcessedUrl || currentOriginalUrl;
+    inpaintImg = new Image();
+    inpaintImg.onload = function() {
+        var maxW = Math.min(700, window.innerWidth - 40);
+        inpaintScale = Math.min(maxW / inpaintImg.width, 1);
+        inpaintCanvas.width = Math.round(inpaintImg.width * inpaintScale);
+        inpaintCanvas.height = Math.round(inpaintImg.height * inpaintScale);
+
+        // Create offscreen mask canvas
+        inpaintMaskCanvas = document.createElement("canvas");
+        inpaintMaskCanvas.width = inpaintCanvas.width;
+        inpaintMaskCanvas.height = inpaintCanvas.height;
+        inpaintMaskCtx = inpaintMaskCanvas.getContext("2d");
+        inpaintMaskCtx.fillStyle = "black";
+        inpaintMaskCtx.fillRect(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+
+        drawInpaintCanvas();
+    };
+    inpaintImg.src = url + "?t=" + Date.now();
+}
+
+function drawInpaintCanvas() {
+    inpaintCtx.drawImage(inpaintImg, 0, 0, inpaintCanvas.width, inpaintCanvas.height);
+
+    // Overlay red tint where mask is white
+    var maskData = inpaintMaskCtx.getImageData(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+    var overlay = inpaintCtx.getImageData(0, 0, inpaintCanvas.width, inpaintCanvas.height);
+    for (var i = 0; i < maskData.data.length; i += 4) {
+        if (maskData.data[i] > 128) {
+            overlay.data[i] = Math.min(255, overlay.data[i] + 100);
+            overlay.data[i + 1] = Math.max(0, overlay.data[i + 1] - 50);
+            overlay.data[i + 2] = Math.max(0, overlay.data[i + 2] - 50);
+            overlay.data[i + 3] = 200;
+        }
+    }
+    inpaintCtx.putImageData(overlay, 0, 0);
+}
+
+function drawBrushCursor(x, y) {
+    var r = parseInt(brushSize.value) * inpaintScale;
+    inpaintCtx.beginPath();
+    inpaintCtx.arc(x, y, r, 0, Math.PI * 2);
+    inpaintCtx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    inpaintCtx.lineWidth = 2;
+    inpaintCtx.stroke();
+}
+
+function paintMask(x, y) {
+    var r = parseInt(brushSize.value) * inpaintScale;
+    inpaintMaskCtx.beginPath();
+    inpaintMaskCtx.arc(x, y, r, 0, Math.PI * 2);
+    inpaintMaskCtx.fillStyle = "white";
+    inpaintMaskCtx.fill();
+}
+
+function sendInpaintRequest() {
+    var spinnerEl = document.createElement("div");
+    spinnerEl.className = "inpaint-spinner";
+    spinnerEl.textContent = "AI 보정 중...";
+    inpaintCanvas.parentElement.appendChild(spinnerEl);
+
+    // Save current state to undo history
+    inpaintHistory.push(inpaintImg.src);
+    inpaintUndoBtn.disabled = false;
+
+    // Get current image as base64 at original resolution
+    var imgCanvas = document.createElement("canvas");
+    imgCanvas.width = inpaintImg.naturalWidth;
+    imgCanvas.height = inpaintImg.naturalHeight;
+    var imgCtx = imgCanvas.getContext("2d");
+    imgCtx.drawImage(inpaintImg, 0, 0);
+    var imageB64 = imgCanvas.toDataURL("image/jpeg", 0.92);
+
+    // Scale mask to original resolution
+    var maskFullCanvas = document.createElement("canvas");
+    maskFullCanvas.width = inpaintImg.naturalWidth;
+    maskFullCanvas.height = inpaintImg.naturalHeight;
+    var maskFullCtx = maskFullCanvas.getContext("2d");
+    maskFullCtx.drawImage(inpaintMaskCanvas, 0, 0, maskFullCanvas.width, maskFullCanvas.height);
+    var maskB64 = maskFullCanvas.toDataURL("image/png");
+
+    fetch("/inpaint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            image: imageB64,
+            mask: maskB64,
+            file_id: currentFileId
+        })
+    })
+    .then(function(resp) {
+        return resp.json().then(function(data) {
+            return { ok: resp.ok, data: data };
+        });
+    })
+    .then(function(result) {
+        spinnerEl.remove();
+        if (!result.ok) {
+            alert(result.data.error || "보정 실패");
+            return;
+        }
+        currentProcessedUrl = result.data.processed;
+        inpaintImg = new Image();
+        inpaintImg.onload = function() {
+            inpaintMaskCtx.fillStyle = "black";
+            inpaintMaskCtx.fillRect(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+            drawInpaintCanvas();
+        };
+        inpaintImg.src = result.data.result_image;
+    })
+    .catch(function() {
+        spinnerEl.remove();
+        alert("서버 연결에 실패했습니다.");
+    });
+}
+
+// Inpainting canvas events
+inpaintCanvas.addEventListener("mousedown", function(e) {
+    inpaintDrawing = true;
+    var rect = inpaintCanvas.getBoundingClientRect();
+    paintMask(e.clientX - rect.left, e.clientY - rect.top);
+    drawInpaintCanvas();
+    drawBrushCursor(e.clientX - rect.left, e.clientY - rect.top);
+});
+
+inpaintCanvas.addEventListener("mousemove", function(e) {
+    var rect = inpaintCanvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    if (inpaintDrawing) {
+        paintMask(x, y);
+    }
+    drawInpaintCanvas();
+    drawBrushCursor(x, y);
+});
+
+inpaintCanvas.addEventListener("mouseup", function() {
+    if (!inpaintDrawing) return;
+    inpaintDrawing = false;
+    var maskData = inpaintMaskCtx.getImageData(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+    var hasWhite = false;
+    for (var i = 0; i < maskData.data.length; i += 4) {
+        if (maskData.data[i] > 128) { hasWhite = true; break; }
+    }
+    if (hasWhite) {
+        sendInpaintRequest();
+    }
+});
+
+inpaintCanvas.addEventListener("mouseleave", function() {
+    if (inpaintDrawing) {
+        inpaintDrawing = false;
+        sendInpaintRequest();
+    }
+    drawInpaintCanvas();
+});
+
+brushSize.addEventListener("input", function() {
+    brushSizeLabel.textContent = brushSize.value + "px";
+});
+
+inpaintBtn.addEventListener("click", startInpaint);
+
+inpaintUndoBtn.addEventListener("click", function() {
+    if (inpaintHistory.length === 0) return;
+    var prevSrc = inpaintHistory.pop();
+    if (inpaintHistory.length === 0) inpaintUndoBtn.disabled = true;
+    inpaintImg = new Image();
+    inpaintImg.onload = function() {
+        inpaintMaskCtx.fillStyle = "black";
+        inpaintMaskCtx.fillRect(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+        drawInpaintCanvas();
+    };
+    inpaintImg.src = prevSrc;
+});
+
+inpaintDoneBtn.addEventListener("click", function() {
+    inpaintSection.hidden = true;
+    processedImg.src = (currentProcessedUrl || "") + "?t=" + Date.now();
+    message.textContent = "부분 보정 완료!";
+    message.style.color = "#2a7d2a";
+    confirmBtn.hidden = false;
+    manualBtn.hidden = false;
+    inpaintBtn.hidden = false;
+    preview.hidden = false;
+});
+
+inpaintCancelBtn.addEventListener("click", function() {
+    inpaintSection.hidden = true;
+    if (currentProcessedUrl) {
+        preview.hidden = false;
+    } else {
+        failMessage.hidden = false;
+    }
+});
+
 // Confirm
 confirmBtn.addEventListener("click", function() {
     message.textContent = "저장 완료! 갤러리에 등록되었습니다.";
     confirmBtn.hidden = true;
     manualBtn.hidden = true;
+    inpaintBtn.hidden = true;
     retryBtn.textContent = "새 사진 올리기";
 });
 
