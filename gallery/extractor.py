@@ -3,9 +3,26 @@ import numpy as np
 from typing import Optional
 from rembg import remove, new_session
 from PIL import Image
+import torch
+from simple_lama_inpainting import SimpleLama
 
 # Pre-load AI model (loaded once at startup)
 _bg_session = new_session("u2net")
+
+# Pre-load LaMa inpainting model (loaded once at startup, forced CPU)
+def _load_lama():
+    device = torch.device("cpu")
+    lama = object.__new__(SimpleLama)
+    from simple_lama_inpainting.models.model import download_model, LAMA_MODEL_URL
+    import os
+    model_path = os.environ.get("LAMA_MODEL") or download_model(LAMA_MODEL_URL)
+    lama.model = torch.jit.load(model_path, map_location=device)
+    lama.model.eval()
+    lama.model.to(device)
+    lama.device = device
+    return lama
+
+_lama_model = _load_lama()
 
 
 def process_photo(img: np.ndarray, output_size: int = 1080) -> Optional[np.ndarray]:
@@ -152,3 +169,17 @@ def _fallback_crop(rgba_arr: np.ndarray, fg_alpha: np.ndarray, output_size: int)
     y_max, x_max = coords.max(axis=0)
     cropped = rgb_out[y_min:y_max, x_min:x_max]
     return _fit_to_square(cropped, output_size)
+
+
+def inpaint_region(img: Image.Image, mask: Image.Image) -> Image.Image:
+    """Inpaint masked region using LaMa model.
+
+    Args:
+        img: RGB PIL Image.
+        mask: Grayscale PIL Image (white=area to inpaint).
+
+    Returns:
+        Inpainted RGB PIL Image.
+    """
+    result = _lama_model(img, mask)
+    return result.convert("RGB")
