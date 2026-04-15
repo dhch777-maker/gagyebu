@@ -1,57 +1,61 @@
 import cv2
 import numpy as np
 from typing import Optional
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image
+
+# Pre-load AI models (loaded once at startup)
+_bg_session = new_session("u2net")
+_human_session = new_session("u2net_human_seg")
 
 
 def process_photo(img: np.ndarray, output_size: int = 1080) -> Optional[np.ndarray]:
-    """Full pipeline: rembg background removal -> remove hands/body -> white bg -> square.
+    """Extract artwork from photo: remove background + human body parts.
 
-    Args:
-        img: BGR image (from cv2.imread).
-        output_size: Final square dimension in pixels.
+    Uses two AI models:
+    1. u2net: removes wall/floor background
+    2. u2net_human_seg: detects human body (hands, face, feet)
 
-    Returns:
-        Square BGR image with white background, or None if processing failed.
+    Painting = foreground - human body
     """
-    # BGR -> RGB -> PIL
     rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     pil_img = Image.fromarray(rgb)
 
-    # Remove background (returns RGBA)
-    result = remove(pil_img)
-    arr = np.array(result)
+    # Step 1: Remove background (wall, floor, etc.)
+    result_fg = remove(pil_img, session=_bg_session)
+    fg_arr = np.array(result_fg)
+    fg_alpha = fg_arr[:, :, 3]
 
-    alpha = arr[:, :, 3]
-    if np.count_nonzero(alpha > 128) == 0:
+    if np.count_nonzero(fg_alpha > 128) == 0:
         return None
 
-    # Replace transparent with white
-    rgb_out = arr[:, :, :3].copy()
-    rgb_out[alpha < 128] = [255, 255, 255]
+    # Step 2: Detect human body (hands, face, feet, legs)
+    result_human = remove(pil_img, session=_human_session)
+    human_alpha = np.array(result_human)[:, :, 3]
 
-    # --- Remove hands/body using morphological opening ---
-    # Opening (erosion + dilation) removes thin protrusions (fingers, arms, feet)
-    # while preserving the large rectangular painting area.
-    _, binary = cv2.threshold(alpha, 128, 255, cv2.THRESH_BINARY)
+    # Step 3: Painting = foreground AND NOT human
+    painting_mask = np.zeros_like(fg_alpha, dtype=np.uint8)
+    painting_mask[(fg_alpha > 128) & (human_alpha < 128)] = 255
 
-    h, w = binary.shape
-    kernel_size = max(h, w) // 20  # ~5% of image dimension
-    if kernel_size < 5:
-        kernel_size = 5
-    if kernel_size % 2 == 0:
-        kernel_size += 1
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
-    opened = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+    # If subtraction removed too much (>80%), fall back to full foreground
+    fg_count = np.count_nonzero(fg_alpha > 128)
+    paint_count = np.count_nonzero(painting_mask > 0)
+    if paint_count < fg_count * 0.2:
+        painting_mask = np.where(fg_alpha > 128, 255, 0).astype(np.uint8)
 
-    # Check we didn't remove too much (keep at least 30% of original foreground)
-    if np.count_nonzero(opened) > np.count_nonzero(binary) * 0.3:
-        coords = np.column_stack(np.where(opened > 0))
-    else:
-        # Fallback: use original mask
-        coords = np.column_stack(np.where(alpha > 128))
+    # Close small gaps at painting edges (where hands overlapped)
+    h, w = painting_mask.shape
+    k = max(h, w) // 60
+    if k >= 3:
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (k, k))
+        painting_mask = cv2.morphologyEx(painting_mask, cv2.MORPH_CLOSE, kernel)
 
+    # Set non-painting areas to white
+    rgb_out = rgb.copy()
+    rgb_out[painting_mask == 0] = [255, 255, 255]
+
+    # Find bounding box of painting area
+    coords = np.column_stack(np.where(painting_mask > 0))
     y_min, x_min = coords.min(axis=0)
     y_max, x_max = coords.max(axis=0)
 
