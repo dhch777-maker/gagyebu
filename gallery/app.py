@@ -44,23 +44,33 @@ def upload():
 
     result = process_photo(img, output_size=OUTPUT_SIZE)
 
-    if result is None:
+    if result is None or not result.success:
         return jsonify({
             "file_id": file_id,
             "original": f"/files/uploads/{original_name}",
             "processed": None,
+            "hand_detected": False,
+            "detection_method": result.detection_method if result else "none",
+            "confidence": result.confidence if result else 0.0,
             "message": "작품 추출에 실패했습니다. 수동으로 지정해주세요.",
         })
 
     processed_name = f"{file_id}_cropped.jpg"
     processed_path = os.path.join(PROCESSED_DIR, processed_name)
-    cv2.imwrite(processed_path, result, [cv2.IMWRITE_JPEG_QUALITY, 92])
+    cv2.imwrite(processed_path, result.image, [cv2.IMWRITE_JPEG_QUALITY, 92])
+
+    msg = "작품 추출 완료!"
+    if result.hand_detected:
+        msg += " (손 자동 보정됨)"
 
     return jsonify({
         "file_id": file_id,
         "original": f"/files/uploads/{original_name}",
         "processed": f"/files/processed/{processed_name}",
-        "message": "작품 추출 완료!",
+        "hand_detected": result.hand_detected,
+        "detection_method": result.detection_method,
+        "confidence": result.confidence,
+        "message": msg,
     })
 
 
