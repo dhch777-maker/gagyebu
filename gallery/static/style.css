@@ -145,3 +145,54 @@ h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
     max-width: 100%;
 }
+
+/* Inpainting */
+.btn-inpaint {
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    background: #9b59b6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.inpaint-section { margin-top: 2rem; }
+.inpaint-hint {
+    margin-bottom: 1rem;
+    color: #555;
+    font-size: 1.05rem;
+    font-weight: 500;
+}
+.inpaint-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+.inpaint-controls label { font-size: 0.95rem; color: #555; }
+.inpaint-controls input[type="range"] { width: 200px; }
+.inpaint-controls span { font-size: 0.9rem; color: #888; min-width: 45px; }
+.inpaint-canvas-area {
+    margin: 0 auto;
+    max-width: 700px;
+    display: inline-block;
+    position: relative;
+}
+.inpaint-canvas-area canvas {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    max-width: 100%;
+}
+.inpaint-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    z-index: 10;
+}
