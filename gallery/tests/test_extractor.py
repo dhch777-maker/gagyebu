@@ -31,3 +31,41 @@ def test_find_artwork_contour_returns_none_for_blank():
     blank = np.full((600, 800, 3), (200, 200, 200), dtype=np.uint8)
     contour = find_artwork_contour(blank)
     assert contour is None, "Should return None when no artwork detected"
+
+
+def test_correct_perspective_returns_straightened_image():
+    from extractor import find_artwork_contour, correct_perspective
+    img = make_test_image()
+    contour = find_artwork_contour(img)
+    assert contour is not None
+    corrected = correct_perspective(img, contour)
+    assert corrected is not None, "Should return corrected image"
+    assert len(corrected.shape) == 3, "Should be a color image"
+    h, w = corrected.shape[:2]
+    assert 250 < h < 400, "Height {} out of expected range".format(h)
+    assert 350 < w < 500, "Width {} out of expected range".format(w)
+
+
+def test_crop_square_returns_square():
+    from extractor import crop_square
+    rect_img = np.full((300, 400, 3), (100, 150, 200), dtype=np.uint8)
+    square = crop_square(rect_img)
+    h, w = square.shape[:2]
+    assert h == w, "Should be square, got {}x{}".format(w, h)
+
+
+def test_crop_square_preserves_content():
+    from extractor import crop_square
+    tall_img = np.full((500, 300, 3), (50, 100, 150), dtype=np.uint8)
+    square = crop_square(tall_img)
+    h, w = square.shape[:2]
+    assert h == w, "Should be square, got {}x{}".format(w, h)
+
+
+def test_process_photo_end_to_end():
+    from extractor import process_photo
+    img = make_test_image()
+    result = process_photo(img, output_size=500)
+    assert result is not None, "Should return processed image"
+    h, w = result.shape[:2]
+    assert h == 500 and w == 500, "Should be 500x500, got {}x{}".format(w, h)

@@ -57,3 +57,51 @@ def _order_points(pts):
     rect[1] = pts[np.argmin(d)]
     rect[3] = pts[np.argmax(d)]
     return rect
+
+
+def correct_perspective(img, corners):
+    # type: (np.ndarray, np.ndarray) -> np.ndarray
+    """Apply perspective transform to straighten the artwork."""
+    tl, tr, br, bl = corners
+
+    width_top = np.linalg.norm(tr - tl)
+    width_bottom = np.linalg.norm(br - bl)
+    max_width = int(max(width_top, width_bottom))
+
+    height_left = np.linalg.norm(bl - tl)
+    height_right = np.linalg.norm(br - tr)
+    max_height = int(max(height_left, height_right))
+
+    dst = np.array([
+        [0, 0],
+        [max_width - 1, 0],
+        [max_width - 1, max_height - 1],
+        [0, max_height - 1],
+    ], dtype=np.float32)
+
+    matrix = cv2.getPerspectiveTransform(corners.astype(np.float32), dst)
+    warped = cv2.warpPerspective(img, matrix, (max_width, max_height))
+    return warped
+
+
+def crop_square(img):
+    # type: (np.ndarray) -> np.ndarray
+    """Crop the image to a centered square (no stretch, no distortion)."""
+    h, w = img.shape[:2]
+    side = min(h, w)
+    y_offset = (h - side) // 2
+    x_offset = (w - side) // 2
+    return img[y_offset:y_offset + side, x_offset:x_offset + side]
+
+
+def process_photo(img, output_size=1080):
+    # type: (np.ndarray, int) -> Optional[np.ndarray]
+    """Full pipeline: detect artwork -> correct perspective -> square crop -> resize."""
+    contour = find_artwork_contour(img)
+    if contour is None:
+        return None
+
+    corrected = correct_perspective(img, contour)
+    square = crop_square(corrected)
+    resized = cv2.resize(square, (output_size, output_size), interpolation=cv2.INTER_LANCZOS4)
+    return resized
