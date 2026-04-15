@@ -66,11 +66,24 @@ h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
 .message { margin: 1rem 0; font-weight: 600; color: #2a7d2a; }
 .fail-message { margin-top: 2rem; color: #c0392b; }
 
-.actions { display: flex; gap: 1rem; justify-content: center; margin-top: 1rem; }
+.actions { display: flex; gap: 0.8rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
 .btn-confirm {
     padding: 0.7rem 2rem;
     font-size: 1rem;
     background: #2a7d2a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.btn-confirm:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+.btn-manual {
+    padding: 0.7rem 1.5rem;
+    font-size: 1rem;
+    background: #e8a735;
     color: white;
     border: none;
     border-radius: 8px;
@@ -86,17 +99,22 @@ h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
     cursor: pointer;
 }
 
+/* Manual crop */
+.manual-section { margin-top: 2rem; }
 .manual-hint {
-    margin: 1rem 0 0.5rem;
-    color: #666;
-    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    color: #555;
+    font-size: 1.05rem;
+    font-weight: 500;
 }
 .manual-crop-area {
-    margin: 1rem auto;
+    margin: 0 auto;
     max-width: 700px;
+    display: inline-block;
 }
 .manual-crop-area canvas {
     cursor: crosshair;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    max-width: 100%;
 }

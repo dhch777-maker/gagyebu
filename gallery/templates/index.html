@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>갤러리 작품 추출기</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/style.css?v=3">
 </head>
 <body>
     <div class="container">
         <h1>작품 사진 추출기</h1>
-        <p class="subtitle">폰으로 찍은 사진을 올리면, 배경을 제거하고 작품만 깔끔하게 추출해드려요</p>
+        <p class="subtitle">폰으로 찍은 사진을 올리면, 작품만 깔끔하게 추출해드려요</p>
 
         <div id="dropzone" class="dropzone">
             <input type="file" id="fileInput" accept="image/*" hidden>
@@ -34,16 +34,32 @@
             <div id="message" class="message"></div>
             <div class="actions">
                 <button id="confirmBtn" class="btn-confirm">확인 — 이대로 저장</button>
+                <button id="manualBtn" class="btn-manual">수동 지정</button>
                 <button id="retryBtn" class="btn-retry">다시하기</button>
             </div>
         </div>
 
         <div id="failMessage" class="fail-message" hidden>
             <p id="failText"></p>
-            <button id="failRetryBtn" class="btn-retry">다른 사진으로 다시하기</button>
+            <div class="actions">
+                <button id="failManualBtn" class="btn-manual">수동으로 지정하기</button>
+                <button id="failRetryBtn" class="btn-retry">다른 사진으로 다시하기</button>
+            </div>
+        </div>
+
+        <div id="manualSection" class="manual-section" hidden>
+            <p id="manualHint" class="manual-hint">그림의 꼭지점 4개를 클릭하세요</p>
+            <div class="manual-crop-area">
+                <canvas id="manualCanvas"></canvas>
+            </div>
+            <div class="actions">
+                <button id="manualApplyBtn" class="btn-confirm" disabled>적용</button>
+                <button id="manualResetBtn" class="btn-retry">점 초기화</button>
+                <button id="manualCancelBtn" class="btn-retry">취소</button>
+            </div>
         </div>
     </div>
 
-    <script src="/static/app.js?v=2"></script>
+    <script src="/static/app.js?v=3"></script>
 </body>
 </html>

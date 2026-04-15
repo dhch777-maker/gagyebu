@@ -129,6 +129,20 @@ def _fit_to_square(rgb_img: np.ndarray, output_size: int) -> np.ndarray:
     return cv2.cvtColor(resized, cv2.COLOR_RGB2BGR)
 
 
+def manual_process(img: np.ndarray, points: list, output_size: int = 1080) -> np.ndarray:
+    """Process with manually specified 4 corner points.
+
+    Args:
+        img: BGR image (from cv2.imread).
+        points: List of 4 [x, y] points in original image coordinates.
+        output_size: Final square dimension.
+    """
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    corners = _order_points(np.array(points, dtype=np.float32))
+    warped = _perspective_transform(rgb, corners)
+    return _fit_to_square(warped, output_size)
+
+
 def _fallback_crop(rgba_arr: np.ndarray, fg_alpha: np.ndarray, output_size: int) -> np.ndarray:
     """Fallback: bounding box of foreground with white background."""
     rgb_out = rgba_arr[:, :, :3].copy()
