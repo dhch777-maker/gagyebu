@@ -18,27 +18,46 @@ def make_test_image(width=800, height=600, rect_color=(0, 0, 200), bg_color=(220
     return img
 
 
-def test_find_artwork_contour_returns_four_points():
-    from extractor import find_artwork_contour
+def test_find_painting_corners_returns_four_points():
+    from extractor import _find_painting_corners, _bg_session
+    from rembg import remove
+    from PIL import Image
+
     img = make_test_image()
-    contour = find_artwork_contour(img)
-    assert contour is not None, "Should detect a contour"
-    assert contour.shape == (4, 2), "Should return 4 corner points, got shape {}".format(contour.shape)
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(rgb)
+    result = remove(pil_img, session=_bg_session)
+    fg_alpha = np.array(result)[:, :, 3]
+
+    corners = _find_painting_corners(rgb, fg_alpha)
+    assert corners is not None, "Should detect corners"
+    assert corners.shape == (4, 2), "Should return 4 corner points, got shape {}".format(corners.shape)
 
 
-def test_find_artwork_contour_returns_none_for_blank():
-    from extractor import find_artwork_contour
+def test_find_painting_corners_returns_none_for_blank():
+    from extractor import _find_painting_corners
+
     blank = np.full((600, 800, 3), (200, 200, 200), dtype=np.uint8)
-    contour = find_artwork_contour(blank)
-    assert contour is None, "Should return None when no artwork detected"
+    fg_alpha = np.zeros((600, 800), dtype=np.uint8)  # no foreground at all
+
+    corners = _find_painting_corners(blank, fg_alpha)
+    assert corners is None, "Should return None when no artwork detected"
 
 
-def test_correct_perspective_returns_straightened_image():
-    from extractor import find_artwork_contour, correct_perspective
+def test_perspective_transform_returns_straightened_image():
+    from extractor import _find_painting_corners, _perspective_transform, _bg_session
+    from rembg import remove
+    from PIL import Image
+
     img = make_test_image()
-    contour = find_artwork_contour(img)
-    assert contour is not None
-    corrected = correct_perspective(img, contour)
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    pil_img = Image.fromarray(rgb)
+    result = remove(pil_img, session=_bg_session)
+    fg_alpha = np.array(result)[:, :, 3]
+
+    corners = _find_painting_corners(rgb, fg_alpha)
+    assert corners is not None
+    corrected = _perspective_transform(rgb, corners)
     assert corrected is not None, "Should return corrected image"
     assert len(corrected.shape) == 3, "Should be a color image"
     h, w = corrected.shape[:2]
@@ -46,18 +65,18 @@ def test_correct_perspective_returns_straightened_image():
     assert 350 < w < 500, "Width {} out of expected range".format(w)
 
 
-def test_crop_square_returns_square():
-    from extractor import crop_square
+def test_fit_to_square_returns_square():
+    from extractor import _fit_to_square
     rect_img = np.full((300, 400, 3), (100, 150, 200), dtype=np.uint8)
-    square = crop_square(rect_img)
+    square = _fit_to_square(rect_img, 500)
     h, w = square.shape[:2]
     assert h == w, "Should be square, got {}x{}".format(w, h)
 
 
-def test_crop_square_preserves_content():
-    from extractor import crop_square
+def test_fit_to_square_preserves_content():
+    from extractor import _fit_to_square
     tall_img = np.full((500, 300, 3), (50, 100, 150), dtype=np.uint8)
-    square = crop_square(tall_img)
+    square = _fit_to_square(tall_img, 500)
     h, w = square.shape[:2]
     assert h == w, "Should be square, got {}x{}".format(w, h)
 
@@ -71,11 +90,11 @@ def test_process_photo_end_to_end():
     assert h == 500 and w == 500, "Should be 500x500, got {}x{}".format(w, h)
 
 
-def test_manual_crop_with_given_corners():
-    from extractor import manual_crop
+def test_manual_process_with_given_corners():
+    from extractor import manual_process
     img = make_test_image()
-    corners = np.array([[200, 150], [600, 150], [600, 450], [200, 450]], dtype=np.float32)
-    result = manual_crop(img, corners, output_size=500)
+    corners = [[200, 150], [600, 150], [600, 450], [200, 450]]
+    result = manual_process(img, corners, output_size=500)
     assert result is not None
     h, w = result.shape[:2]
     assert h == 500 and w == 500, "Expected 500x500, got {}x{}".format(w, h)
