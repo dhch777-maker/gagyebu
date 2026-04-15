@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function loadCornerImage() {
-        var url = currentProcessedUrl || currentOriginalUrl;
+        var url = currentOriginalUrl;
         cornerImg = new Image();
         cornerImg.onload = function () {
             var container = cornerCanvas.parentElement;
