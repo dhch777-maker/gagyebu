@@ -66,21 +66,31 @@ def manual_crop():
     data = request.get_json()
     file_id = data.get("file_id")
     points = data.get("points")  # [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+    source = data.get("source", "original")  # "original" or "processed"
 
     if not file_id or not points or len(points) != 4:
         return jsonify({"error": "file_id와 4개의 꼭지점이 필요합니다"}), 400
 
-    # Find original file
-    original_path = None
-    for f in os.listdir(UPLOAD_DIR):
-        if f.startswith(file_id):
-            original_path = os.path.join(UPLOAD_DIR, f)
-            break
+    # Find source file
+    if source == "processed":
+        processed_name = f"{file_id}_cropped.jpg"
+        source_path = os.path.join(PROCESSED_DIR, processed_name)
+        if not os.path.exists(source_path):
+            source_path = None
+    else:
+        source_path = None
 
-    if not original_path:
-        return jsonify({"error": "원본 파일을 찾을 수 없습니다"}), 404
+    if source_path is None:
+        # Fallback to original
+        for f in os.listdir(UPLOAD_DIR):
+            if f.startswith(file_id):
+                source_path = os.path.join(UPLOAD_DIR, f)
+                break
 
-    img = cv2.imread(original_path)
+    if not source_path:
+        return jsonify({"error": "파일을 찾을 수 없습니다"}), 404
+
+    img = cv2.imread(source_path)
     if img is None:
         return jsonify({"error": "이미지를 읽을 수 없습니다"}), 400
 

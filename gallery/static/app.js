@@ -25,9 +25,15 @@ var manualResetBtn = document.getElementById("manualResetBtn");
 var manualCancelBtn = document.getElementById("manualCancelBtn");
 var manualCtx = manualCanvas.getContext("2d");
 
+// Source toggle elements
+var srcOriginalBtn = document.getElementById("srcOriginalBtn");
+var srcProcessedBtn = document.getElementById("srcProcessedBtn");
+
 // State
 var currentFileId = null;
 var currentOriginalUrl = null;
+var currentProcessedUrl = null;
+var manualSource = "original"; // "original" or "processed"
 var manualPoints = [];
 var manualImg = null;
 var manualScale = 1;
@@ -80,6 +86,7 @@ function resetUI() {
     retryBtn.textContent = "다시하기";
     currentFileId = null;
     currentOriginalUrl = null;
+    currentProcessedUrl = null;
     manualPoints = [];
 }
 
@@ -113,6 +120,7 @@ function uploadFile(file) {
             originalImg.src = result.data.original;
 
             if (result.data.processed) {
+                currentProcessedUrl = result.data.processed;
                 processedImg.src = result.data.processed;
                 message.textContent = result.data.message;
                 message.style.color = "#2a7d2a";
@@ -139,7 +147,24 @@ function startManualCrop() {
     manualSection.hidden = false;
     manualPoints = [];
     manualApplyBtn.disabled = true;
+    manualSource = "original";
+    srcOriginalBtn.classList.add("active");
+    srcProcessedBtn.classList.remove("active");
+
+    // Enable/disable processed button based on availability
+    if (currentProcessedUrl) {
+        srcProcessedBtn.disabled = false;
+    } else {
+        srcProcessedBtn.disabled = true;
+    }
+
     updateManualHint();
+    loadManualImage();
+}
+
+function loadManualImage() {
+    var url = (manualSource === "processed" && currentProcessedUrl)
+        ? currentProcessedUrl : currentOriginalUrl;
 
     manualImg = new Image();
     manualImg.onload = function() {
@@ -149,7 +174,7 @@ function startManualCrop() {
         manualCanvas.height = Math.round(manualImg.height * manualScale);
         drawManualCanvas();
     };
-    manualImg.src = currentOriginalUrl;
+    manualImg.src = url;
 }
 
 function updateManualHint() {
@@ -221,6 +246,28 @@ manualCanvas.addEventListener("click", function(e) {
     }
 });
 
+// Source toggle
+srcOriginalBtn.addEventListener("click", function() {
+    if (manualSource === "original") return;
+    manualSource = "original";
+    srcOriginalBtn.classList.add("active");
+    srcProcessedBtn.classList.remove("active");
+    manualPoints = [];
+    manualApplyBtn.disabled = true;
+    updateManualHint();
+    loadManualImage();
+});
+srcProcessedBtn.addEventListener("click", function() {
+    if (manualSource === "processed" || !currentProcessedUrl) return;
+    manualSource = "processed";
+    srcProcessedBtn.classList.add("active");
+    srcOriginalBtn.classList.remove("active");
+    manualPoints = [];
+    manualApplyBtn.disabled = true;
+    updateManualHint();
+    loadManualImage();
+});
+
 manualApplyBtn.addEventListener("click", function() {
     if (manualPoints.length !== 4 || !currentFileId) return;
 
@@ -232,7 +279,7 @@ manualApplyBtn.addEventListener("click", function() {
     fetch("/manual-crop", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ file_id: currentFileId, points: points })
+        body: JSON.stringify({ file_id: currentFileId, points: points, source: manualSource })
     })
     .then(function(resp) {
         return resp.json().then(function(data) {
