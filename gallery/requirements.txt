@@ -4,4 +4,3 @@ numpy
 rembg[cpu]
 Pillow
 simple-lama-inpainting
-mediapipe

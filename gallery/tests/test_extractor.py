@@ -7,67 +7,95 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 def make_test_image(width=800, height=600, rect_color=(0, 0, 200), bg_color=(220, 220, 220)):
+    """Create a synthetic image: gray background with a colored rectangle (simulating a painting)."""
     img = np.full((height, width, 3), bg_color, dtype=np.uint8)
     center = (width // 2, height // 2)
     rect_w, rect_h = 400, 300
-    angle = 5
+    angle = 5  # degrees tilt
     box = cv2.boxPoints(((center[0], center[1]), (rect_w, rect_h), angle))
     box = np.intp(box)
     cv2.fillPoly(img, [box], rect_color)
     return img
 
 
-def test_process_photo_returns_process_result():
-    from extractor import process_photo, ProcessResult
+def test_find_artwork_contour_returns_four_points():
+    from extractor import find_artwork_contour
+    img = make_test_image()
+    contour = find_artwork_contour(img)
+    assert contour is not None, "Should detect a contour"
+    assert contour.shape == (4, 2), "Should return 4 corner points, got shape {}".format(contour.shape)
+
+
+def test_find_artwork_contour_returns_none_for_blank():
+    from extractor import find_artwork_contour
+    blank = np.full((600, 800, 3), (200, 200, 200), dtype=np.uint8)
+    contour = find_artwork_contour(blank)
+    assert contour is None, "Should return None when no artwork detected"
+
+
+def test_correct_perspective_returns_straightened_image():
+    from extractor import find_artwork_contour, correct_perspective
+    img = make_test_image()
+    contour = find_artwork_contour(img)
+    assert contour is not None
+    corrected = correct_perspective(img, contour)
+    assert corrected is not None, "Should return corrected image"
+    assert len(corrected.shape) == 3, "Should be a color image"
+    h, w = corrected.shape[:2]
+    assert 250 < h < 400, "Height {} out of expected range".format(h)
+    assert 350 < w < 500, "Width {} out of expected range".format(w)
+
+
+def test_crop_square_returns_square():
+    from extractor import crop_square
+    rect_img = np.full((300, 400, 3), (100, 150, 200), dtype=np.uint8)
+    square = crop_square(rect_img)
+    h, w = square.shape[:2]
+    assert h == w, "Should be square, got {}x{}".format(w, h)
+
+
+def test_crop_square_preserves_content():
+    from extractor import crop_square
+    tall_img = np.full((500, 300, 3), (50, 100, 150), dtype=np.uint8)
+    square = crop_square(tall_img)
+    h, w = square.shape[:2]
+    assert h == w, "Should be square, got {}x{}".format(w, h)
+
+
+def test_process_photo_end_to_end():
+    from extractor import process_photo
     img = make_test_image()
     result = process_photo(img, output_size=500)
-    assert isinstance(result, ProcessResult)
-    assert result.success
-    assert result.image is not None
-    h, w = result.image.shape[:2]
-    assert h == 500 and w == 500
-    assert result.detection_method == "legacy"
+    assert result is not None, "Should return processed image"
+    h, w = result.shape[:2]
+    assert h == 500 and w == 500, "Should be 500x500, got {}x{}".format(w, h)
 
 
-def test_process_photo_blank_image():
-    from extractor import process_photo, ProcessResult
-    blank = np.full((600, 800, 3), (200, 200, 200), dtype=np.uint8)
-    result = process_photo(blank, output_size=500)
-    assert isinstance(result, ProcessResult)
-    # May succeed (rembg finds something) or fail
-    if result.success and result.image is not None:
-        h, w = result.image.shape[:2]
-        assert h == 500 and w == 500
-
-
-def test_manual_process():
-    from extractor import manual_process
+def test_manual_crop_with_given_corners():
+    from extractor import manual_crop
     img = make_test_image()
-    corners = [[200, 150], [600, 150], [600, 450], [200, 450]]
-    result = manual_process(img, corners, output_size=500)
+    corners = np.array([[200, 150], [600, 150], [600, 450], [200, 450]], dtype=np.float32)
+    result = manual_crop(img, corners, output_size=500)
     assert result is not None
     h, w = result.shape[:2]
-    assert h == 500 and w == 500
+    assert h == 500 and w == 500, "Expected 500x500, got {}x{}".format(w, h)
 
 
-def test_fit_to_square():
-    from extractor import _fit_to_square
-    rect_img = np.full((300, 400, 3), (100, 150, 200), dtype=np.uint8)
-    square = _fit_to_square(rect_img, 500)
-    h, w = square.shape[:2]
-    assert h == w == 500
-
-
-def test_inpaint_region():
+def test_inpaint_region_fills_masked_area():
     from extractor import inpaint_region
-    from PIL import Image, ImageDraw
+    from PIL import Image
 
+    # Create a 200x200 red image
     img = Image.new("RGB", (200, 200), (200, 100, 100))
+
+    # Create mask: white circle in center (area to inpaint)
     mask = Image.new("L", (200, 200), 0)
+    from PIL import ImageDraw
     draw = ImageDraw.Draw(mask)
     draw.ellipse([80, 80, 120, 120], fill=255)
 
     result = inpaint_region(img, mask)
-    assert isinstance(result, Image.Image)
-    assert result.size == (200, 200)
-    assert result.mode == "RGB"
+
+    assert isinstance(result, Image.Image), "Should return PIL Image"
+    assert result.size == (200, 200), "Should preserve original size, got {}".format(result.size)
+    assert result.mode == "RGB", "Should return RGB image"

@@ -1,709 +1,629 @@
-/* ===== app.js — Mobile 3-step Wizard ===== */
+document.addEventListener("DOMContentLoaded", function() {
 
-document.addEventListener("DOMContentLoaded", function () {
+var dropzone = document.getElementById("dropzone");
+var fileInput = document.getElementById("fileInput");
+var selectBtn = document.getElementById("selectBtn");
+var spinner = document.getElementById("spinner");
+var preview = document.getElementById("preview");
+var originalImg = document.getElementById("originalImg");
+var processedImg = document.getElementById("processedImg");
+var message = document.getElementById("message");
+var confirmBtn = document.getElementById("confirmBtn");
+var manualBtn = document.getElementById("manualBtn");
+var retryBtn = document.getElementById("retryBtn");
+var failMessage = document.getElementById("failMessage");
+var failText = document.getElementById("failText");
+var failManualBtn = document.getElementById("failManualBtn");
+var failRetryBtn = document.getElementById("failRetryBtn");
 
-    // ── DOM refs ──────────────────────────────────────────────────────────
-    var progressBar    = document.getElementById("progressBar");
-    var progressLabel  = document.getElementById("progressLabel");
-    var progressSteps  = document.querySelectorAll(".progress-step");
+// Inpainting elements
+var inpaintBtn = document.getElementById("inpaintBtn");
+var inpaintSection = document.getElementById("inpaintSection");
+var inpaintCanvas = document.getElementById("inpaintCanvas");
+var inpaintCtx = inpaintCanvas.getContext("2d");
+var brushSize = document.getElementById("brushSize");
+var brushSizeLabel = document.getElementById("brushSizeLabel");
+var inpaintUndoBtn = document.getElementById("inpaintUndoBtn");
+var inpaintDoneBtn = document.getElementById("inpaintDoneBtn");
+var inpaintCancelBtn = document.getElementById("inpaintCancelBtn");
 
-    // Step 1
-    var step1          = document.getElementById("step1");
-    var cameraBtn      = document.getElementById("cameraBtn");
-    var galleryBtn     = document.getElementById("galleryBtn");
-    var fileInput      = document.getElementById("fileInput");
-    var galleryInput   = document.getElementById("galleryInput");
+// Manual crop elements
+var manualSection = document.getElementById("manualSection");
+var manualHint = document.getElementById("manualHint");
+var manualCanvas = document.getElementById("manualCanvas");
+var manualApplyBtn = document.getElementById("manualApplyBtn");
+var manualResetBtn = document.getElementById("manualResetBtn");
+var manualCancelBtn = document.getElementById("manualCancelBtn");
+var manualCtx = manualCanvas.getContext("2d");
 
-    // Loading
-    var loadingView    = document.getElementById("loadingView");
-    var loadingText    = document.getElementById("loadingText");
-    var lsDetect       = document.getElementById("lsDetect");
-    var lsTransform    = document.getElementById("lsTransform");
-    var lsHand         = document.getElementById("lsHand");
-    var lsFinish       = document.getElementById("lsFinish");
+// Source toggle elements
+var srcOriginalBtn = document.getElementById("srcOriginalBtn");
+var srcProcessedBtn = document.getElementById("srcProcessedBtn");
 
-    // Step 2 (success)
-    var step2          = document.getElementById("step2");
-    var reviewImg      = document.getElementById("reviewImg");
-    var handBadge      = document.getElementById("handBadge");
-    var confidenceBadge= document.getElementById("confidenceBadge");
-    var reviewMessage  = document.getElementById("reviewMessage");
-    var confirmBtn     = document.getElementById("confirmBtn");
-    var adjustCornersBtn = document.getElementById("adjustCornersBtn");
-    var touchupBtn     = document.getElementById("touchupBtn");
-    var retryBtn       = document.getElementById("retryBtn");
+// State
+var currentFileId = null;
+var currentOriginalUrl = null;
+var currentProcessedUrl = null;
+var manualSource = "original"; // "original" or "processed"
+var manualPoints = [];
+var manualImg = null;
+var manualScale = 1;
 
-    // Step 2 (fail)
-    var step2fail      = document.getElementById("step2fail");
-    var failText       = document.getElementById("failText");
-    var failManualBtn  = document.getElementById("failManualBtn");
-    var failRetryBtn   = document.getElementById("failRetryBtn");
+// Inpainting state
+var inpaintImg = null;
+var inpaintScale = 1;
+var inpaintDrawing = false;
+var inpaintMaskCanvas = null;
+var inpaintMaskCtx = null;
+var inpaintHistory = [];
 
-    // Step 3
-    var step3          = document.getElementById("step3");
-    var tabCorners     = document.getElementById("tabCorners");
-    var tabBrush       = document.getElementById("tabBrush");
-    var cornerMode     = document.getElementById("cornerMode");
-    var brushMode      = document.getElementById("brushMode");
-    var cornerHint     = document.getElementById("cornerHint");
-    var cornerCanvas   = document.getElementById("cornerCanvas");
-    var cornerApplyBtn = document.getElementById("cornerApplyBtn");
-    var cornerResetBtn = document.getElementById("cornerResetBtn");
-    var cornerCancelBtn= document.getElementById("cornerCancelBtn");
-    var brushSize      = document.getElementById("brushSize");
-    var brushSizeLabel = document.getElementById("brushSizeLabel");
-    var brushCanvas    = document.getElementById("brushCanvas");
-    var brushUndoBtn   = document.getElementById("brushUndoBtn");
-    var brushDoneBtn   = document.getElementById("brushDoneBtn");
-    var brushCancelBtn = document.getElementById("brushCancelBtn");
+// Prevent browser from opening dropped files
+document.addEventListener("dragover", function(e) { e.preventDefault(); });
+document.addEventListener("drop", function(e) { e.preventDefault(); });
 
-    // Saved
-    var savedView      = document.getElementById("savedView");
-    var newPhotoBtn    = document.getElementById("newPhotoBtn");
+// Drag and drop
+dropzone.addEventListener("dragover", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.add("dragover");
+});
+dropzone.addEventListener("dragleave", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove("dragover");
+});
+dropzone.addEventListener("drop", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzone.classList.remove("dragover");
+    if (e.dataTransfer.files.length > 0) {
+        uploadFile(e.dataTransfer.files[0]);
+    }
+});
 
-    var cornerCtx = cornerCanvas.getContext("2d");
-    var brushCtx  = brushCanvas.getContext("2d");
+// Click to select
+selectBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    fileInput.click();
+});
+dropzone.addEventListener("click", function() { fileInput.click(); });
+fileInput.addEventListener("change", function() {
+    if (fileInput.files.length > 0) {
+        uploadFile(fileInput.files[0]);
+    }
+});
 
-    // ── State ─────────────────────────────────────────────────────────────
-    var currentFileId        = null;
-    var currentOriginalUrl   = null;
-    var currentProcessedUrl  = null;
+function resetUI() {
+    preview.hidden = true;
+    failMessage.hidden = true;
+    manualSection.hidden = true;
+    spinner.hidden = true;
+    dropzone.hidden = false;
+    fileInput.value = "";
+    confirmBtn.hidden = false;
+    manualBtn.hidden = false;
+    inpaintBtn.hidden = false;
+    retryBtn.textContent = "다시하기";
+    currentFileId = null;
+    currentOriginalUrl = null;
+    currentProcessedUrl = null;
+    manualPoints = [];
+    inpaintSection.hidden = true;
+    inpaintHistory = [];
+    inpaintUndoBtn.disabled = true;
+}
 
-    // Corner mode
-    var cornerImg   = null;
-    var cornerScale = 1;
-    var cornerPoints= [];
-    var cornerMousePos = null;
+function uploadFile(file) {
+    dropzone.hidden = true;
+    spinner.hidden = false;
+    preview.hidden = true;
+    failMessage.hidden = true;
+    manualSection.hidden = true;
 
-    // Brush mode
-    var brushImg        = null;
-    var brushScale      = 1;
-    var brushDrawing    = false;
-    var brushMaskCanvas = null;
-    var brushMaskCtx    = null;
-    var brushHistory    = [];   // array of image src strings
+    var formData = new FormData();
+    formData.append("photo", file);
 
-    // ── Helpers ───────────────────────────────────────────────────────────
-    var ALL_STEPS = [step1, loadingView, step2, step2fail, step3, savedView];
-
-    function showStep(el, progressNum) {
-        ALL_STEPS.forEach(function (s) { s.hidden = true; });
-        el.hidden = false;
-
-        if (progressNum) {
-            progressBar.hidden = false;
-            progressLabel.textContent = progressNum + "/3";
-            progressSteps.forEach(function (ps, i) {
-                ps.classList.remove("active", "done");
-                var n = parseInt(ps.dataset.step);
-                if (n < progressNum) ps.classList.add("done");
-                else if (n === progressNum) ps.classList.add("active");
+    fetch("/upload", { method: "POST", body: formData })
+        .then(function(resp) {
+            return resp.json().then(function(data) {
+                return { ok: resp.ok, data: data };
             });
-        } else {
-            progressBar.hidden = true;
-        }
-    }
+        })
+        .then(function(result) {
+            spinner.hidden = true;
 
-    // Animate loading steps with staggered highlights
-    var loadingTimer = null;
-    var loadingStepEls = [lsDetect, lsTransform, lsHand, lsFinish];
+            if (!result.ok) {
+                failText.textContent = result.data.error || "업로드 실패";
+                failMessage.hidden = false;
+                return;
+            }
 
-    function startLoadingAnimation() {
-        loadingStepEls.forEach(function (el) {
-            el.classList.remove("active", "done");
-        });
-        var idx = 0;
-        loadingTimer = setInterval(function () {
-            if (idx > 0) loadingStepEls[idx - 1].classList.replace("active", "done");
-            if (idx < loadingStepEls.length) {
-                loadingStepEls[idx].classList.add("active");
-                idx++;
+            currentFileId = result.data.file_id;
+            currentOriginalUrl = result.data.original;
+            originalImg.src = result.data.original;
+
+            if (result.data.processed) {
+                currentProcessedUrl = result.data.processed;
+                processedImg.src = result.data.processed;
+                message.textContent = result.data.message;
+                message.style.color = "#2a7d2a";
+                confirmBtn.hidden = false;
+                manualBtn.hidden = false;
+                inpaintBtn.hidden = false;
+                preview.hidden = false;
             } else {
-                clearInterval(loadingTimer);
+                failText.textContent = result.data.message;
+                failMessage.hidden = false;
             }
-        }, 700);
-    }
-
-    function stopLoadingAnimation() {
-        clearInterval(loadingTimer);
-        loadingStepEls.forEach(function (el) {
-            el.classList.remove("active");
-            el.classList.add("done");
-        });
-    }
-
-    // ── Client-side image resize (max 2048px) ─────────────────────────────
-    function resizeImageFile(file, maxPx, callback) {
-        var reader = new FileReader();
-        reader.onload = function (e) {
-            var img = new Image();
-            img.onload = function () {
-                var w = img.width, h = img.height;
-                if (w <= maxPx && h <= maxPx) {
-                    callback(file); // no resize needed
-                    return;
-                }
-                var scale = Math.min(maxPx / w, maxPx / h);
-                var canvas = document.createElement("canvas");
-                canvas.width  = Math.round(w * scale);
-                canvas.height = Math.round(h * scale);
-                canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-                canvas.toBlob(function (blob) {
-                    callback(new File([blob], file.name, { type: "image/jpeg" }));
-                }, "image/jpeg", 0.92);
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
-
-    // ── Upload ────────────────────────────────────────────────────────────
-    function uploadFile(file) {
-        showStep(loadingView, 1);
-        startLoadingAnimation();
-
-        resizeImageFile(file, 2048, function (resized) {
-            var formData = new FormData();
-            formData.append("photo", resized);
-
-            fetch("/upload", { method: "POST", body: formData })
-                .then(function (resp) {
-                    return resp.json().then(function (data) {
-                        return { ok: resp.ok, data: data };
-                    });
-                })
-                .then(function (result) {
-                    stopLoadingAnimation();
-                    fileInput.value = "";
-                    galleryInput.value = "";
-
-                    if (!result.ok) {
-                        failText.textContent = result.data.error || "업로드 실패";
-                        showStep(step2fail, 2);
-                        return;
-                    }
-
-                    currentFileId       = result.data.file_id;
-                    currentOriginalUrl  = result.data.original;
-                    currentProcessedUrl = result.data.processed || null;
-
-                    if (result.data.processed) {
-                        reviewImg.src = result.data.processed + "?t=" + Date.now();
-
-                        // Hand badge
-                        if (result.data.hand_detected) {
-                            handBadge.hidden = false;
-                        } else {
-                            handBadge.hidden = true;
-                        }
-
-                        // Confidence badge
-                        if (result.data.confidence != null) {
-                            var pct = Math.round(result.data.confidence * 100);
-                            confidenceBadge.textContent = "신뢰도 " + pct + "%";
-                            confidenceBadge.hidden = false;
-                        } else {
-                            confidenceBadge.hidden = true;
-                        }
-
-                        reviewMessage.textContent = result.data.message || "";
-                        showStep(step2, 2);
-                    } else {
-                        failText.textContent = result.data.message || "작품을 자동으로 찾지 못했어요";
-                        showStep(step2fail, 2);
-                    }
-                })
-                .catch(function () {
-                    stopLoadingAnimation();
-                    failText.textContent = "서버 연결에 실패했습니다.";
-                    showStep(step2fail, 2);
-                });
-        });
-    }
-
-    // Button wiring — Step 1
-    cameraBtn.addEventListener("click", function () { fileInput.click(); });
-    fileInput.addEventListener("change", function () {
-        if (fileInput.files.length > 0) uploadFile(fileInput.files[0]);
-    });
-
-    galleryBtn.addEventListener("click", function () { galleryInput.click(); });
-    galleryInput.addEventListener("change", function () {
-        if (galleryInput.files.length > 0) uploadFile(galleryInput.files[0]);
-    });
-
-    // Step 2 actions
-    confirmBtn.addEventListener("click", function () {
-        showStep(savedView);
-    });
-
-    retryBtn.addEventListener("click", function () {
-        showStep(step1);
-    });
-
-    failRetryBtn.addEventListener("click", function () {
-        showStep(step1);
-    });
-
-    adjustCornersBtn.addEventListener("click", function () {
-        startCornerMode();
-    });
-
-    touchupBtn.addEventListener("click", function () {
-        startBrushMode();
-    });
-
-    failManualBtn.addEventListener("click", function () {
-        startCornerMode();
-    });
-
-    newPhotoBtn.addEventListener("click", function () {
-        currentFileId       = null;
-        currentOriginalUrl  = null;
-        currentProcessedUrl = null;
-        showStep(step1);
-    });
-
-    // ── Tab switching in Step 3 ───────────────────────────────────────────
-    tabCorners.addEventListener("click", function () {
-        tabCorners.classList.add("active");
-        tabBrush.classList.remove("active");
-        cornerMode.hidden = false;
-        brushMode.hidden  = true;
-    });
-
-    tabBrush.addEventListener("click", function () {
-        tabBrush.classList.add("active");
-        tabCorners.classList.remove("active");
-        brushMode.hidden  = false;
-        cornerMode.hidden = true;
-        // Lazy init brush canvas if not already loaded
-        if (!brushImg) initBrushCanvas();
-    });
-
-    // ── Corner Mode ───────────────────────────────────────────────────────
-    function startCornerMode() {
-        cornerPoints   = [];
-        cornerMousePos = null;
-        cornerApplyBtn.disabled = true;
-        tabCorners.classList.add("active");
-        tabBrush.classList.remove("active");
-        cornerMode.hidden = false;
-        brushMode.hidden  = true;
-        brushImg = null; // reset brush so it reloads
-        showStep(step3, 3);
-        loadCornerImage();
-    }
-
-    function loadCornerImage() {
-        var url = currentOriginalUrl;
-        cornerImg = new Image();
-        cornerImg.onload = function () {
-            var container = cornerCanvas.parentElement;
-            var maxW = container.clientWidth  || (window.innerWidth);
-            var maxH = container.clientHeight || Math.round(window.innerHeight * 0.55);
-            cornerScale = Math.min(maxW / cornerImg.width, maxH / cornerImg.height, 1);
-            cornerCanvas.width  = Math.round(cornerImg.width  * cornerScale);
-            cornerCanvas.height = Math.round(cornerImg.height * cornerScale);
-            drawCornerCanvas();
-        };
-        cornerImg.src = url + "?t=" + Date.now();
-    }
-
-    function updateCornerHint() {
-        var left = 4 - cornerPoints.length;
-        if (left > 0) {
-            cornerHint.textContent = "꼭지점을 터치하세요 (남은 점: " + left + "개)";
-        } else {
-            cornerHint.textContent = "4개 완료! 적용 버튼을 누르세요";
-        }
-    }
-
-    function drawCornerCanvas() {
-        if (!cornerImg) return;
-        cornerCtx.drawImage(cornerImg, 0, 0, cornerCanvas.width, cornerCanvas.height);
-
-        var pts = cornerPoints;
-
-        // Solid lines between placed points
-        if (pts.length > 1) {
-            cornerCtx.beginPath();
-            cornerCtx.setLineDash([]);
-            cornerCtx.moveTo(pts[0].cx, pts[0].cy);
-            for (var i = 1; i < pts.length; i++) cornerCtx.lineTo(pts[i].cx, pts[i].cy);
-            if (pts.length === 4) cornerCtx.closePath();
-            cornerCtx.strokeStyle = "rgba(37,99,235,0.9)";
-            cornerCtx.lineWidth = 2.5;
-            cornerCtx.stroke();
-        }
-
-        // Dashed preview to mouse/touch position
-        if (cornerMousePos && pts.length > 0 && pts.length < 4) {
-            var last = pts[pts.length - 1];
-            cornerCtx.beginPath();
-            cornerCtx.setLineDash([6, 4]);
-            cornerCtx.strokeStyle = "rgba(220,38,38,0.8)";
-            cornerCtx.lineWidth = 2;
-            cornerCtx.moveTo(last.cx, last.cy);
-            cornerCtx.lineTo(cornerMousePos.cx, cornerMousePos.cy);
-            if (pts.length >= 2) {
-                cornerCtx.moveTo(cornerMousePos.cx, cornerMousePos.cy);
-                cornerCtx.lineTo(pts[0].cx, pts[0].cy);
-            }
-            cornerCtx.stroke();
-            cornerCtx.setLineDash([]);
-        }
-
-        // Semi-transparent fill when 4 points
-        if (pts.length === 4) {
-            cornerCtx.beginPath();
-            cornerCtx.moveTo(pts[0].cx, pts[0].cy);
-            for (var j = 1; j < pts.length; j++) cornerCtx.lineTo(pts[j].cx, pts[j].cy);
-            cornerCtx.closePath();
-            cornerCtx.fillStyle = "rgba(220,38,38,0.18)";
-            cornerCtx.fill();
-        }
-
-        // Point circles
-        for (var k = 0; k < pts.length; k++) {
-            var p = pts[k];
-            cornerCtx.beginPath();
-            cornerCtx.arc(p.cx, p.cy, 12, 0, Math.PI * 2);
-            cornerCtx.fillStyle = "rgba(37,99,235,0.85)";
-            cornerCtx.fill();
-            cornerCtx.strokeStyle = "white";
-            cornerCtx.lineWidth = 2.5;
-            cornerCtx.setLineDash([]);
-            cornerCtx.stroke();
-            cornerCtx.fillStyle = "white";
-            cornerCtx.font = "bold 13px sans-serif";
-            cornerCtx.textAlign = "center";
-            cornerCtx.textBaseline = "middle";
-            cornerCtx.fillText(String(k + 1), p.cx, p.cy);
-        }
-    }
-
-    function getCanvasXY(canvas, e) {
-        var rect = canvas.getBoundingClientRect();
-        var scaleX = canvas.width  / rect.width;
-        var scaleY = canvas.height / rect.height;
-        var clientX, clientY;
-        if (e.touches && e.touches.length > 0) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-        return {
-            cx: (clientX - rect.left) * scaleX,
-            cy: (clientY - rect.top)  * scaleY
-        };
-    }
-
-    function cornerHandleTap(e) {
-        e.preventDefault();
-        if (cornerPoints.length >= 4) return;
-        var pos = getCanvasXY(cornerCanvas, e);
-        cornerPoints.push({
-            cx: pos.cx, cy: pos.cy,
-            ox: pos.cx / cornerScale,
-            oy: pos.cy / cornerScale
-        });
-        updateCornerHint();
-        drawCornerCanvas();
-        if (cornerPoints.length === 4) cornerApplyBtn.disabled = false;
-    }
-
-    cornerCanvas.addEventListener("click",      cornerHandleTap);
-    cornerCanvas.addEventListener("touchend",   cornerHandleTap);
-
-    cornerCanvas.addEventListener("mousemove", function (e) {
-        if (cornerPoints.length === 0 || cornerPoints.length >= 4) return;
-        cornerMousePos = getCanvasXY(cornerCanvas, e);
-        drawCornerCanvas();
-    });
-
-    cornerCanvas.addEventListener("mouseleave", function () {
-        cornerMousePos = null;
-        drawCornerCanvas();
-    });
-
-    cornerCanvas.addEventListener("touchmove", function (e) { e.preventDefault(); });
-
-    cornerResetBtn.addEventListener("click", function () {
-        cornerPoints = [];
-        cornerApplyBtn.disabled = true;
-        updateCornerHint();
-        drawCornerCanvas();
-    });
-
-    cornerCancelBtn.addEventListener("click", function () {
-        if (currentProcessedUrl) {
-            showStep(step2, 2);
-        } else {
-            showStep(step2fail, 2);
-        }
-    });
-
-    cornerApplyBtn.addEventListener("click", function () {
-        if (cornerPoints.length !== 4 || !currentFileId) return;
-        showStep(loadingView, 3);
-        startLoadingAnimation();
-
-        var points = cornerPoints.map(function (p) { return [p.ox, p.oy]; });
-
-        fetch("/manual-crop", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ file_id: currentFileId, points: points, source: "original" })
         })
-        .then(function (resp) {
-            return resp.json().then(function (data) { return { ok: resp.ok, data: data }; });
-        })
-        .then(function (result) {
-            stopLoadingAnimation();
-            if (!result.ok) {
-                failText.textContent = result.data.error || "꼭지점 보정 실패";
-                showStep(step2fail, 2);
-                return;
-            }
-            currentProcessedUrl = result.data.processed;
-            reviewImg.src = result.data.processed + "?t=" + Date.now();
-            reviewMessage.textContent = result.data.message || "꼭지점 보정 완료!";
-            handBadge.hidden = true;
-            confidenceBadge.hidden = true;
-            showStep(step2, 2);
-        })
-        .catch(function () {
-            stopLoadingAnimation();
+        .catch(function() {
+            spinner.hidden = true;
             failText.textContent = "서버 연결에 실패했습니다.";
-            showStep(step2fail, 2);
+            failMessage.hidden = false;
         });
-    });
+}
 
-    // ── Brush Mode ────────────────────────────────────────────────────────
-    function startBrushMode() {
-        tabBrush.classList.add("active");
-        tabCorners.classList.remove("active");
-        brushMode.hidden  = false;
-        cornerMode.hidden = true;
-        brushHistory    = [];
-        brushUndoBtn.disabled = true;
-        showStep(step3, 3);
-        initBrushCanvas();
+// --- Manual Crop ---
+
+var manualMousePos = null; // Track mouse position for preview lines
+
+function startManualCrop() {
+    preview.hidden = true;
+    failMessage.hidden = true;
+    manualSection.hidden = false;
+    manualPoints = [];
+    manualMousePos = null;
+    manualApplyBtn.disabled = true;
+    manualSource = "original";
+    srcOriginalBtn.classList.add("active");
+    srcProcessedBtn.classList.remove("active");
+
+    // Enable/disable processed button based on availability
+    if (currentProcessedUrl) {
+        srcProcessedBtn.disabled = false;
+    } else {
+        srcProcessedBtn.disabled = true;
     }
 
-    function initBrushCanvas() {
-        var url = currentProcessedUrl || currentOriginalUrl;
-        brushImg = new Image();
-        brushImg.onload = function () {
-            var container = brushCanvas.parentElement;
-            var maxW = container.clientWidth  || window.innerWidth;
-            var maxH = container.clientHeight || Math.round(window.innerHeight * 0.55);
-            brushScale = Math.min(maxW / brushImg.width, maxH / brushImg.height, 1);
-            brushCanvas.width  = Math.round(brushImg.width  * brushScale);
-            brushCanvas.height = Math.round(brushImg.height * brushScale);
+    updateManualHint();
+    loadManualImage();
+}
 
-            brushMaskCanvas = document.createElement("canvas");
-            brushMaskCanvas.width  = brushCanvas.width;
-            brushMaskCanvas.height = brushCanvas.height;
-            brushMaskCtx = brushMaskCanvas.getContext("2d");
-            brushMaskCtx.fillStyle = "black";
-            brushMaskCtx.fillRect(0, 0, brushMaskCanvas.width, brushMaskCanvas.height);
+function loadManualImage() {
+    var url = (manualSource === "processed" && currentProcessedUrl)
+        ? currentProcessedUrl : currentOriginalUrl;
 
-            drawBrushCanvas();
-        };
-        brushImg.src = url + "?t=" + Date.now();
+    manualImg = new Image();
+    manualImg.onload = function() {
+        var maxW = Math.min(700, window.innerWidth - 40);
+        manualScale = Math.min(maxW / manualImg.width, 1);
+        manualCanvas.width = Math.round(manualImg.width * manualScale);
+        manualCanvas.height = Math.round(manualImg.height * manualScale);
+        drawManualCanvas();
+    };
+    manualImg.src = url;
+}
+
+function updateManualHint() {
+    var remaining = 4 - manualPoints.length;
+    if (remaining > 0) {
+        manualHint.textContent = "그림의 꼭지점을 클릭하세요 (남은 점: " + remaining + "개)";
+    } else {
+        manualHint.textContent = "4개 점 지정 완료! '적용' 버튼을 눌러주세요";
     }
+}
 
-    function drawBrushCanvas() {
-        if (!brushImg) return;
-        brushCtx.drawImage(brushImg, 0, 0, brushCanvas.width, brushCanvas.height);
+function drawManualCanvas() {
+    manualCtx.drawImage(manualImg, 0, 0, manualCanvas.width, manualCanvas.height);
 
-        // Overlay red tint on masked areas
-        var maskData = brushMaskCtx.getImageData(0, 0, brushMaskCanvas.width, brushMaskCanvas.height);
-        var imgData  = brushCtx.getImageData(0, 0, brushCanvas.width, brushCanvas.height);
-        for (var i = 0; i < maskData.data.length; i += 4) {
-            if (maskData.data[i] > 128) {
-                imgData.data[i]     = Math.min(255, imgData.data[i]     + 100);
-                imgData.data[i + 1] = Math.max(0,   imgData.data[i + 1] - 50);
-                imgData.data[i + 2] = Math.max(0,   imgData.data[i + 2] - 50);
-            }
+    // Draw solid lines between confirmed points
+    if (manualPoints.length > 1) {
+        manualCtx.beginPath();
+        manualCtx.setLineDash([]);
+        manualCtx.moveTo(manualPoints[0].cx, manualPoints[0].cy);
+        for (var i = 1; i < manualPoints.length; i++) {
+            manualCtx.lineTo(manualPoints[i].cx, manualPoints[i].cy);
         }
-        brushCtx.putImageData(imgData, 0, 0);
+        if (manualPoints.length === 4) {
+            manualCtx.closePath();
+        }
+        manualCtx.strokeStyle = "rgba(74, 144, 217, 0.9)";
+        manualCtx.lineWidth = 2;
+        manualCtx.stroke();
     }
 
-    function paintBrushMask(x, y) {
-        var r = parseInt(brushSize.value) * brushScale;
-        brushMaskCtx.beginPath();
-        brushMaskCtx.arc(x, y, r, 0, Math.PI * 2);
-        brushMaskCtx.fillStyle = "white";
-        brushMaskCtx.fill();
+    // Draw dashed preview lines to mouse position
+    if (manualMousePos && manualPoints.length > 0 && manualPoints.length < 4) {
+        var last = manualPoints[manualPoints.length - 1];
+        manualCtx.beginPath();
+        manualCtx.setLineDash([6, 4]);
+        manualCtx.strokeStyle = "rgba(220, 30, 30, 0.8)";
+        manualCtx.lineWidth = 2;
+
+        // Last point → mouse position
+        manualCtx.moveTo(last.cx, last.cy);
+        manualCtx.lineTo(manualMousePos.cx, manualMousePos.cy);
+
+        // Mouse position → first point (closing preview, when 2+ points exist)
+        if (manualPoints.length >= 2) {
+            manualCtx.moveTo(manualMousePos.cx, manualMousePos.cy);
+            manualCtx.lineTo(manualPoints[0].cx, manualPoints[0].cy);
+        }
+
+        manualCtx.stroke();
+        manualCtx.setLineDash([]);
     }
 
-    function drawBrushCursor(x, y) {
-        var r = parseInt(brushSize.value) * brushScale;
-        brushCtx.beginPath();
-        brushCtx.arc(x, y, r, 0, Math.PI * 2);
-        brushCtx.strokeStyle = "rgba(255,255,255,0.85)";
-        brushCtx.lineWidth = 2;
-        brushCtx.stroke();
+    // Semi-transparent fill when 4 points completed
+    if (manualPoints.length === 4) {
+        manualCtx.beginPath();
+        manualCtx.moveTo(manualPoints[0].cx, manualPoints[0].cy);
+        for (var i = 1; i < manualPoints.length; i++) {
+            manualCtx.lineTo(manualPoints[i].cx, manualPoints[i].cy);
+        }
+        manualCtx.closePath();
+        manualCtx.fillStyle = "rgba(220, 30, 30, 0.25)";
+        manualCtx.fill();
     }
 
-    function sendBrushInpaint() {
-        // Show overlay spinner
-        var overlay = document.createElement("div");
-        overlay.className = "inpaint-overlay";
-        overlay.innerHTML = '<div class="inpaint-overlay-text"><div class="loading-spinner"></div>AI 보정 중...</div>';
-        brushCanvas.parentElement.appendChild(overlay);
+    // Draw points
+    for (var i = 0; i < manualPoints.length; i++) {
+        var p = manualPoints[i];
 
-        // Save undo snapshot (the current image src)
-        brushHistory.push(brushImg.src);
-        brushUndoBtn.disabled = false;
+        // Outer circle
+        manualCtx.beginPath();
+        manualCtx.arc(p.cx, p.cy, 10, 0, Math.PI * 2);
+        manualCtx.fillStyle = "rgba(74, 144, 217, 0.85)";
+        manualCtx.fill();
+        manualCtx.strokeStyle = "white";
+        manualCtx.lineWidth = 2;
+        manualCtx.stroke();
 
-        // Full-res image canvas
-        var imgCanvas = document.createElement("canvas");
-        imgCanvas.width  = brushImg.naturalWidth;
-        imgCanvas.height = brushImg.naturalHeight;
-        imgCanvas.getContext("2d").drawImage(brushImg, 0, 0);
-        var imageB64 = imgCanvas.toDataURL("image/jpeg", 0.92);
+        // Number
+        manualCtx.fillStyle = "white";
+        manualCtx.font = "bold 12px sans-serif";
+        manualCtx.textAlign = "center";
+        manualCtx.textBaseline = "middle";
+        manualCtx.fillText((i + 1).toString(), p.cx, p.cy);
+    }
+}
 
-        // Full-res mask canvas
-        var maskFull = document.createElement("canvas");
-        maskFull.width  = brushImg.naturalWidth;
-        maskFull.height = brushImg.naturalHeight;
-        maskFull.getContext("2d").drawImage(brushMaskCanvas, 0, 0, maskFull.width, maskFull.height);
-        var maskB64 = maskFull.toDataURL("image/png");
+manualCanvas.addEventListener("click", function(e) {
+    if (manualPoints.length >= 4) return;
 
-        fetch("/inpaint", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ image: imageB64, mask: maskB64, file_id: currentFileId })
-        })
-        .then(function (resp) {
-            return resp.json().then(function (data) { return { ok: resp.ok, data: data }; });
-        })
-        .then(function (result) {
-            overlay.remove();
-            if (!result.ok) {
-                alert(result.data.error || "보정 실패");
-                return;
-            }
-            currentProcessedUrl = result.data.processed;
-            var newImg = new Image();
-            newImg.onload = function () {
-                brushImg = newImg;
-                // Reset mask
-                brushMaskCtx.fillStyle = "black";
-                brushMaskCtx.fillRect(0, 0, brushMaskCanvas.width, brushMaskCanvas.height);
-                drawBrushCanvas();
-            };
-            newImg.src = result.data.result_image;
-        })
-        .catch(function () {
-            overlay.remove();
-            alert("서버 연결에 실패했습니다.");
+    var rect = manualCanvas.getBoundingClientRect();
+    var cx = e.clientX - rect.left;
+    var cy = e.clientY - rect.top;
+
+    // Convert to original image coordinates
+    var origX = cx / manualScale;
+    var origY = cy / manualScale;
+
+    manualPoints.push({ cx: cx, cy: cy, ox: origX, oy: origY });
+    updateManualHint();
+    drawManualCanvas();
+
+    if (manualPoints.length === 4) {
+        manualApplyBtn.disabled = false;
+    }
+});
+
+// Mouse tracking for preview lines
+manualCanvas.addEventListener("mousemove", function(e) {
+    if (manualPoints.length === 0 || manualPoints.length >= 4) return;
+    var rect = manualCanvas.getBoundingClientRect();
+    manualMousePos = { cx: e.clientX - rect.left, cy: e.clientY - rect.top };
+    drawManualCanvas();
+});
+
+manualCanvas.addEventListener("mouseleave", function() {
+    manualMousePos = null;
+    drawManualCanvas();
+});
+
+// Source toggle
+srcOriginalBtn.addEventListener("click", function() {
+    if (manualSource === "original") return;
+    manualSource = "original";
+    srcOriginalBtn.classList.add("active");
+    srcProcessedBtn.classList.remove("active");
+    manualPoints = [];
+    manualApplyBtn.disabled = true;
+    updateManualHint();
+    loadManualImage();
+});
+srcProcessedBtn.addEventListener("click", function() {
+    if (manualSource === "processed" || !currentProcessedUrl) return;
+    manualSource = "processed";
+    srcProcessedBtn.classList.add("active");
+    srcOriginalBtn.classList.remove("active");
+    manualPoints = [];
+    manualApplyBtn.disabled = true;
+    updateManualHint();
+    loadManualImage();
+});
+
+manualApplyBtn.addEventListener("click", function() {
+    if (manualPoints.length !== 4 || !currentFileId) return;
+
+    manualSection.hidden = true;
+    spinner.hidden = false;
+
+    var points = manualPoints.map(function(p) { return [p.ox, p.oy]; });
+
+    fetch("/manual-crop", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file_id: currentFileId, points: points, source: manualSource })
+    })
+    .then(function(resp) {
+        return resp.json().then(function(data) {
+            return { ok: resp.ok, data: data };
         });
-    }
+    })
+    .then(function(result) {
+        spinner.hidden = true;
 
-    // Brush canvas events
-    brushCanvas.addEventListener("mousedown", function (e) {
-        e.preventDefault();
-        brushDrawing = true;
-        var pos = getCanvasXY(brushCanvas, e);
-        paintBrushMask(pos.cx, pos.cy);
-        drawBrushCanvas();
-        drawBrushCursor(pos.cx, pos.cy);
-    });
-
-    brushCanvas.addEventListener("mousemove", function (e) {
-        e.preventDefault();
-        var pos = getCanvasXY(brushCanvas, e);
-        if (brushDrawing) paintBrushMask(pos.cx, pos.cy);
-        drawBrushCanvas();
-        drawBrushCursor(pos.cx, pos.cy);
-    });
-
-    brushCanvas.addEventListener("mouseup", function (e) {
-        e.preventDefault();
-        if (!brushDrawing) return;
-        brushDrawing = false;
-        if (hasMaskContent()) sendBrushInpaint();
-    });
-
-    brushCanvas.addEventListener("mouseleave", function (e) {
-        if (brushDrawing) {
-            brushDrawing = false;
-            if (hasMaskContent()) sendBrushInpaint();
+        if (!result.ok) {
+            failText.textContent = result.data.error || "수동 보정 실패";
+            failMessage.hidden = false;
+            return;
         }
-        drawBrushCanvas();
+
+        processedImg.src = result.data.processed + "?t=" + Date.now();
+        message.textContent = result.data.message;
+        message.style.color = "#2a7d2a";
+        confirmBtn.hidden = false;
+        manualBtn.hidden = false;
+        preview.hidden = false;
+    })
+    .catch(function() {
+        spinner.hidden = true;
+        failText.textContent = "서버 연결에 실패했습니다.";
+        failMessage.hidden = false;
     });
+});
 
-    brushCanvas.addEventListener("touchstart", function (e) {
-        e.preventDefault();
-        brushDrawing = true;
-        var pos = getCanvasXY(brushCanvas, e);
-        paintBrushMask(pos.cx, pos.cy);
-        drawBrushCanvas();
-    }, { passive: false });
+manualResetBtn.addEventListener("click", function() {
+    manualPoints = [];
+    manualApplyBtn.disabled = true;
+    updateManualHint();
+    drawManualCanvas();
+});
 
-    brushCanvas.addEventListener("touchmove", function (e) {
-        e.preventDefault();
-        if (!brushDrawing) return;
-        var pos = getCanvasXY(brushCanvas, e);
-        paintBrushMask(pos.cx, pos.cy);
-        drawBrushCanvas();
-    }, { passive: false });
-
-    brushCanvas.addEventListener("touchend", function (e) {
-        e.preventDefault();
-        if (!brushDrawing) return;
-        brushDrawing = false;
-        if (hasMaskContent()) sendBrushInpaint();
-    }, { passive: false });
-
-    function hasMaskContent() {
-        if (!brushMaskCtx) return false;
-        var data = brushMaskCtx.getImageData(0, 0, brushMaskCanvas.width, brushMaskCanvas.height).data;
-        for (var i = 0; i < data.length; i += 4) {
-            if (data[i] > 128) return true;
-        }
-        return false;
+manualCancelBtn.addEventListener("click", function() {
+    manualSection.hidden = true;
+    if (processedImg.src) {
+        preview.hidden = false;
+    } else {
+        failMessage.hidden = false;
     }
+});
 
-    brushSize.addEventListener("input", function () {
-        brushSizeLabel.textContent = brushSize.value + "px";
-    });
+// Manual crop buttons
+manualBtn.addEventListener("click", startManualCrop);
+failManualBtn.addEventListener("click", startManualCrop);
 
-    brushUndoBtn.addEventListener("click", function () {
-        if (brushHistory.length === 0) return;
-        var prevSrc = brushHistory.pop();
-        if (brushHistory.length === 0) brushUndoBtn.disabled = true;
-        var prev = new Image();
-        prev.onload = function () {
-            brushImg = prev;
-            brushMaskCtx.fillStyle = "black";
-            brushMaskCtx.fillRect(0, 0, brushMaskCanvas.width, brushMaskCanvas.height);
-            drawBrushCanvas();
+// Retry
+retryBtn.addEventListener("click", resetUI);
+failRetryBtn.addEventListener("click", resetUI);
+
+// --- Inpainting Mode ---
+
+function startInpaint() {
+    preview.hidden = true;
+    failMessage.hidden = true;
+    manualSection.hidden = true;
+    inpaintSection.hidden = false;
+    inpaintHistory = [];
+    inpaintUndoBtn.disabled = true;
+    loadInpaintImage();
+}
+
+function loadInpaintImage() {
+    var url = currentProcessedUrl || currentOriginalUrl;
+    inpaintImg = new Image();
+    inpaintImg.onload = function() {
+        var maxW = Math.min(700, window.innerWidth - 40);
+        inpaintScale = Math.min(maxW / inpaintImg.width, 1);
+        inpaintCanvas.width = Math.round(inpaintImg.width * inpaintScale);
+        inpaintCanvas.height = Math.round(inpaintImg.height * inpaintScale);
+
+        // Create offscreen mask canvas
+        inpaintMaskCanvas = document.createElement("canvas");
+        inpaintMaskCanvas.width = inpaintCanvas.width;
+        inpaintMaskCanvas.height = inpaintCanvas.height;
+        inpaintMaskCtx = inpaintMaskCanvas.getContext("2d");
+        inpaintMaskCtx.fillStyle = "black";
+        inpaintMaskCtx.fillRect(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+
+        drawInpaintCanvas();
+    };
+    inpaintImg.src = url + "?t=" + Date.now();
+}
+
+function drawInpaintCanvas() {
+    inpaintCtx.drawImage(inpaintImg, 0, 0, inpaintCanvas.width, inpaintCanvas.height);
+
+    // Overlay red tint where mask is white
+    var maskData = inpaintMaskCtx.getImageData(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+    var overlay = inpaintCtx.getImageData(0, 0, inpaintCanvas.width, inpaintCanvas.height);
+    for (var i = 0; i < maskData.data.length; i += 4) {
+        if (maskData.data[i] > 128) {
+            overlay.data[i] = Math.min(255, overlay.data[i] + 100);
+            overlay.data[i + 1] = Math.max(0, overlay.data[i + 1] - 50);
+            overlay.data[i + 2] = Math.max(0, overlay.data[i + 2] - 50);
+            overlay.data[i + 3] = 200;
+        }
+    }
+    inpaintCtx.putImageData(overlay, 0, 0);
+}
+
+function drawBrushCursor(x, y) {
+    var r = parseInt(brushSize.value) * inpaintScale;
+    inpaintCtx.beginPath();
+    inpaintCtx.arc(x, y, r, 0, Math.PI * 2);
+    inpaintCtx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    inpaintCtx.lineWidth = 2;
+    inpaintCtx.stroke();
+}
+
+function paintMask(x, y) {
+    var r = parseInt(brushSize.value) * inpaintScale;
+    inpaintMaskCtx.beginPath();
+    inpaintMaskCtx.arc(x, y, r, 0, Math.PI * 2);
+    inpaintMaskCtx.fillStyle = "white";
+    inpaintMaskCtx.fill();
+}
+
+function sendInpaintRequest() {
+    var spinnerEl = document.createElement("div");
+    spinnerEl.className = "inpaint-spinner";
+    spinnerEl.textContent = "AI 보정 중...";
+    inpaintCanvas.parentElement.appendChild(spinnerEl);
+
+    // Save current state to undo history
+    inpaintHistory.push(inpaintImg.src);
+    inpaintUndoBtn.disabled = false;
+
+    // Get current image as base64 at original resolution
+    var imgCanvas = document.createElement("canvas");
+    imgCanvas.width = inpaintImg.naturalWidth;
+    imgCanvas.height = inpaintImg.naturalHeight;
+    var imgCtx = imgCanvas.getContext("2d");
+    imgCtx.drawImage(inpaintImg, 0, 0);
+    var imageB64 = imgCanvas.toDataURL("image/jpeg", 0.92);
+
+    // Scale mask to original resolution
+    var maskFullCanvas = document.createElement("canvas");
+    maskFullCanvas.width = inpaintImg.naturalWidth;
+    maskFullCanvas.height = inpaintImg.naturalHeight;
+    var maskFullCtx = maskFullCanvas.getContext("2d");
+    maskFullCtx.drawImage(inpaintMaskCanvas, 0, 0, maskFullCanvas.width, maskFullCanvas.height);
+    var maskB64 = maskFullCanvas.toDataURL("image/png");
+
+    fetch("/inpaint", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            image: imageB64,
+            mask: maskB64,
+            file_id: currentFileId
+        })
+    })
+    .then(function(resp) {
+        return resp.json().then(function(data) {
+            return { ok: resp.ok, data: data };
+        });
+    })
+    .then(function(result) {
+        spinnerEl.remove();
+        if (!result.ok) {
+            alert(result.data.error || "보정 실패");
+            return;
+        }
+        currentProcessedUrl = result.data.processed;
+        inpaintImg = new Image();
+        inpaintImg.onload = function() {
+            inpaintMaskCtx.fillStyle = "black";
+            inpaintMaskCtx.fillRect(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+            drawInpaintCanvas();
         };
-        prev.src = prevSrc;
+        inpaintImg.src = result.data.result_image;
+    })
+    .catch(function() {
+        spinnerEl.remove();
+        alert("서버 연결에 실패했습니다.");
     });
+}
 
-    brushDoneBtn.addEventListener("click", function () {
-        reviewImg.src = (currentProcessedUrl || "") + "?t=" + Date.now();
-        reviewMessage.textContent = "보정 완료!";
-        handBadge.hidden = true;
-        confidenceBadge.hidden = true;
-        showStep(step2, 2);
-    });
+// Inpainting canvas events
+inpaintCanvas.addEventListener("mousedown", function(e) {
+    inpaintDrawing = true;
+    var rect = inpaintCanvas.getBoundingClientRect();
+    paintMask(e.clientX - rect.left, e.clientY - rect.top);
+    drawInpaintCanvas();
+    drawBrushCursor(e.clientX - rect.left, e.clientY - rect.top);
+});
 
-    brushCancelBtn.addEventListener("click", function () {
-        if (currentProcessedUrl) showStep(step2, 2);
-        else showStep(step2fail, 2);
-    });
+inpaintCanvas.addEventListener("mousemove", function(e) {
+    var rect = inpaintCanvas.getBoundingClientRect();
+    var x = e.clientX - rect.left;
+    var y = e.clientY - rect.top;
+    if (inpaintDrawing) {
+        paintMask(x, y);
+    }
+    drawInpaintCanvas();
+    drawBrushCursor(x, y);
+});
 
-    // ── Initial state ─────────────────────────────────────────────────────
-    showStep(step1);
+inpaintCanvas.addEventListener("mouseup", function() {
+    if (!inpaintDrawing) return;
+    inpaintDrawing = false;
+    var maskData = inpaintMaskCtx.getImageData(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+    var hasWhite = false;
+    for (var i = 0; i < maskData.data.length; i += 4) {
+        if (maskData.data[i] > 128) { hasWhite = true; break; }
+    }
+    if (hasWhite) {
+        sendInpaintRequest();
+    }
+});
+
+inpaintCanvas.addEventListener("mouseleave", function() {
+    if (inpaintDrawing) {
+        inpaintDrawing = false;
+        sendInpaintRequest();
+    }
+    drawInpaintCanvas();
+});
+
+brushSize.addEventListener("input", function() {
+    brushSizeLabel.textContent = brushSize.value + "px";
+});
+
+inpaintBtn.addEventListener("click", startInpaint);
+
+inpaintUndoBtn.addEventListener("click", function() {
+    if (inpaintHistory.length === 0) return;
+    var prevSrc = inpaintHistory.pop();
+    if (inpaintHistory.length === 0) inpaintUndoBtn.disabled = true;
+    inpaintImg = new Image();
+    inpaintImg.onload = function() {
+        inpaintMaskCtx.fillStyle = "black";
+        inpaintMaskCtx.fillRect(0, 0, inpaintMaskCanvas.width, inpaintMaskCanvas.height);
+        drawInpaintCanvas();
+    };
+    inpaintImg.src = prevSrc;
+});
+
+inpaintDoneBtn.addEventListener("click", function() {
+    inpaintSection.hidden = true;
+    processedImg.src = (currentProcessedUrl || "") + "?t=" + Date.now();
+    message.textContent = "부분 보정 완료!";
+    message.style.color = "#2a7d2a";
+    confirmBtn.hidden = false;
+    manualBtn.hidden = false;
+    inpaintBtn.hidden = false;
+    preview.hidden = false;
+});
+
+inpaintCancelBtn.addEventListener("click", function() {
+    inpaintSection.hidden = true;
+    if (currentProcessedUrl) {
+        preview.hidden = false;
+    } else {
+        failMessage.hidden = false;
+    }
+});
+
+// Confirm
+confirmBtn.addEventListener("click", function() {
+    message.textContent = "저장 완료! 갤러리에 등록되었습니다.";
+    confirmBtn.hidden = true;
+    manualBtn.hidden = true;
+    inpaintBtn.hidden = true;
+    retryBtn.textContent = "새 사진 올리기";
+});
 
 }); // end DOMContentLoaded
