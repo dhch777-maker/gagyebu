@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>갤러리 작품 추출기</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>작품 사진 추출기</h1>
+        <p class="subtitle">폰으로 찍은 사진을 올리면, 작품만 깔끔하게 잘라드려요</p>
+
+        <div id="dropzone" class="dropzone">
+            <input type="file" id="fileInput" accept="image/*" hidden>
+            <p>사진을 여기에 드래그하거나<br><button id="selectBtn" class="btn-select">파일 선택</button></p>
+        </div>
+
+        <div id="spinner" class="spinner" hidden>
+            <p>작품을 추출하고 있어요...</p>
+        </div>
+
+        <div id="preview" class="preview" hidden>
+            <div class="preview-images">
+                <div class="preview-card">
+                    <h3>원본</h3>
+                    <img id="originalImg" src="" alt="원본 사진">
+                </div>
+                <div class="preview-card">
+                    <h3>추출 결과</h3>
+                    <img id="processedImg" src="" alt="추출된 작품">
+                </div>
+            </div>
+            <div id="message" class="message"></div>
+            <div class="actions">
+                <button id="confirmBtn" class="btn-confirm">확인 — 이대로 저장</button>
+                <button id="retryBtn" class="btn-retry">다시하기</button>
+            </div>
+        </div>
+
+        <div id="failMessage" class="fail-message" hidden>
+            <p id="failText"></p>
+            <button id="failRetryBtn" class="btn-retry">다른 사진으로 다시하기</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
