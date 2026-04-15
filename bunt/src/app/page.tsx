@@ -140,10 +140,20 @@ export default function LoginPage() {
         </form>
 
         {isDemoMode ? (
-          <p style={{
-            textAlign: 'center', marginTop: 24,
-            fontSize: 10, color: '#d4a85360', letterSpacing: 1,
-          }}>데모 모드 · 아무 값이나 입력 후 로그인</p>
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <p style={{ fontSize: 10, color: '#d4a85360', letterSpacing: 1, marginBottom: 16 }}>
+              데모 모드 · 아무 값이나 입력 후 로그인
+            </p>
+            <button
+              onClick={() => router.push('/admin')}
+              style={{
+                background: 'none', border: '1px solid #2a2a2a',
+                color: '#555', fontSize: 9, letterSpacing: 3,
+                textTransform: 'uppercase', padding: '7px 16px',
+                cursor: 'pointer', fontFamily: 'Georgia, serif',
+              }}
+            >관리자 페이지 →</button>
+          </div>
         ) : (
           <p style={{
             textAlign: 'center', marginTop: 24,
