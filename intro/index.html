@@ -6,7 +6,7 @@
     <title>차아림 — 동양화 작가 · 분트쿤스트슐레 원장</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@200;300;400;500&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after {
             margin: 0;
@@ -28,12 +28,13 @@
         }
 
         body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             color: var(--black);
             background: var(--white);
             line-height: 1.7;
             font-weight: 300;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         /* ── Navigation ── */
@@ -58,7 +59,7 @@
         }
 
         nav .logo {
-            font-family: 'Noto Serif KR', serif;
+            font-family: 'Noto Serif KR', 'Cormorant Garamond', serif;
             font-size: 1.1rem;
             font-weight: 700;
             letter-spacing: 0.05em;
@@ -73,9 +74,9 @@
         nav .nav-links a {
             text-decoration: none;
             color: var(--gray);
-            font-size: 0.85rem;
-            font-weight: 400;
-            letter-spacing: 0.08em;
+            font-size: 0.8rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
             transition: color 0.3s;
         }
@@ -96,41 +97,65 @@
         }
 
         .hero h1 {
-            font-family: 'Noto Serif KR', serif;
-            font-size: clamp(3rem, 8vw, 6rem);
+            font-family: 'Noto Serif KR', 'Cormorant Garamond', serif;
+            font-size: clamp(3.5rem, 9vw, 7rem);
             font-weight: 700;
-            letter-spacing: 0.15em;
+            letter-spacing: 0.2em;
             margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(40px);
+            animation: heroIn 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
         }
 
         .hero .subtitle {
-            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
             color: var(--gray);
-            letter-spacing: 0.25em;
+            letter-spacing: 0.3em;
             text-transform: uppercase;
-            font-weight: 400;
+            font-weight: 300;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: heroIn 1s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
         }
 
         .hero .divider {
-            width: 40px;
+            width: 50px;
             height: 1px;
             background: var(--black);
             margin: 2rem auto;
+            opacity: 0;
+            transform: scaleX(0);
+            animation: lineIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
         }
 
         .hero .scroll-hint {
             position: absolute;
             bottom: 2.5rem;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--gray);
-            letter-spacing: 0.15em;
+            letter-spacing: 0.2em;
             text-transform: uppercase;
-            animation: float 2s ease-in-out infinite;
+            font-weight: 300;
+            opacity: 0;
+            animation: fadeIn 1s ease 1.5s forwards, float 2.5s ease-in-out 2.5s infinite;
+        }
+
+        @keyframes heroIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes lineIn {
+            to { opacity: 1; transform: scaleX(1); }
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
         }
 
         @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(6px); }
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(8px); opacity: 0.6; }
         }
 
         /* ── Section Common ── */
@@ -150,10 +175,10 @@
         }
 
         /* ── About ── */
-        .about p {
-            font-family: 'Noto Serif KR', serif;
-            font-size: 1.35rem;
-            line-height: 2;
+        .about > p:not(.section-label) {
+            font-family: 'Noto Serif KR', 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+            line-height: 2.1;
             font-weight: 400;
         }
 
@@ -185,13 +210,16 @@
         }
 
         .about .edu-name {
-            font-weight: 500;
+            font-weight: 400;
             font-size: 1rem;
+            letter-spacing: 0.02em;
         }
 
         .about .edu-detail {
             color: var(--gray);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            font-weight: 300;
+            letter-spacing: 0.03em;
         }
 
         /* ── Career ── */
@@ -202,23 +230,25 @@
         }
 
         .career .track h3 {
-            font-family: 'Noto Serif KR', serif;
-            font-size: 1.3rem;
-            font-weight: 700;
+            font-family: 'Cormorant Garamond', 'Noto Serif KR', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
             margin-bottom: 1.5rem;
             padding-bottom: 1rem;
-            border-bottom: 2px solid var(--black);
+            border-bottom: 1px solid var(--black);
+            letter-spacing: 0.05em;
         }
 
         .career .track p {
             color: var(--gray);
             font-size: 0.95rem;
-            line-height: 1.9;
+            line-height: 2;
+            font-weight: 300;
         }
 
         .career .track .highlight {
             color: var(--black);
-            font-weight: 500;
+            font-weight: 400;
         }
 
         /* ── Contact ── */
@@ -228,27 +258,30 @@
         }
 
         .contact h2 {
-            font-family: 'Noto Serif KR', serif;
-            font-size: clamp(1.8rem, 4vw, 2.5rem);
-            font-weight: 700;
+            font-family: 'Noto Serif KR', 'Cormorant Garamond', serif;
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 400;
             margin-bottom: 2rem;
+            letter-spacing: 0.05em;
         }
 
         .contact p {
             color: var(--gray);
-            font-size: 1rem;
+            font-size: 0.95rem;
             margin-bottom: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.03em;
         }
 
         .contact .email-link {
             display: inline-block;
             color: var(--black);
             text-decoration: none;
-            font-size: 1.1rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-            padding-bottom: 2px;
-            border-bottom: 1px solid var(--black);
+            font-size: 1rem;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--light-gray);
             transition: color 0.3s, border-color 0.3s;
         }
 
@@ -267,16 +300,85 @@
             border-top: 1px solid var(--light-gray);
         }
 
-        /* ── Scroll Reveal ── */
+        /* ── Scroll Reveal Animations ── */
         .reveal {
             opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s ease, transform 0.8s ease;
+            transform: translateY(50px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .reveal.visible {
             opacity: 1;
             transform: translateY(0);
+        }
+
+        /* Staggered children */
+        .reveal-stagger > * {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-stagger.visible > *:nth-child(1) { transition-delay: 0s; }
+        .reveal-stagger.visible > *:nth-child(2) { transition-delay: 0.15s; }
+        .reveal-stagger.visible > *:nth-child(3) { transition-delay: 0.3s; }
+        .reveal-stagger.visible > *:nth-child(4) { transition-delay: 0.45s; }
+
+        .reveal-stagger.visible > * {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Fade up from left */
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-40px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-left.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Fade up from right */
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(40px);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* Scale in */
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1),
+                        transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-scale.visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Line grow */
+        .reveal-line {
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal-line.visible {
+            transform: scaleX(1);
         }
 
         /* ── Responsive ── */
@@ -348,7 +450,7 @@
             다음 세대의 예술적 감각을 키워가고 있습니다.
         </p>
 
-        <div class="education reveal">
+        <div class="education reveal-stagger">
             <h3>Education</h3>
             <div class="edu-item">
                 <span class="edu-name">숙명여자대학교 대학원</span>
@@ -368,8 +470,8 @@
     <!-- Career -->
     <section class="career" id="career">
         <p class="section-label reveal">Career</p>
-        <div class="tracks reveal">
-            <div class="track">
+        <div class="tracks">
+            <div class="track reveal-left">
                 <h3>작가</h3>
                 <p>
                     <span class="highlight">동양화</span>를 기반으로
@@ -378,7 +480,7 @@
                     동시대적 감각을 담아냅니다.
                 </p>
             </div>
-            <div class="track">
+            <div class="track reveal-right">
                 <h3>교육</h3>
                 <p>
                     <span class="highlight">분트쿤스트슐레 마곡원</span> 원장으로서
@@ -393,7 +495,7 @@
     <!-- Contact -->
     <section class="contact" id="contact">
         <p class="section-label reveal">Contact</p>
-        <h2 class="reveal">함께 이야기 나누고 싶으시다면</h2>
+        <h2 class="reveal-scale">함께 이야기 나누고 싶으시다면</h2>
         <p class="reveal">전시 협업, 수업 문의 등 편하게 연락해 주세요.</p>
         <a href="mailto:dhch777@gmail.com" class="email-link reveal">dhch777@gmail.com</a>
     </section>
@@ -410,17 +512,20 @@
             nav.classList.toggle('scrolled', window.scrollY > 50);
         });
 
-        // Scroll reveal
-        const reveals = document.querySelectorAll('.reveal');
+        // Scroll reveal — observe all animated elements
+        const animated = document.querySelectorAll(
+            '.reveal, .reveal-stagger, .reveal-left, .reveal-right, .reveal-scale, .reveal-line'
+        );
+
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.classList.add('visible');
                 }
             });
-        }, { threshold: 0.15 });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
 
-        reveals.forEach(el => observer.observe(el));
+        animated.forEach(el => observer.observe(el));
     </script>
 
 </body>
