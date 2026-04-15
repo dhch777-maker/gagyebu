@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
+const isDemoMode = !process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('http') ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('your-')
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -15,6 +18,12 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
+
+    // 데모 모드: 아무 값이나 입력하면 갤러리로 이동
+    if (isDemoMode) {
+      router.push('/gallery')
+      return
+    }
 
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -130,13 +139,17 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p style={{
-          textAlign: 'center',
-          marginTop: 24,
-          fontSize: 10,
-          color: '#222',
-          letterSpacing: 1,
-        }}>계정 문의는 담당 선생님께</p>
+        {isDemoMode ? (
+          <p style={{
+            textAlign: 'center', marginTop: 24,
+            fontSize: 10, color: '#d4a85360', letterSpacing: 1,
+          }}>데모 모드 · 아무 값이나 입력 후 로그인</p>
+        ) : (
+          <p style={{
+            textAlign: 'center', marginTop: 24,
+            fontSize: 10, color: '#222', letterSpacing: 1,
+          }}>계정 문의는 담당 선생님께</p>
+        )}
       </div>
     </main>
   )
