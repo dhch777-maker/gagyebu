@@ -10,7 +10,7 @@ interface StudentRow {
 }
 
 const DEMO_STUDENTS: StudentRow[] = [
-  { id: '1', name: '김민준', accountId: 'kim_minjun@bunt.kr', artworkCount: 9 },
+  { id: '1', name: '최동해', accountId: 'choi_donghae@bunt.kr', artworkCount: 9 },
   { id: '2', name: '이서연', accountId: 'lee_seoyeon@bunt.kr', artworkCount: 6 },
   { id: '3', name: '박지호', accountId: 'park_jiho@bunt.kr', artworkCount: 4 },
 ]
@@ -88,7 +88,7 @@ export default function AdminDashboard() {
               textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif',
             }}>등록</button>
             <button type="button" onClick={() => setShowAddForm(false)} style={{
-              background: 'none', color: '#444', border: '1px solid #222',
+              background: 'none', color: '#999', border: '1px solid #444',
               padding: '8px 20px', fontSize: 10, letterSpacing: 2,
               textTransform: 'uppercase', cursor: 'pointer', fontFamily: 'Georgia, serif',
             }}>취소</button>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
               }}>👤</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, color: '#e0d4c0', letterSpacing: 1 }}>{student.name}</div>
-                <div style={{ fontSize: 10, color: '#2a2a2a', letterSpacing: 1, marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: '#888', letterSpacing: 1, marginTop: 2 }}>
                   {student.artworkCount}점 · {student.accountId}
                 </div>
               </div>

@@ -16,7 +16,7 @@ const DEMO_ARTWORKS: Artwork[] = [
 
 export default async function GalleryPage() {
   let artworks: Artwork[] = DEMO_ARTWORKS
-  let studentName = '김민준'
+  let studentName = '최동해'
 
   try {
     if (
@@ -55,13 +55,13 @@ export default async function GalleryPage() {
       <NavBar />
       <main style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
         <div style={{ marginBottom: 28, paddingBottom: 16, borderBottom: '1px solid #1e1e1e' }}>
-          <p style={{ fontSize: 10, letterSpacing: 3, color: '#333', textTransform: 'uppercase', marginBottom: 6 }}>
+          <p style={{ fontSize: 10, letterSpacing: 3, color: '#888', textTransform: 'uppercase', marginBottom: 6 }}>
             Welcome · 학부모님
           </p>
           <h1 style={{ fontSize: 24, color: '#e0d4c0', letterSpacing: 2 }}>
             <span style={{ color: '#d4a853' }}>{studentName}</span> 작품 갤러리
           </h1>
-          <p style={{ fontSize: 10, color: '#2a2a2a', letterSpacing: 1, marginTop: 4 }}>
+          <p style={{ fontSize: 10, color: '#888', letterSpacing: 1, marginTop: 4 }}>
             총 {artworks.length}점
           </p>
         </div>

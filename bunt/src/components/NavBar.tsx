@@ -36,7 +36,7 @@ export default function NavBar({ isAdmin }: Props) {
         )}
         <button onClick={handleLogout} style={{
           background: 'none', border: 'none',
-          fontSize: 9, letterSpacing: 2, color: '#333',
+          fontSize: 9, letterSpacing: 2, color: '#888',
           textTransform: 'uppercase', cursor: 'pointer',
           fontFamily: 'Georgia, serif',
         }}>로그아웃</button>

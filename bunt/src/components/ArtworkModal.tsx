@@ -88,9 +88,9 @@ export default function ArtworkModal({ artworks, initialIndex, onClose }: Props)
           <h2 style={{ fontSize: 18, color: '#d4a853', letterSpacing: 3, marginBottom: 4 }}>
             {artwork.title}
           </h2>
-          <p style={{ fontSize: 10, color: '#333', letterSpacing: 1 }}>{dateStr}</p>
+          <p style={{ fontSize: 10, color: '#888', letterSpacing: 1 }}>{dateStr}</p>
           <div style={{ width: 30, height: 1, background: '#d4a85340', margin: '12px 0' }} />
-          <p style={{ fontSize: 10, color: '#2a2a2a', letterSpacing: 1 }}>
+          <p style={{ fontSize: 10, color: '#888', letterSpacing: 1 }}>
             {index + 1} / {artworks.length}
           </p>
         </div>

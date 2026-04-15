@@ -60,7 +60,7 @@ export default function LoginPage() {
           <p style={{
             fontSize: 11,
             letterSpacing: 3,
-            color: '#333',
+            color: '#888',
             textTransform: 'uppercase',
             marginTop: 6,
           }}>Kunstschule Magok · 마곡원</p>
@@ -147,7 +147,7 @@ export default function LoginPage() {
         ) : (
           <p style={{
             textAlign: 'center', marginTop: 24,
-            fontSize: 10, color: '#222', letterSpacing: 1,
+            fontSize: 10, color: '#666', letterSpacing: 1,
           }}>계정 문의는 담당 선생님께</p>
         )}
       </div>
