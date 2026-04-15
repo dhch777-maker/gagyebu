@@ -1,3 +1,5 @@
+document.addEventListener("DOMContentLoaded", function() {
+
 var dropzone = document.getElementById("dropzone");
 var fileInput = document.getElementById("fileInput");
 var selectBtn = document.getElementById("selectBtn");
@@ -112,3 +114,5 @@ confirmBtn.addEventListener("click", function() {
     confirmBtn.hidden = true;
     retryBtn.textContent = "새 사진 올리기";
 });
+
+}); // end DOMContentLoaded
