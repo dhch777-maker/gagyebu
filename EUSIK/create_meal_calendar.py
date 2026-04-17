@@ -7,7 +7,7 @@ import calendar
 # === 설정 ===
 BABY_BIRTH_DATE = date(2025, 10, 17)
 MEAL_START_DATE = date(2026, 4, 20)  # 월요일
-OUTPUT_FILE = "EUSIK/초기_이유식_캘린더.xlsx"
+OUTPUT_FILE = "EUSIK/초기_이유식_캘린더_v2.xlsx"
 
 # === 28일 식단 데이터 ===
 meal_plan = {
@@ -152,50 +152,83 @@ for year, month in months:
     ws.row_dimensions[row_cursor].height = 22
     row_cursor += 1
 
-    # 달력 본체
+    # 달력 본체 (각 주 = 날짜 행 + 내용 행)
     cal = calendar.monthcalendar(year, month)
+
+    DATE_ROW_FILL = PatternFill(start_color="F5E6D3", end_color="F5E6D3", fill_type="solid")
+    DATE_ROW_WEEKEND = PatternFill(start_color="F0D5C0", end_color="F0D5C0", fill_type="solid")
+    DATE_BORDER = Border(
+        left=Side(style="thin", color="D5D5D5"),
+        right=Side(style="thin", color="D5D5D5"),
+        top=Side(style="thin", color="D5D5D5"),
+        bottom=Side(style="hair", color="D5D5D5"),
+    )
+    CONTENT_BORDER = Border(
+        left=Side(style="thin", color="D5D5D5"),
+        right=Side(style="thin", color="D5D5D5"),
+        top=Side(style="hair", color="D5D5D5"),
+        bottom=Side(style="thin", color="D5D5D5"),
+    )
 
     for week_idx, week in enumerate(cal):
         week_fill = WEEK_COLORS[week_idx % len(WEEK_COLORS)]
+        date_row = row_cursor
+        content_row = row_cursor + 1
 
         for col_idx, day in enumerate(week):
-            cell = ws.cell(row=row_cursor, column=col_idx + 1)
-            cell.border = THIN_BORDER
-            cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
+            d_cell = ws.cell(row=date_row, column=col_idx + 1)
+            c_cell = ws.cell(row=content_row, column=col_idx + 1)
+
+            d_cell.border = DATE_BORDER
+            c_cell.border = CONTENT_BORDER
+            d_cell.alignment = Alignment(horizontal="left", vertical="center")
+            c_cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
             if day == 0:
-                cell.fill = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
+                empty_fill = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
+                d_cell.fill = empty_fill
+                c_cell.fill = empty_fill
                 continue
 
             current_date = date(year, month, day)
             d_plus = (current_date - BABY_BIRTH_DATE).days
             meal_day = (current_date - MEAL_START_DATE).days + 1
 
-            # 주말 배경
-            if col_idx >= 5:  # 토, 일
-                cell.fill = WEEKEND_FILL
+            is_weekend = col_idx >= 5
+
+            # 날짜 행: 배경색 구분
+            if is_weekend:
+                d_cell.fill = DATE_ROW_WEEKEND
+                c_cell.fill = WEEKEND_FILL
             else:
-                cell.fill = week_fill
+                d_cell.fill = DATE_ROW_FILL
+                c_cell.fill = week_fill
 
             if 1 <= meal_day <= 28:
+                # 날짜 행
+                d_cell.value = f"{day}일  D+{d_plus}  [{meal_day}일차]"
+                d_cell.font = Font(name="맑은 고딕", size=9, bold=True, color="333333")
+
+                # 내용 행
                 meal = meal_plan[meal_day]
-                lines = [f"{day}일  D+{d_plus}  [{meal_day}일차]"]
-                lines.append("")
+                lines = []
                 if meal["밥"]:
                     lines.append(f"🍚 {meal['밥'].replace(chr(10), ' ')}")
                 if meal["고기류"]:
                     lines.append(f"🥩 {meal['고기류'].replace(chr(10), ' ')}")
                 if meal["반찬"]:
                     lines.append(f"🥬 {meal['반찬'].replace(chr(10), ' ')}")
-
-                cell.value = "\n".join(lines)
-                cell.font = Font(name="맑은 고딕", size=8, color="333333")
+                c_cell.value = "\n".join(lines)
+                c_cell.font = Font(name="맑은 고딕", size=8, color="333333")
             else:
-                cell.value = f"{day}일  D+{d_plus}"
-                cell.font = Font(name="맑은 고딕", size=9, color="AAAAAA")
+                # 이유식 기간 외 날짜
+                d_cell.value = f"{day}일  D+{d_plus}"
+                d_cell.font = Font(name="맑은 고딕", size=9, color="AAAAAA")
+                c_cell.value = ""
 
-        ws.row_dimensions[row_cursor].height = 100
-        row_cursor += 1
+        ws.row_dimensions[date_row].height = 22
+        ws.row_dimensions[content_row].height = 80
+        row_cursor += 2
 
     # 월 사이 간격
     ws.row_dimensions[row_cursor].height = 15
