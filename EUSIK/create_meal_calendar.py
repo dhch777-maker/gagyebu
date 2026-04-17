@@ -5,9 +5,9 @@ from datetime import date, timedelta
 import calendar
 
 # === 설정 ===
-BABY_BIRTH_DATE = date(2025, 10, 17)
-MEAL_START_DATE = date(2026, 4, 20)  # 월요일
-OUTPUT_FILE = "EUSIK/초기_이유식_캘린더_v2.xlsx"
+BABY_BIRTH_DATE = date(2025, 10, 28)
+MEAL_START_DATE = date(2026, 4, 19)  # 일요일
+OUTPUT_FILE = "EUSIK/초기_이유식_캘린더_v3.xlsx"
 
 # === 28일 식단 데이터 ===
 meal_plan = {
