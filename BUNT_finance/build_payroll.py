@@ -8,7 +8,7 @@ import os
 from datetime import datetime, timedelta
 from pyxlsb import open_workbook as open_xlsb
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, numbers
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.formatting.rule import CellIsRule
@@ -18,13 +18,21 @@ XLSB_PATH = os.path.join(os.path.dirname(__file__), "분트 재무제표(25.12�
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "분트_인건비관리.xlsx")
 SHEET_NAME = "2. 인건비 계산"
 
+# 직원 마스터 (원본 데이터 기준 입사월/퇴사월 반영)
+# pay_type/amount는 현재 기준 (급여 요약에서는 근무기록 원본값 우선 사용)
 EMPLOYEES = [
-    {"name": "고경민", "pay_type": "월급", "amount": 1200000, "account": "국민은행 82240104164295", "status": "재직"},
-    {"name": "장예원", "pay_type": "시급", "amount": 12000, "account": "카카오뱅크 3333-07-7072641", "status": "퇴직"},
-    {"name": "유은비", "pay_type": "시급", "amount": 12000, "account": "우리 1002-533-898534", "status": "퇴직"},
-    {"name": "전민아", "pay_type": "시급", "amount": 12000, "account": "하나은행 558-910330-30707", "status": "재직"},
-    {"name": "김채현", "pay_type": "시급", "amount": 12000, "account": "우리은행 1002-351-542250", "status": "재직"},
-    {"name": "이진화", "pay_type": "시급", "amount": 12000, "account": "우리은행 1002-166-678383", "status": "재직"},
+    {"name": "고경민", "pay_type": "월급", "amount": 1300000, "account": "국민은행 82240104164295",
+     "status": "재직", "start_month": 202502, "end_month": None},
+    {"name": "장예원", "pay_type": "시급", "amount": 12000, "account": "카카오뱅크 3333-07-7072641",
+     "status": "퇴직", "start_month": 202502, "end_month": 202507},
+    {"name": "유은비", "pay_type": "시급", "amount": 12000, "account": "우리 1002-533-898534",
+     "status": "퇴직", "start_month": 202502, "end_month": 202503},
+    {"name": "전민아", "pay_type": "시급", "amount": 12000, "account": "하나은행 558-910330-30707",
+     "status": "재직", "start_month": 202503, "end_month": None},
+    {"name": "김채현", "pay_type": "시급", "amount": 12000, "account": "우리은행 1002-351-542250",
+     "status": "퇴직", "start_month": 202507, "end_month": 202510},
+    {"name": "이진화", "pay_type": "시급", "amount": 12000, "account": "우리은행 1002-166-678383",
+     "status": "재직", "start_month": 202511, "end_month": None},
 ]
 
 EXCEL_EPOCH = datetime(1899, 12, 30)
@@ -72,10 +80,10 @@ def extract_data():
                 continue
 
             dt = excel_serial_to_date(serial)
-            start_time = row[3].v  # D column
-            end_time = row[4].v    # E column
-            hours = row[5].v       # F column
-            daily_pay = row[6].v   # G column
+            start_time = row[3].v
+            end_time = row[4].v
+            hours = row[5].v
+            daily_pay = row[6].v
 
             records.append({
                 "date": dt,
@@ -115,8 +123,8 @@ def build_master_sheet(wb):
     ws.title = "직원 마스터"
     ws.sheet_properties.tabColor = "4472C4"
 
-    headers = ["이름", "급여유형", "금액", "입금계좌", "재직상태", "입사일", "비고"]
-    col_widths = [12, 12, 15, 30, 12, 14, 20]
+    headers = ["이름", "급여유형", "금액", "입금계좌", "재직상태", "입사월", "퇴사월", "비고"]
+    col_widths = [12, 12, 15, 30, 12, 12, 12, 20]
 
     for i, h in enumerate(headers, 1):
         ws.cell(row=1, column=i, value=h)
@@ -131,6 +139,10 @@ def build_master_sheet(wb):
         ws.cell(row=r, column=3, value=emp["amount"])
         ws.cell(row=r, column=4, value=emp["account"])
         ws.cell(row=r, column=5, value=emp["status"])
+        ws.cell(row=r, column=6, value=emp["start_month"])
+        ws.cell(row=r, column=6).number_format = "0"
+        ws.cell(row=r, column=7, value=emp["end_month"])
+        ws.cell(row=r, column=7).number_format = "0"
         for c in range(1, len(headers) + 1):
             apply_cell_style(ws.cell(row=r, column=c), fill=YELLOW_FILL)
         ws.cell(row=r, column=3).number_format = MONEY_FMT
@@ -149,7 +161,10 @@ def build_master_sheet(wb):
 
 
 def build_records_sheet(wb, records):
-    """Sheet 2: 근무 기록"""
+    """Sheet 2: 근무 기록
+    마이그레이션 데이터: 일 급여를 원본 값 그대로 저장 (수식 X)
+    신규 입력 행: 수식으로 자동 계산
+    """
     ws = wb.create_sheet("근무 기록")
     ws.sheet_properties.tabColor = "70AD47"
 
@@ -163,12 +178,9 @@ def build_records_sheet(wb, records):
     for i, w in enumerate(col_widths, 1):
         ws.column_dimensions[get_column_letter(i)].width = w
 
-    # Input columns: A(날짜), B(근무자), C(시작시간), D(종료시간), H(비고) → yellow
-    # Formula columns: E(근무시간), F(일 급여), G(급여유형) → gray
     INPUT_COLS = {1, 2, 3, 4, 8}
-    FORMULA_COLS = {5, 6, 7}
 
-    # Write extracted data
+    # Write extracted data — 원본 값 그대로 저장
     for idx, rec in enumerate(records):
         r = idx + 2
         ws.cell(row=r, column=1, value=rec["date"])
@@ -176,49 +188,44 @@ def build_records_sheet(wb, records):
         ws.cell(row=r, column=2, value=rec["worker"])
 
         if rec["start"] is not None:
-            # Store as decimal hours (e.g. 14.5 = 14:30)
-            # Convert to Excel time fraction for display
-            h_start = float(rec["start"])
-            ws.cell(row=r, column=3, value=h_start / 24)
+            ws.cell(row=r, column=3, value=float(rec["start"]) / 24)
             ws.cell(row=r, column=3).number_format = "H:MM"
         if rec["end"] is not None:
-            h_end = float(rec["end"])
-            ws.cell(row=r, column=4, value=h_end / 24)
+            ws.cell(row=r, column=4, value=float(rec["end"]) / 24)
             ws.cell(row=r, column=4).number_format = "H:MM"
 
-        # Formula: 근무시간
+        # 근무시간: 수식
         ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},0)'
         ws.cell(row=r, column=5).number_format = "0.0"
-        # Formula: 일 급여
-        ws.cell(row=r, column=6).value = (
-            f'=IF(G{r}="시급",E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),0)'
-        )
+
+        # 일 급여: 원본 값 그대로 (수식 아님!)
+        ws.cell(row=r, column=6, value=int(rec["daily_pay"]) if rec["daily_pay"] else 0)
         ws.cell(row=r, column=6).number_format = MONEY_FMT
-        # Formula: 급여유형
+
+        # 급여유형: 수식
         ws.cell(row=r, column=7).value = (
             f'=IF(B{r}<>"",VLOOKUP(B{r},\'직원 마스터\'!A:B,2,FALSE),"")'
         )
 
-        # Styling
         for c in range(1, len(headers) + 1):
             cell = ws.cell(row=r, column=c)
-            if c in INPUT_COLS:
+            if c in INPUT_COLS or c == 6:  # 일 급여도 마이그레이션 데이터는 입력값
                 apply_cell_style(cell, fill=YELLOW_FILL)
             else:
                 apply_cell_style(cell, fill=GRAY_FILL)
 
-    # Add 50 empty rows with formulas
+    # 빈 행 50개 (신규 입력용 — 수식으로 자동 계산)
     last_data_row = len(records) + 1
     for i in range(50):
         r = last_data_row + 1 + i
         ws.cell(row=r, column=1).number_format = "YYYY-MM-DD"
-        if r > 1:
-            ws.cell(row=r, column=3).number_format = "H:MM"
-            ws.cell(row=r, column=4).number_format = "H:MM"
+        ws.cell(row=r, column=3).number_format = "H:MM"
+        ws.cell(row=r, column=4).number_format = "H:MM"
         ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},0)'
         ws.cell(row=r, column=5).number_format = "0.0"
+        # 신규 행만 수식으로 일 급여 계산
         ws.cell(row=r, column=6).value = (
-            f'=IF(G{r}="시급",E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),0)'
+            f'=IF(AND(B{r}<>"",G{r}="시급"),E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),0)'
         )
         ws.cell(row=r, column=6).number_format = MONEY_FMT
         ws.cell(row=r, column=7).value = (
@@ -231,34 +238,35 @@ def build_records_sheet(wb, records):
             else:
                 apply_cell_style(cell, fill=GRAY_FILL)
 
-    # Worker dropdown from master sheet names
+    # Worker dropdown
     emp_names = ",".join(e["name"] for e in EMPLOYEES)
     dv_worker = DataValidation(type="list", formula1=f'"{emp_names}"', allow_blank=True)
     ws.add_data_validation(dv_worker)
     total_rows = last_data_row + 50
     dv_worker.add(f"B2:B{total_rows}")
 
-    # Auto-filter
     ws.auto_filter.ref = f"A1:H{total_rows}"
-
     return ws
 
 
 def build_summary_sheet(wb):
-    """Sheet 3: 급여 요약"""
+    """Sheet 3: 급여 요약
+    - 선택한 월에 재직 중이던 직원만 표시 (입사월~퇴사월 범위)
+    - 총 급여 = 근무기록 일 급여 합산 (>0이면), 없으면 월급제 고정액
+    """
     ws = wb.create_sheet("급여 요약")
     ws.sheet_properties.tabColor = "ED7D31"
 
-    # Column widths
     widths = {1: 4, 2: 14, 3: 12, 4: 14, 5: 16, 6: 16, 7: 14, 8: 28, 9: 12, 10: 14}
     for c, w in widths.items():
         ws.column_dimensions[get_column_letter(c)].width = w
 
-    # B1: Month selector
-    ws.cell(row=1, column=2, value=202501)
+    # B1: 월 선택
+    ws.cell(row=1, column=2, value=202502)
     ws.cell(row=1, column=2).font = Font(bold=True, size=14)
     ws.cell(row=1, column=2).number_format = "0"
     ws.cell(row=1, column=2).alignment = Alignment(horizontal="center")
+    apply_cell_style(ws.cell(row=1, column=2), fill=YELLOW_FILL)
 
     months_list = ",".join(str(m) for m in range(202501, 202513))
     dv_month = DataValidation(type="list", formula1=f'"{months_list}"', allow_blank=False)
@@ -268,8 +276,7 @@ def build_summary_sheet(wb):
     ws.cell(row=1, column=3, value="← 월 선택")
     ws.cell(row=1, column=3).font = Font(color="888888", italic=True)
 
-    # Hidden J column: helper dates
-    # J1 = start of month, J2 = end of month
+    # Hidden J column: 날짜 계산 보조
     ws.cell(row=1, column=10, value='=DATE(INT(B1/100),MOD(B1,100),1)')
     ws.cell(row=1, column=10).number_format = "YYYY-MM-DD"
     ws.cell(row=2, column=10, value='=EOMONTH(J1,0)')
@@ -280,28 +287,34 @@ def build_summary_sheet(wb):
     headers = ["", "이름", "급여유형", "총 근무시간", "총 급여(세전)", "3.3% 원천징수", "실지급액", "입금계좌", "지급여부"]
     for i, h in enumerate(headers, 1):
         if i == 1:
-            continue  # column A empty
+            continue
         ws.cell(row=3, column=i, value=h)
     apply_header_style(ws, 3, 9)
 
-    # Employee rows (rows 4+)
     num_emp = len(EMPLOYEES)
     for idx, emp in enumerate(EMPLOYEES):
         r = 4 + idx
-        master_row = idx + 2  # row in master sheet
+        mr = idx + 2  # master row
 
-        # 재직 여부 참조 (마스터 E열)
-        status_ref = f"'직원 마스터'!E{master_row}"
+        # 해당 월에 재직 중이었는지 판별:
+        # 입사월(F열) <= 선택월 AND (퇴사월(G열)이 비어있거나 >= 선택월)
+        active_check = (
+            f'AND(\'직원 마스터\'!F{mr}<>"",'
+            f'\'직원 마스터\'!F{mr}<=$B$1,'
+            f'OR(\'직원 마스터\'!G{mr}="",'
+            f'\'직원 마스터\'!G{mr}>=$B$1))'
+        )
 
-        # 이름: 재직자만 표시
-        ws.cell(row=r, column=2).value = f'=IF({status_ref}="재직",\'직원 마스터\'!A{master_row},"")'
-        # 급여유형: 재직자만 표시
-        ws.cell(row=r, column=3).value = f'=IF({status_ref}="재직",\'직원 마스터\'!B{master_row},"")'
+        name_ref = f"'직원 마스터'!A{mr}"
 
-        # 총 근무시간: 재직자만 계산
-        name_ref = f"'직원 마스터'!A{master_row}"
+        # 이름
+        ws.cell(row=r, column=2).value = f'=IF({active_check},{name_ref},"")'
+        # 급여유형
+        ws.cell(row=r, column=3).value = f'=IF({active_check},\'직원 마스터\'!B{mr},"")'
+
+        # 총 근무시간
         ws.cell(row=r, column=4).value = (
-            f'=IF({status_ref}="재직",'
+            f'=IF({active_check},'
             f'SUMPRODUCT(('
             f"'근무 기록'!B$2:B$500={name_ref})*"
             f"('근무 기록'!A$2:A$500>=J$1)*"
@@ -310,8 +323,8 @@ def build_summary_sheet(wb):
         )
         ws.cell(row=r, column=4).number_format = "0.0"
 
-        # 일 급여 합산 (근무기록 F열 합산)
-        daily_pay_sum = (
+        # 일 급여 합산 (근무기록 F열)
+        daily_sum = (
             f'SUMPRODUCT(('
             f"'근무 기록'!B$2:B$500={name_ref})*"
             f"('근무 기록'!A$2:A$500>=J$1)*"
@@ -319,47 +332,46 @@ def build_summary_sheet(wb):
             f"('근무 기록'!F$2:F$500))"
         )
 
-        # 총 급여(세전): 근무기록 일급여 합산 > 0이면 합산값, 아니면 월급제 고정액
+        # 총 급여: 일급여 합산 > 0이면 합산, 아니면 월급제 고정액
         ws.cell(row=r, column=5).value = (
-            f'=IF({status_ref}<>"재직","",'
-            f"IF({daily_pay_sum}>0,{daily_pay_sum},"
-            f"IF(C{r}=\"월급\",'직원 마스터'!C{master_row},0)))"
+            f'=IF(B{r}="","",'
+            f"IF({daily_sum}>0,{daily_sum},"
+            f"IF(C{r}=\"월급\",'직원 마스터'!C{mr},0)))"
         )
         ws.cell(row=r, column=5).number_format = MONEY_FMT
 
-        # 3.3% 원천징수: 재직자만
+        # 3.3% 원천징수
         ws.cell(row=r, column=6).value = f'=IF(E{r}="","",ROUND(E{r}*0.033,0))'
         ws.cell(row=r, column=6).number_format = MONEY_FMT
 
-        # 실지급액: 재직자만
+        # 실지급액
         ws.cell(row=r, column=7).value = f'=IF(E{r}="","",E{r}-F{r})'
         ws.cell(row=r, column=7).number_format = MONEY_FMT
 
-        # 입금계좌: 재직자만
-        ws.cell(row=r, column=8).value = f'=IF({status_ref}="재직",\'직원 마스터\'!D{master_row},"")'
+        # 입금계좌
+        ws.cell(row=r, column=8).value = f'=IF(B{r}="","",\'직원 마스터\'!D{mr})'
 
-        # 지급여부: 재직자만 기본값
-        ws.cell(row=r, column=9).value = f'=IF({status_ref}="재직","X","")'
+        # 지급여부
+        ws.cell(row=r, column=9).value = f'=IF(B{r}="","","X")'
 
         # Styling
         for c in range(2, 10):
             cell = ws.cell(row=r, column=c)
             cell.border = THIN_BORDER
             cell.alignment = Alignment(horizontal="center", vertical="center")
-            if c in (4, 5, 6, 7):  # calculated
+            if c in (4, 5, 6, 7):
                 cell.fill = GRAY_FILL
             elif c == 9:
-                pass  # conditional formatting below
+                pass
             else:
                 cell.fill = YELLOW_FILL
 
-    # 지급여부 dropdown O/X
+    # 지급여부 드롭다운 / 조건부 서식
+    last_emp_row = 3 + num_emp
     dv_paid = DataValidation(type="list", formula1='"O,X"', allow_blank=True)
     ws.add_data_validation(dv_paid)
-    last_emp_row = 3 + num_emp
     dv_paid.add(f"I4:I{last_emp_row}")
 
-    # Conditional formatting for 지급여부
     ws.conditional_formatting.add(
         f"I4:I{last_emp_row}",
         CellIsRule(operator="equal", formula=['"O"'], fill=GREEN_FILL),
@@ -369,32 +381,28 @@ def build_summary_sheet(wb):
         CellIsRule(operator="equal", formula=['"X"'], fill=RED_FILL),
     )
 
-    # Summary rows
+    # 하단 요약
     summary_row = last_emp_row + 2
     ws.cell(row=summary_row, column=2, value="합계")
     ws.cell(row=summary_row, column=2).font = Font(bold=True, size=11)
     ws.cell(row=summary_row, column=2).alignment = Alignment(horizontal="center")
     ws.cell(row=summary_row, column=2).border = THIN_BORDER
 
-    # 총 급여 합계
     ws.cell(row=summary_row, column=5).value = f"=SUM(E4:E{last_emp_row})"
     ws.cell(row=summary_row, column=5).number_format = MONEY_FMT
     ws.cell(row=summary_row, column=5).font = Font(bold=True)
     ws.cell(row=summary_row, column=5).border = THIN_BORDER
 
-    # 원천징수 합계
     ws.cell(row=summary_row, column=6).value = f"=SUM(F4:F{last_emp_row})"
     ws.cell(row=summary_row, column=6).number_format = MONEY_FMT
     ws.cell(row=summary_row, column=6).font = Font(bold=True)
     ws.cell(row=summary_row, column=6).border = THIN_BORDER
 
-    # 실지급 합계
     ws.cell(row=summary_row, column=7).value = f"=SUM(G4:G{last_emp_row})"
     ws.cell(row=summary_row, column=7).number_format = MONEY_FMT
     ws.cell(row=summary_row, column=7).font = Font(bold=True)
     ws.cell(row=summary_row, column=7).border = THIN_BORDER
 
-    # "당월 총 인건비" label
     label_row = summary_row + 1
     ws.merge_cells(start_row=label_row, start_column=2, end_row=label_row, end_column=4)
     ws.cell(row=label_row, column=2, value="당월 총 인건비")
@@ -412,19 +420,15 @@ def build_summary_sheet(wb):
 def main():
     print("분트 인건비 관리 엑셀 생성 시작...")
 
-    # 1. Extract data
     records = extract_data()
     print(f"  → 근무 기록 {len(records)}건 추출 완료")
 
-    # Unique workers found
     workers = sorted(set(r["worker"] for r in records))
     print(f"  → 근무자: {', '.join(workers)}")
 
-    # Date range
     if records:
         print(f"  → 기간: {records[0]['date'].strftime('%Y-%m-%d')} ~ {records[-1]['date'].strftime('%Y-%m-%d')}")
 
-    # 2. Build workbook
     wb = Workbook()
 
     build_master_sheet(wb)
@@ -436,7 +440,6 @@ def main():
     build_summary_sheet(wb)
     print("  → [급여 요약] 시트 생성 완료")
 
-    # 3. Save
     wb.save(OUTPUT_PATH)
     print(f"\n[완료] 저장: {OUTPUT_PATH}")
 
