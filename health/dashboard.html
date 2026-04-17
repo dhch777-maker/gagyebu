@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>건강검진 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232733;
+    --border: #2e3344;
+    --text: #e4e6ef;
+    --text2: #8b8fa3;
+    --accent: #6c8cff;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --orange: #fb923c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* Header */
+  .header {
+    background: linear-gradient(135deg, #1e2235 0%, #141722 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2rem 1.5rem;
+  }
+  .header h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .header .subtitle { color: var(--text2); font-size: 0.9rem; }
+  .meta-cards {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .meta-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+  }
+  .meta-card .year { font-weight: 700; color: var(--accent); }
+
+  /* Layout */
+  .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(580px, 1fr));
+    gap: 1.5rem;
+  }
+
+  /* Section cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .card h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card h2 .icon { font-size: 1.2rem; }
+  .chart-wrap { position: relative; height: 280px; }
+
+  /* Data table inside card */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-top: 0.75rem;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    font-weight: 500;
+  }
+  .data-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(46,51,68,0.5);
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* Status badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  .badge-normal { background: rgba(52,211,153,0.15); color: var(--green); }
+  .badge-high   { background: rgba(248,113,113,0.15); color: var(--red); }
+  .badge-low    { background: rgba(251,191,36,0.15); color: var(--yellow); }
+  .badge-warn   { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+  /* Value display */
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid rgba(46,51,68,0.3);
+  }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-name { color: var(--text2); font-size: 0.85rem; }
+  .metric-values { display: flex; gap: 1rem; font-size: 0.85rem; }
+  .metric-val { min-width: 70px; text-align: right; }
+  .metric-val.null { color: var(--text2); font-style: italic; }
+
+  /* Trend arrows */
+  .trend-up   { color: var(--red); }
+  .trend-down { color: var(--green); }
+  .trend-flat { color: var(--text2); }
+
+  /* Full-width sections */
+  .full-width { grid-column: 1 / -1; }
+
+  /* Flags table */
+  .flags-section { margin-top: 0.5rem; }
+  .flag-year {
+    font-weight: 600;
+    color: var(--accent);
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+    margin-top: 0.75rem;
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+    .header { padding: 1.5rem 1rem 1rem; }
+    .container { padding: 1rem; }
+    .chart-wrap { height: 220px; }
+  }
+
+  /* Nav */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,23,0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1.5rem;
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+  .nav a {
+    color: var(--text2);
+    text-decoration: none;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .nav a:hover {
+    background: var(--surface2);
+    color: var(--text);
+  }
+</style>
+</head>
+<body>
+
+<script>
+const TRENDS = {
+  "years": [
+    2024,
+    2025
+  ],
+  "meta": [
+    {
+      "year": 2024,
+      "date": "2024-07-17",
+      "institution": "한국의료재단 IFC",
+      "age": 31
+    },
+    {
+      "year": 2025,
+      "date": "2025-06-20",
+      "institution": "한신메디피아",
+      "age": 33
+    }
+  ],
+  "sections": {
+    "basic": {
+      "title": "신체계측",
+      "metrics": [
+        {
+          "label": "체중",
+          "unit": "kg",
+          "ref": null,
+          "values": [
+            75.8,
+            76.0
+          ],
+          "statuses": [
+            null,
+            null
+          ]
+        },
+        {
+          "label": "BMI",
+          "unit": "kg/m²",
+          "ref": "18.5-24.9",
+          "values": [
+            null,
+            24.8
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "허리둘레",
+          "unit": "cm",
+          "ref": "남<90",
+          "values": [
+            80,
+            null
+          ],
+          "statuses": [
+            "정상",
+            null
+          ]
+        },
+        {
+          "label": "수축기 혈압",
+          "unit": "mmHg",
+          "ref": "<120",
+          "values": [
+            108,
+            117
+          ],
+          "statuses": [
+            "정상",
+            "정상"
+          ]
+        },
+        {
+          "label": "이완기 혈압",
+          "unit": "mmHg",
+          "ref": "<80",
+          "values": [
+            79,
+            76
+          ],
+          "statuses": [
+            "정상",
+            "정상"
+          ]
+        }
+      ]
+    },
+    "body_composition": {
+      "title": "체성분 (InBody)",
+      "metrics": [
+        {
+          "label": "체지방률",
+          "unit": "%",
+          "ref": "10-20(남)",
+          "values": [
+            null,
+            26.2
+          ],
+          "statuses": [
+            null,
+            null
+          ]
+        },
+        {
+          "label": "골격근량",
+          "unit": "kg",
+          "ref": null,
+          "values": [
+            null,
+            31.9
+          ],
+          "statuses": [
+            null,
+            null
+          ]
+        },
+        {
+          "label": "내장지방",
+          "unit": "레벨",
+          "ref": "1-9",
+          "values": [
+            null,
+            7
+          ],
+          "statuses": [
+            null,
+            null
+          ]
+        },
+        {
+          "label": "InBody 점수",
+          "unit": "점",
+          "ref": null,
+          "values": [
+            null,
+            69
+          ],
+          "statuses": [
+            null,
+            null
+          ]
+        },
+        {
+          "label": "기초대사량",
+          "unit": "kcal",
+          "ref": null,
+          "values": [
+            null,
+            1582
+          ],
+          "statuses": [
+            null,
+            null
+          ]
+        }
+      ]
+    },
+    "lipid": {
+      "title": "지질 검사",
+      "metrics": [
+        {
+          "label": "총콜레스테롤",
+          "unit": "mg/dL",
+          "ref": "<200",
+          "values": [
+            216,
+            236
+          ],
+          "statuses": [
+            "높음",
+            "높음"
+          ]
+        },
+        {
+          "label": "HDL",
+          "unit": "mg/dL",
+          "ref": "≥60",
+          "values": [
+            null,
+            61
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "LDL",
+          "unit": "mg/dL",
+          "ref": "<130",
+          "values": [
+            140,
+            163
+          ],
+          "statuses": [
+            "높음",
+            "높음"
+          ]
+        },
+        {
+          "label": "중성지방",
+          "unit": "mg/dL",
+          "ref": "<150",
+          "values": [
+            null,
+            92
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        }
+      ]
+    },
+    "liver": {
+      "title": "간기능",
+      "metrics": [
+        {
+          "label": "AST (SGOT)",
+          "unit": "U/L",
+          "ref": "0-40",
+          "values": [
+            null,
+            26
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "ALT (SGPT)",
+          "unit": "U/L",
+          "ref": "0-41",
+          "values": [
+            null,
+            49
+          ],
+          "statuses": [
+            null,
+            "높음"
+          ]
+        },
+        {
+          "label": "GGT",
+          "unit": "U/L",
+          "ref": "11-63",
+          "values": [
+            null,
+            73
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "ALP",
+          "unit": "U/L",
+          "ref": "40-129",
+          "values": [
+            null,
+            25
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "LDH",
+          "unit": "U/L",
+          "ref": "0-250",
+          "values": [
+            null,
+            256
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        }
+      ]
+    },
+    "kidney": {
+      "title": "신장기능",
+      "metrics": [
+        {
+          "label": "BUN",
+          "unit": "mg/dL",
+          "ref": "6-20",
+          "values": [
+            null,
+            19.3
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "크레아티닌",
+          "unit": "mg/dL",
+          "ref": "0.6-1.2",
+          "values": [
+            0.9,
+            1.11
+          ],
+          "statuses": [
+            "정상",
+            "정상"
+          ]
+        },
+        {
+          "label": "eGFR",
+          "unit": "mL/min",
+          "ref": "≥90",
+          "values": [
+            null,
+            87
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "요산",
+          "unit": "mg/dL",
+          "ref": "3.4-7.0",
+          "values": [
+            null,
+            5.8
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        }
+      ]
+    },
+    "diabetes": {
+      "title": "당뇨",
+      "metrics": [
+        {
+          "label": "공복혈당",
+          "unit": "mg/dL",
+          "ref": "<100",
+          "values": [
+            97,
+            89
+          ],
+          "statuses": [
+            "정상",
+            "정상"
+          ]
+        },
+        {
+          "label": "HbA1c",
+          "unit": "%",
+          "ref": "<5.7",
+          "values": [
+            null,
+            5.1
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        }
+      ]
+    },
+    "inflammation": {
+      "title": "염증",
+      "metrics": [
+        {
+          "label": "hs-CRP",
+          "unit": "mg/L",
+          "ref": "<3.0",
+          "values": [
+            null,
+            7.8
+          ],
+          "statuses": [
+            null,
+            "높음"
+          ]
+        }
+      ]
+    },
+    "cbc": {
+      "title": "일반혈액 (CBC)",
+      "metrics": [
+        {
+          "label": "WBC",
+          "unit": "10³/μL",
+          "ref": "4.0-10.0",
+          "values": [
+            null,
+            5.07
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "헤모글로빈",
+          "unit": "g/dL",
+          "ref": "13.0-17.0",
+          "values": [
+            null,
+            15.8
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "헤마토크릿",
+          "unit": "%",
+          "ref": "39-52",
+          "values": [
+            null,
+            46
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        },
+        {
+          "label": "혈소판",
+          "unit": "10³/μL",
+          "ref": "150-400",
+          "values": [
+            null,
+            226
+          ],
+          "statuses": [
+            null,
+            "정상"
+          ]
+        }
+      ]
+    }
+  },
+  "imaging": [
+    {
+      "year": 2024,
+      "items": [
+        {
+          "name": "chest_xray",
+          "status": "정상",
+          "finding": "비활동성 폐결핵 또는 정상"
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "items": [
+        {
+          "name": "chest_xray",
+          "status": "정상",
+          "finding": "특이사항 없음"
+        },
+        {
+          "name": "chest_ct",
+          "status": "정상",
+          "finding": "양측 폐실질과 늑막 특이사항 없음"
+        },
+        {
+          "name": "abdominal_us",
+          "status": "주의",
+          "finding": "경도 지방간 (Mild fatty liver), 담낭 용종/담석 의심 5mm → 추적검사 권고"
+        },
+        {
+          "name": "thyroid_us",
+          "status": "정상",
+          "finding": "특이소견 없음"
+        },
+        {
+          "name": "prostate_us",
+          "status": "정상",
+          "finding": "정상 크기, 특이소견 없음"
+        },
+        {
+          "name": "gastroscopy",
+          "status": "주의",
+          "finding": "위염 관찰"
+        }
+      ]
+    }
+  ],
+  "flags": [
+    {
+      "year": 2024,
+      "flags": [
+        {
+          "category": "blood",
+          "item": "total_cholesterol",
+          "value": 216,
+          "status": "높음",
+          "action": "이상지질혈증 관리 필요"
+        },
+        {
+          "category": "blood",
+          "item": "ldl",
+          "value": 140,
+          "status": "높음",
+          "action": "LDL 130 미만 목표"
+        },
+        {
+          "category": "lifestyle",
+          "item": "exercise",
+          "value": "주 2회",
+          "status": "부족",
+          "action": "주 5회 이상 유산소+근력 권고"
+        }
+      ]
+    },
+    {
+      "year": 2025,
+      "flags": [
+        {
+          "category": "blood",
+          "item": "sgpt_alt",
+          "value": 49,
+          "status": "높음",
+          "action": "3개월 내 재검, 금주·금연 권고"
+        },
+        {
+          "category": "blood",
+          "item": "total_cholesterol",
+          "value": 236,
+          "status": "높음",
+          "action": "1개월 생활습관 개선 후 재검, 약물치료 검토"
+        },
+        {
+          "category": "blood",
+          "item": "ldl",
+          "value": 163,
+          "status": "높음",
+          "action": "생활습관 개선, 약물치료 검토"
+        },
+        {
+          "category": "blood",
+          "item": "hs_crp",
+          "value": 7.8,
+          "status": "높음",
+          "action": "내과 진료 및 정밀검사"
+        },
+        {
+          "category": "blood",
+          "item": "neutrophil",
+          "value": 73,
+          "status": "높음",
+          "action": "1개월 내 재검, 지속 시 전문의 상담"
+        },
+        {
+          "category": "imaging",
+          "item": "abdominal_us",
+          "value": null,
+          "status": "주의",
+          "action": "경도 지방간 관리, 담낭 5mm 용종/담석 추적검사"
+        },
+        {
+          "category": "endoscopy",
+          "item": "gastroscopy",
+          "value": null,
+          "status": "주의",
+          "action": "위염 - 증상 시 진료, 1-2년 정기검진"
+        },
+        {
+          "category": "genetics",
+          "item": "myocardial_infarction",
+          "value": 3.47,
+          "status": "높음",
+          "action": "심근경색 유전적 고위험 - 유산소 운동, 금연, 저지방 식단"
+        },
+        {
+          "category": "genetics",
+          "item": "atrial_fibrillation",
+          "value": 2.8,
+          "status": "높음",
+          "action": "심방세동 유전적 고위험 - 금주, 금연, 스트레스 관리"
+        }
+      ]
+    }
+  ],
+  "special": [
+    {
+      "year": 2024,
+      "items": {
+        "cardiovascular_risk": {
+          "ten_year_risk": "0.5%",
+          "cv_age": 28,
+          "actual_age": 31,
+          "note": "10년 내 심뇌혈관질환 발생 위험 0.5%, 심뇌혈관 나이 28세"
+        }
+      }
+    },
+    {
+      "year": 2025,
+      "items": {
+        "ecg": {
+          "status": "정상",
+          "finding": "특이소견 없음"
+        },
+        "bone_density": {
+          "value": 0.1,
+          "status": "정상"
+        },
+        "arterial_stiffness": {
+          "status": "정상",
+          "finding": "동맥 경화·협착 없음, 10년 내 심혈관 위험도 낮음"
+        },
+        "nk_cell_activity": {
+          "value": ">2000",
+          "unit": "pg/mL",
+          "status": "정상"
+        },
+        "metabolic_age": {
+          "actual_age": 32.7,
+          "metabolic_age_diff": {
+            "abdominal": -2.8,
+            "blood_pressure": -0.2,
+            "blood_sugar": -0.6,
+            "arterial": 5.0
+          },
+          "metabolic_syndrome": "정상 (해당항목 0개)"
+        },
+        "health_type": {
+          "type": "BMH",
+          "name": "건강튼튼형",
+          "grade": "A (90점)",
+          "recommended_next_checkup": "2026-06-20",
+          "recommended_tests": [
+            "위내시경",
+            "갑상선 초음파",
+            "복부 초음파"
+          ]
+        },
+        "foot_analysis": {
+          "left_arch": "정상",
+          "right_arch": "정상",
+          "balance": "비대칭",
+          "hallux_valgus_left": "정상",
+          "hallux_valgus_right": "정상"
+        }
+      }
+    }
+  ],
+  "genetics": [
+    {
+      "year": 2025,
+      "data": {
+        "cardiovascular_5": {
+          "provider": "제노플랜코리아",
+          "report_date": "2025-06-26",
+          "items": {
+            "myocardial_infarction": {
+              "risk_ratio": 3.47,
+              "level": "높아요"
+            },
+            "atrial_fibrillation": {
+              "risk_ratio": 2.8,
+              "level": "높은 편"
+            },
+            "parkinsons": {
+              "risk_ratio": 1.22,
+              "level": "높은 편"
+            },
+            "stroke": {
+              "risk_ratio": 0.92,
+              "level": "낮은 편"
+            },
+            "alzheimers": {
+              "risk_ratio": 0.54,
+              "level": "낮은 편"
+            }
+          }
+        },
+        "cancer_5_male": {
+          "provider": "랩지노믹스 GenoPAC",
+          "report_date": "2025-06-27",
+          "items": {
+            "colorectal": {
+              "risk_ratio": 1.55,
+              "level": "주의"
+            },
+            "lung": {
+              "risk_ratio": 1.41,
+              "level": "주의"
+            },
+            "prostate": {
+              "risk_ratio": 1.37,
+              "level": "주의"
+            },
+            "liver": {
+              "risk_ratio": 1.03,
+              "level": "관심"
+            },
+            "pancreatic": {
+              "risk_ratio": 0.79,
+              "level": "관심"
+            }
+          }
+        }
+      }
+    }
+  ]
+};
+</script>
+
+<div class="header">
+  <h1>Health Dashboard</h1>
+  <p class="subtitle" id="subtitle"></p>
+  <div class="meta-cards" id="meta-cards"></div>
+</div>
+
+<nav class="nav" id="nav"></nav>
+
+<div class="container">
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+// ─── Helpers ────────────────────────────────────────────────
+const SECTION_ICONS = {
+  basic: '📏', body_composition: '🏋️', lipid: '🩸', liver: '🫁',
+  kidney: '💧', diabetes: '🍬', inflammation: '🔥', cbc: '🔬',
+};
+
+function statusBadge(status) {
+  if (!status) return '';
+  const cls = {
+    '정상': 'badge-normal', '높음': 'badge-high', '낮음': 'badge-low',
+    '주의': 'badge-warn', '부족': 'badge-warn', '비대상': 'badge-normal',
+  }[status] || 'badge-warn';
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function fmtVal(v) {
+  if (v === null || v === undefined) return '<span class="null">-</span>';
+  return String(v);
+}
+
+function trendArrow(values) {
+  const nums = values.filter(v => v !== null && v !== undefined);
+  if (nums.length < 2) return '';
+  const diff = nums[nums.length - 1] - nums[nums.length - 2];
+  if (Math.abs(diff) < 0.01) return '<span class="trend-flat">→</span>';
+  return diff > 0
+    ? `<span class="trend-up">↑${Math.abs(diff).toFixed(1)}</span>`
+    : `<span class="trend-down">↓${Math.abs(diff).toFixed(1)}</span>`;
+}
+
+const CHART_COLORS = [
+  '#6c8cff', '#34d399', '#fbbf24', '#f87171', '#a78bfa',
+  '#fb923c', '#38bdf8', '#f472b6',
+];
+
+function parseRef(ref) {
+  if (!ref) return null;
+  // "<200" or "≥60"
+  let m = ref.match(/^[<≤]\s*([\d.]+)$/);
+  if (m) return { max: parseFloat(m[1]) };
+  m = ref.match(/^[>≥]\s*([\d.]+)$/);
+  if (m) return { min: parseFloat(m[1]) };
+  // "0.6-1.2" or "18.5-24.9"
+  m = ref.match(/^([\d.]+)\s*[-~]\s*([\d.]+)$/);
+  if (m) return { min: parseFloat(m[1]), max: parseFloat(m[2]) };
+  return null;
+}
+
+// ─── Render meta ────────────────────────────────────────────
+function renderMeta() {
+  const sub = TRENDS.meta.map(m => `${m.year}년`).join(' → ') + ' 추이';
+  document.getElementById('subtitle').textContent = sub;
+
+  const cards = TRENDS.meta.map(m => `
+    <div class="meta-card">
+      <span class="year">${m.year}</span>
+      ${m.date || ''} · ${m.institution || ''} · ${m.age || ''}세
+    </div>
+  `).join('');
+  document.getElementById('meta-cards').innerHTML = cards;
+}
+
+// ─── Render chart sections ──────────────────────────────────
+function createChart(canvas, metrics, years) {
+  const datasets = metrics
+    .filter(m => m.values.some(v => v !== null))
+    .map((m, i) => ({
+      label: `${m.label} (${m.unit})`,
+      data: m.values,
+      borderColor: CHART_COLORS[i % CHART_COLORS.length],
+      backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '22',
+      borderWidth: 2.5,
+      pointRadius: 5,
+      pointHoverRadius: 7,
+      tension: 0.3,
+      spanGaps: true,
+    }));
+
+  // Reference line annotations
+  const annotations = [];
+  metrics.forEach((m, i) => {
+    const parsed = parseRef(m.ref);
+    if (!parsed) return;
+    const color = CHART_COLORS[i % CHART_COLORS.length];
+    if (parsed.max !== undefined) {
+      annotations.push({
+        type: 'line', yMin: parsed.max, yMax: parsed.max,
+        borderColor: color + '55', borderWidth: 1, borderDash: [4, 4],
+        label: { display: false },
+      });
+    }
+    if (parsed.min !== undefined) {
+      annotations.push({
+        type: 'line', yMin: parsed.min, yMax: parsed.min,
+        borderColor: color + '55', borderWidth: 1, borderDash: [4, 4],
+        label: { display: false },
+      });
+    }
+  });
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: years.map(String),
+      datasets,
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: { color: '#8b8fa3', font: { size: 11 }, usePointStyle: true, pointStyle: 'circle' },
+        },
+        tooltip: {
+          backgroundColor: '#232733',
+          titleColor: '#e4e6ef',
+          bodyColor: '#e4e6ef',
+          borderColor: '#2e3344',
+          borderWidth: 1,
+          padding: 10,
+        },
+        annotation: annotations.length > 0 ? { annotations } : undefined,
+      },
+      scales: {
+        x: {
+          ticks: { color: '#8b8fa3' },
+          grid: { color: 'rgba(46,51,68,0.5)' },
+        },
+        y: {
+          ticks: { color: '#8b8fa3' },
+          grid: { color: 'rgba(46,51,68,0.5)' },
+        },
+      },
+    },
+  });
+}
+
+function renderChartSections() {
+  const grid = document.getElementById('grid');
+  const nav = document.getElementById('nav');
+  const sections = TRENDS.sections;
+
+  for (const [key, section] of Object.entries(sections)) {
+    const hasData = section.metrics.some(m => m.values.some(v => v !== null));
+    if (!hasData) continue;
+
+    const id = `section-${key}`;
+    const icon = SECTION_ICONS[key] || '📊';
+
+    // Nav link
+    nav.innerHTML += `<a href="#${id}">${icon} ${section.title}</a>`;
+
+    // Metric table rows
+    const tableRows = section.metrics.map(m => {
+      const cells = TRENDS.years.map((y, i) => {
+        const v = fmtVal(m.values[i]);
+        const badge = statusBadge(m.statuses[i]);
+        return `<td>${v} ${badge}</td>`;
+      }).join('');
+      return `<tr>
+        <td>${m.label} <span style="color:var(--text2);font-size:0.75rem">${m.unit}</span></td>
+        ${cells}
+        <td>${trendArrow(m.values)}</td>
+        <td style="color:var(--text2);font-size:0.75rem">${m.ref || '-'}</td>
+      </tr>`;
+    }).join('');
+
+    const yearHeaders = TRENDS.years.map(y => `<th>${y}</th>`).join('');
+
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = id;
+    card.innerHTML = `
+      <h2><span class="icon">${icon}</span>${section.title}</h2>
+      <div class="chart-wrap"><canvas id="chart-${key}"></canvas></div>
+      <table class="data-table">
+        <thead><tr><th>항목</th>${yearHeaders}<th>변동</th><th>참고치</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    `;
+    grid.appendChild(card);
+
+    const canvas = card.querySelector(`#chart-${key}`);
+    createChart(canvas, section.metrics, TRENDS.years);
+  }
+}
+
+// ─── Imaging / Endoscopy table ──────────────────────────────
+function renderImaging() {
+  const grid = document.getElementById('grid');
+  const nav = document.getElementById('nav');
+
+  nav.innerHTML += `<a href="#section-imaging">🏥 영상/내시경</a>`;
+
+  const ITEM_LABELS = {
+    chest_xray: '흉부 X선', chest_ct: '흉부 CT', abdominal_us: '복부 초음파',
+    thyroid_us: '갑상선 초음파', prostate_us: '전립선 초음파',
+    gastroscopy: '위내시경', colonoscopy: '대장내시경',
+  };
+
+  let rows = '';
+  const allItems = new Set();
+  TRENDS.imaging.forEach(y => y.items.forEach(i => allItems.add(i.name)));
+
+  allItems.forEach(name => {
+    const label = ITEM_LABELS[name] || name;
+    const cells = TRENDS.imaging.map(y => {
+      const item = y.items.find(i => i.name === name);
+      if (!item) return '<td style="color:var(--text2)">-</td>';
+      return `<td>${statusBadge(item.status)} <span style="font-size:0.8rem">${item.finding || ''}</span></td>`;
+    }).join('');
+    rows += `<tr><td>${label}</td>${cells}</tr>`;
+  });
+
+  const yearHeaders = TRENDS.years.map(y => `<th>${y}</th>`).join('');
+  const card = document.createElement('div');
+  card.className = 'card full-width';
+  card.id = 'section-imaging';
+  card.innerHTML = `
+    <h2><span class="icon">🏥</span>영상/내시경 소견</h2>
+    <table class="data-table">
+      <thead><tr><th>검사</th>${yearHeaders}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  grid.appendChild(card);
+}
+
+// ─── Flags (이상항목) ───────────────────────────────────────
+function renderFlags() {
+  const grid = document.getElementById('grid');
+  const nav = document.getElementById('nav');
+
+  nav.innerHTML += `<a href="#section-flags">⚠️ 이상항목</a>`;
+
+  const CATEGORY_LABELS = {
+    blood: '혈액', imaging: '영상', endoscopy: '내시경',
+    lifestyle: '생활습관', genetics: '유전체',
+  };
+  const ITEM_LABELS = {
+    total_cholesterol: '총콜레스테롤', ldl: 'LDL', hdl: 'HDL',
+    sgpt_alt: 'ALT', sgot_ast: 'AST', hs_crp: 'hs-CRP',
+    neutrophil: '호중구', fasting_glucose: '공복혈당',
+    abdominal_us: '복부초음파', gastroscopy: '위내시경',
+    exercise: '운동', myocardial_infarction: '심근경색 위험',
+    atrial_fibrillation: '심방세동 위험',
+  };
+
+  let content = '';
+  TRENDS.flags.forEach(yf => {
+    content += `<div class="flag-year">${yf.year}년 (${yf.flags.length}건)</div>`;
+    if (yf.flags.length === 0) {
+      content += '<p style="color:var(--text2);padding:0.5rem 0;font-size:0.85rem">이상항목 없음</p>';
+      return;
+    }
+    content += '<table class="data-table"><thead><tr><th>분류</th><th>항목</th><th>수치</th><th>상태</th><th>조치</th></tr></thead><tbody>';
+    yf.flags.forEach(f => {
+      const cat = CATEGORY_LABELS[f.category] || f.category;
+      const item = ITEM_LABELS[f.item] || f.item;
+      content += `<tr>
+        <td>${cat}</td>
+        <td>${item}</td>
+        <td>${fmtVal(f.value)}</td>
+        <td>${statusBadge(f.status)}</td>
+        <td style="font-size:0.8rem;color:var(--text2)">${f.action || ''}</td>
+      </tr>`;
+    });
+    content += '</tbody></table>';
+  });
+
+  const card = document.createElement('div');
+  card.className = 'card full-width';
+  card.id = 'section-flags';
+  card.innerHTML = `
+    <h2><span class="icon">⚠️</span>이상항목 추이</h2>
+    <div class="flags-section">${content}</div>
+  `;
+  grid.appendChild(card);
+}
+
+// ─── Special tests ──────────────────────────────────────────
+function renderSpecial() {
+  const grid = document.getElementById('grid');
+  const nav = document.getElementById('nav');
+
+  nav.innerHTML += `<a href="#section-special">🧪 특수검사</a>`;
+
+  const LABELS = {
+    ecg: '심전도', bone_density: '골밀도',
+    arterial_stiffness: '동맥경화도', nk_cell_activity: 'NK세포활성도',
+  };
+
+  let rows = '';
+  const allKeys = new Set();
+  TRENDS.special.forEach(s => {
+    Object.keys(s.items).forEach(k => {
+      if (['cardiovascular_risk', 'metabolic_age', 'health_type', 'foot_analysis'].includes(k)) return;
+      allKeys.add(k);
+    });
+  });
+
+  allKeys.forEach(key => {
+    const label = LABELS[key] || key;
+    const cells = TRENDS.special.map(s => {
+      const item = s.items[key];
+      if (!item) return '<td style="color:var(--text2)">-</td>';
+      const val = item.value !== undefined ? item.value : '';
+      return `<td>${statusBadge(item.status)} ${val} <span style="font-size:0.78rem;color:var(--text2)">${item.finding || ''}</span></td>`;
+    }).join('');
+    rows += `<tr><td>${label}</td>${cells}</tr>`;
+  });
+
+  const yearHeaders = TRENDS.years.map(y => `<th>${y}</th>`).join('');
+  const card = document.createElement('div');
+  card.className = 'card full-width';
+  card.id = 'section-special';
+  card.innerHTML = `
+    <h2><span class="icon">🧪</span>특수검사</h2>
+    <table class="data-table">
+      <thead><tr><th>검사</th>${yearHeaders}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  grid.appendChild(card);
+}
+
+// ─── Genetics ───────────────────────────────────────────────
+function renderGenetics() {
+  if (!TRENDS.genetics || TRENDS.genetics.length === 0) return;
+
+  const grid = document.getElementById('grid');
+  const nav = document.getElementById('nav');
+  nav.innerHTML += `<a href="#section-genetics">🧬 유전체</a>`;
+
+  const ITEM_LABELS = {
+    myocardial_infarction: '심근경색', atrial_fibrillation: '심방세동',
+    parkinsons: '파킨슨병', stroke: '뇌졸중', alzheimers: '알츠하이머',
+    colorectal: '대장암', lung: '폐암', prostate: '전립선암',
+    liver: '간암', pancreatic: '췌장암',
+  };
+
+  let content = '';
+  TRENDS.genetics.forEach(g => {
+    for (const [catKey, cat] of Object.entries(g.data)) {
+      const title = catKey === 'cardiovascular_5' ? '심뇌혈관 5종' : catKey === 'cancer_5_male' ? '남성 암 5종' : catKey;
+      content += `<div class="flag-year">${g.year}년 · ${title} (${cat.provider})</div>`;
+      content += '<table class="data-table"><thead><tr><th>항목</th><th>위험배율</th><th>수준</th></tr></thead><tbody>';
+      for (const [itemKey, item] of Object.entries(cat.items)) {
+        const label = ITEM_LABELS[itemKey] || itemKey;
+        const levelClass = item.risk_ratio > 1.5 ? 'badge-high' : item.risk_ratio > 1.0 ? 'badge-warn' : 'badge-normal';
+        content += `<tr>
+          <td>${label}</td>
+          <td>${item.risk_ratio}x</td>
+          <td><span class="badge ${levelClass}">${item.level}</span></td>
+        </tr>`;
+      }
+      content += '</tbody></table>';
+    }
+  });
+
+  const card = document.createElement('div');
+  card.className = 'card full-width';
+  card.id = 'section-genetics';
+  card.innerHTML = `
+    <h2><span class="icon">🧬</span>유전체 검사</h2>
+    ${content}
+  `;
+  grid.appendChild(card);
+}
+
+// ─── Init ───────────────────────────────────────────────────
+renderMeta();
+renderChartSections();
+renderImaging();
+renderFlags();
+renderSpecial();
+renderGenetics();
+</script>
+
+</body>
+</html>
