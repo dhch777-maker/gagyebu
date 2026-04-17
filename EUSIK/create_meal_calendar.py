@@ -8,7 +8,7 @@ import calendar
 BABY_NAME = "동해"
 BABY_BIRTH_DATE = date(2025, 10, 28)
 MEAL_START_DATE = date(2026, 4, 19)
-OUTPUT_FILE = "EUSIK/동해_초기이유식_캘린더.xlsx"
+OUTPUT_FILE = "EUSIK/동해_초기이유식_캘린더_v2.xlsx"
 
 # === 28일 식단 데이터 ===
 meal_plan = {
@@ -90,7 +90,7 @@ HEADER_BORDER = Border(
     bottom=Side(style="medium", color=DEEP_SEA),
 )
 
-DOW_KR = ["월", "화", "수", "목", "금", "토", "일"]
+DOW_KR = ["일", "월", "화", "수", "목", "금", "토"]
 
 wb = openpyxl.Workbook()
 ws = wb.active
@@ -184,8 +184,9 @@ for year, month in months:
     ws.row_dimensions[row_cursor].height = 24
     row_cursor += 1
 
-    # 달력 본체
-    cal = calendar.monthcalendar(year, month)
+    # 달력 본체 (일요일 시작)
+    c = calendar.Calendar(firstweekday=6)
+    cal = c.monthdayscalendar(year, month)
 
     for week_idx, week in enumerate(cal):
         wave = WAVE_COLORS[week_idx % len(WAVE_COLORS)]
@@ -210,7 +211,7 @@ for year, month in months:
             current_date = date(year, month, day)
             d_plus = (current_date - BABY_BIRTH_DATE).days
             meal_day = (current_date - MEAL_START_DATE).days + 1
-            is_weekend = col_idx >= 5
+            is_weekend = col_idx == 0 or col_idx == 6  # 일(0), 토(6)
 
             if is_weekend:
                 d_cell.fill = PatternFill(start_color=DATE_ROW_WEEKEND_COLOR, end_color=DATE_ROW_WEEKEND_COLOR, fill_type="solid")
