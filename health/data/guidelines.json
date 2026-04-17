@@ -1,0 +1,335 @@
+{
+  "$schema": "health-screening-guidelines-v1",
+  "description": "의학 가이드라인 기반 건강검진 권고 룰셋. USPSTF, 국가건강검진, 한국학회, ACS 근거.",
+  "last_updated": "2025-01",
+
+  "uspstf": {
+    "description": "U.S. Preventive Services Task Force A/B 등급 권고",
+    "source": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation-topics/uspstf-a-and-b-recommendations",
+    "items": [
+      {
+        "id": "uspstf_hypertension",
+        "name": "고혈압 선별",
+        "grade": "A",
+        "min_age": 18,
+        "sex": "all",
+        "interval_years": 1,
+        "related_keys": ["basic.bp_systolic", "basic.bp_diastolic"],
+        "related_terms": ["혈압", "혈압측정", "고혈압"],
+        "note": "18세 이상 모든 성인, 매년 측정 권고"
+      },
+      {
+        "id": "uspstf_lipid_men",
+        "name": "이상지질혈증 선별 (남성)",
+        "grade": "A",
+        "min_age": 35,
+        "sex": "male",
+        "interval_years": 1,
+        "related_keys": ["blood.lipid.total_cholesterol", "blood.lipid.ldl", "blood.lipid.hdl", "blood.lipid.triglyceride"],
+        "related_terms": ["지질", "콜레스테롤", "LDL", "HDL", "중성지방", "이상지질혈증", "고지혈증"],
+        "note": "남성 35세 이상, 강한 근거(A등급)"
+      },
+      {
+        "id": "uspstf_diabetes",
+        "name": "당뇨/전당뇨 선별",
+        "grade": "B",
+        "min_age": 35,
+        "max_age": 70,
+        "sex": "all",
+        "condition": "BMI >= 25",
+        "interval_years": 3,
+        "related_keys": ["blood.diabetes.fasting_glucose", "blood.diabetes.hba1c"],
+        "related_terms": ["혈당", "공복혈당", "당화혈색소", "HbA1c", "당뇨"],
+        "note": "35-70세, BMI≥25(과체중/비만). BMI 24.8로 경계"
+      },
+      {
+        "id": "uspstf_hcv",
+        "name": "C형간염 선별",
+        "grade": "B",
+        "min_age": 18,
+        "max_age": 79,
+        "sex": "all",
+        "interval_years": null,
+        "related_keys": [],
+        "related_terms": ["C형간염", "간염", "HCV"],
+        "note": "18-79세 1회 선별 권고"
+      },
+      {
+        "id": "uspstf_hiv",
+        "name": "HIV 선별",
+        "grade": "A",
+        "min_age": 15,
+        "max_age": 65,
+        "sex": "all",
+        "interval_years": null,
+        "related_keys": [],
+        "related_terms": ["HIV", "에이즈"],
+        "note": "15-65세, 위험인자별 주기 결정"
+      },
+      {
+        "id": "uspstf_depression",
+        "name": "우울증 선별",
+        "grade": "B",
+        "min_age": 18,
+        "sex": "all",
+        "interval_years": 2,
+        "related_keys": [],
+        "related_terms": ["우울증", "정신건강", "심리검사", "우울"],
+        "note": "모든 성인, 적절한 관리 체계가 있을 때 권고"
+      },
+      {
+        "id": "uspstf_statin",
+        "name": "스타틴 사용 평가",
+        "grade": "B",
+        "min_age": 40,
+        "max_age": 75,
+        "sex": "all",
+        "condition": "CVD risk factors",
+        "interval_years": null,
+        "related_keys": ["blood.lipid.ldl", "blood.lipid.total_cholesterol"],
+        "related_terms": ["스타틴", "심혈관위험", "동맥경화"],
+        "note": "40-75세, 1개 이상 CVD 위험인자 보유 시"
+      }
+    ]
+  },
+
+  "national_checkup": {
+    "description": "대한민국 국가건강검진 항목 및 주기 (2025년 기준)",
+    "source": "https://www.nhis.or.kr/nhis/healthin/wbhaca04500m01.do",
+    "general": [
+      {
+        "id": "nk_basic",
+        "name": "기본검진 (신체계측, 혈압, 시력, 청력, 흉부X선, 혈액, 소변)",
+        "min_age": 20,
+        "sex": "all",
+        "interval_years": 2,
+        "related_keys": ["basic", "blood", "urine", "imaging.chest_xray"],
+        "related_terms": ["일반검진", "기본검진", "신체계측", "흉부X선", "흉부촬영", "소변검사", "요검사", "혈액검사", "신장기능", "간기능", "혈당검사", "혈당"]
+      },
+      {
+        "id": "nk_lipid",
+        "name": "이상지질혈증 (총콜레스테롤, HDL, LDL, 중성지방)",
+        "min_age": 24,
+        "sex": "male",
+        "interval_years": 4,
+        "related_keys": ["blood.lipid"],
+        "related_terms": ["지질검사", "콜레스테롤", "고지혈증"]
+      },
+      {
+        "id": "nk_hepb",
+        "name": "B형간염 항원/항체",
+        "target_age": 40,
+        "sex": "all",
+        "interval_years": null,
+        "related_keys": [],
+        "related_terms": ["B형간염", "간염"]
+      },
+      {
+        "id": "nk_bone",
+        "name": "골밀도검사",
+        "target_ages": [54, 66],
+        "sex": "female",
+        "interval_years": null,
+        "related_keys": ["special.bone_density"],
+        "related_terms": ["골밀도", "골다공증"]
+      },
+      {
+        "id": "nk_mental",
+        "name": "정신건강검사 (우울증)",
+        "min_age": 20,
+        "max_age": 34,
+        "sex": "all",
+        "interval_years": 2,
+        "related_keys": [],
+        "related_terms": ["정신건강", "우울증", "심리검사"],
+        "note": "2025년부터 20-34세 2년 주기로 확대"
+      },
+      {
+        "id": "nk_cognitive",
+        "name": "인지기능검사",
+        "min_age": 66,
+        "sex": "all",
+        "interval_years": 2,
+        "related_keys": [],
+        "related_terms": ["인지기능", "치매"]
+      }
+    ],
+    "cancer": [
+      {
+        "id": "nk_stomach",
+        "name": "위암 (위내시경 또는 위장조영)",
+        "min_age": 40,
+        "sex": "all",
+        "interval_years": 2,
+        "related_keys": ["endoscopy.gastroscopy"],
+        "related_terms": ["위내시경", "위암", "위장조영", "위검사"]
+      },
+      {
+        "id": "nk_liver",
+        "name": "간암 (간초음파 + AFP)",
+        "min_age": 40,
+        "sex": "all",
+        "condition": "high_risk",
+        "interval_months": 6,
+        "related_keys": ["imaging.abdominal_us"],
+        "related_terms": ["간초음파", "간암", "AFP"]
+      },
+      {
+        "id": "nk_colorectal",
+        "name": "대장암 (분변잠혈 → 대장내시경)",
+        "min_age": 50,
+        "sex": "all",
+        "interval_years": 1,
+        "related_keys": ["endoscopy.colonoscopy"],
+        "related_terms": ["대장내시경", "대장암", "분변잠혈", "대장검사"]
+      },
+      {
+        "id": "nk_lung",
+        "name": "폐암 (저선량 흉부CT)",
+        "min_age": 54,
+        "max_age": 74,
+        "sex": "all",
+        "condition": "high_risk_smoker",
+        "interval_years": 2,
+        "related_keys": ["imaging.chest_ct"],
+        "related_terms": ["폐암", "저선량CT", "흉부CT", "폐CT"]
+      }
+    ]
+  },
+
+  "korean_society": {
+    "description": "한국 전문학회 가이드라인 (이상지질혈증, 간, 당뇨 등)",
+    "items": [
+      {
+        "id": "ks_lipid_recheck",
+        "name": "이상지질혈증 재검 (한국지질·동맥경화학회)",
+        "source": "한국지질·동맥경화학회 진료지침 제5판",
+        "trigger": "LDL >= 130 또는 총콜레스테롤 >= 200",
+        "recheck_months": 3,
+        "related_keys": ["blood.lipid.ldl", "blood.lipid.total_cholesterol"],
+        "related_terms": ["지질재검", "콜레스테롤", "LDL"],
+        "note": "생활습관 개선 1-3개월 후 재검, 지속 시 약물치료 검토"
+      },
+      {
+        "id": "ks_liver_recheck",
+        "name": "간기능 이상 재검",
+        "trigger": "ALT > 40 또는 AST > 40",
+        "recheck_months": 3,
+        "related_keys": ["blood.liver.sgpt_alt", "blood.liver.sgot_ast", "blood.liver.gamma_gtp"],
+        "related_terms": ["간기능", "ALT", "AST", "간수치"],
+        "note": "ALT/AST 상승 시 3개월 내 재검, 금주 권고"
+      },
+      {
+        "id": "ks_fatty_liver",
+        "name": "지방간 추적 (대한간학회 2024)",
+        "source": "대한간학회 대사이상지방간질환 진료 가이드라인 2024",
+        "trigger": "지방간 소견",
+        "recheck_months": 6,
+        "related_keys": ["imaging.abdominal_us"],
+        "related_terms": ["지방간", "복부초음파", "간초음파"],
+        "note": "경도 지방간 → 6-12개월 추적, 체중감량 7-10% 목표"
+      },
+      {
+        "id": "ks_gallbladder_polyp",
+        "name": "담낭 용종 추적",
+        "trigger": "담낭 용종 발견",
+        "recheck_months": 6,
+        "related_keys": ["imaging.abdominal_us"],
+        "related_terms": ["담낭", "용종", "복부초음파", "담석"],
+        "note": "5mm 이하 6-12개월, 10mm 이상 수술 고려"
+      },
+      {
+        "id": "ks_gastritis",
+        "name": "위염 추적검사",
+        "trigger": "위내시경 위염 소견",
+        "recheck_months": 12,
+        "related_keys": ["endoscopy.gastroscopy"],
+        "related_terms": ["위내시경", "위염"],
+        "note": "위염 소견 시 1-2년 주기 정기검진"
+      },
+      {
+        "id": "ks_crp_recheck",
+        "name": "염증 수치 재검",
+        "trigger": "hs-CRP >= 3.0",
+        "recheck_months": 1,
+        "related_keys": ["blood.inflammation.hs_crp"],
+        "related_terms": ["CRP", "염증", "혈액검사"],
+        "note": "hs-CRP 3.0 이상 시 내과 진료 및 재검"
+      }
+    ]
+  },
+
+  "acs": {
+    "description": "American Cancer Society 암 선별검사 권고",
+    "source": "https://www.cancer.org/cancer/screening/american-cancer-society-guidelines-for-the-early-detection-of-cancer.html",
+    "items": [
+      {
+        "id": "acs_colorectal",
+        "name": "대장암 선별 (ACS)",
+        "min_age": 45,
+        "sex": "all",
+        "interval_years": null,
+        "related_keys": ["endoscopy.colonoscopy"],
+        "related_terms": ["대장내시경", "대장암"],
+        "note": "45세+ 평균위험군, 대장내시경 10년 또는 분변검사 매년"
+      },
+      {
+        "id": "acs_lung",
+        "name": "폐암 선별 (ACS)",
+        "min_age": 50,
+        "max_age": 80,
+        "sex": "all",
+        "condition": "heavy_smoker",
+        "interval_years": 1,
+        "related_keys": ["imaging.chest_ct"],
+        "related_terms": ["폐암", "저선량CT", "흉부CT"],
+        "note": "50-80세 고위험(흡연력), 매년 LDCT"
+      },
+      {
+        "id": "acs_prostate",
+        "name": "전립선암 선별 (ACS)",
+        "min_age": 50,
+        "sex": "male",
+        "interval_years": null,
+        "related_keys": ["imaging.prostate_us"],
+        "related_terms": ["전립선", "PSA", "전립선초음파"],
+        "note": "50세+ 남성 (고위험군은 40-45세), 의사와 상의 후 결정"
+      }
+    ]
+  },
+
+  "term_aliases": {
+    "description": "병원 검진 메뉴에서 사용하는 다양한 표현 → 정규화된 키워드 매핑",
+    "mappings": {
+      "위내시경": ["위내시경", "위장내시경", "상부내시경", "수면위내시경", "수면내시경", "위검사", "식도위십이지장내시경", "EGD", "gastroscopy"],
+      "대장내시경": ["대장내시경", "하부내시경", "수면대장내시경", "대장검사", "colonoscopy"],
+      "복부초음파": ["복부초음파", "복부 초음파", "상복부초음파", "간초음파", "간담췌초음파", "간담도초음파", "abdominal US"],
+      "흉부CT": ["흉부CT", "흉부 CT", "저선량CT", "저선량 흉부CT", "폐CT", "LDCT", "chest CT"],
+      "흉부X선": ["흉부X선", "흉부X-ray", "흉부촬영", "흉부 방사선", "chest X-ray"],
+      "갑상선초음파": ["갑상선초음파", "갑상선 초음파", "thyroid US"],
+      "심장초음파": ["심장초음파", "심초음파", "심장 초음파", "echocardiography"],
+      "심전도": ["심전도", "ECG", "EKG", "electrocardiogram"],
+      "골밀도": ["골밀도", "골밀도검사", "DEXA", "DXA", "bone density"],
+      "지질검사": ["지질검사", "지질", "콜레스테롤", "콜레스테롤검사", "고지혈증검사", "lipid panel"],
+      "간기능검사": ["간기능", "간기능검사", "간수치", "AST", "ALT", "GGT", "liver function"],
+      "신장기능검사": ["신장기능", "신장기능검사", "크레아티닌", "BUN", "신기능", "kidney function"],
+      "혈당검사": ["혈당", "혈당검사", "공복혈당", "당화혈색소", "HbA1c", "당뇨검사", "glucose"],
+      "혈액검사": ["혈액검사", "일반혈액", "CBC", "종합혈액", "blood test"],
+      "소변검사": ["소변검사", "요검사", "뇨검사", "urinalysis"],
+      "전립선초음파": ["전립선초음파", "전립선 초음파", "prostate US"],
+      "유전체검사": ["유전체", "유전자", "유전체검사", "DNA", "genetics"],
+      "NK세포": ["NK세포", "NK세포활성도", "자연살해세포", "NK cell"],
+      "동맥경화도": ["동맥경화도", "동맥경화", "동맥경직도", "PWV", "ABI", "arterial stiffness"],
+      "인바디": ["인바디", "InBody", "체성분", "체성분검사", "체성분분석", "body composition"],
+      "혈압": ["혈압", "혈압측정", "blood pressure"],
+      "정신건강": ["정신건강", "우울증", "심리검사", "정신건강검사", "mental health"],
+      "HIV": ["HIV", "에이즈", "HIV검사"],
+      "간염검사": ["간염", "B형간염", "C형간염", "HBV", "HCV", "hepatitis"],
+      "종양표지자": ["종양표지자", "암표지자", "CEA", "AFP", "CA19-9", "PSA", "tumor marker"],
+      "경동맥초음파": ["경동맥", "경동맥초음파", "carotid US"],
+      "눈검사": ["안과", "안저", "안저검사", "안압", "눈검사", "시력", "eye exam"],
+      "청력검사": ["청력", "청력검사", "hearing test"],
+      "구강검진": ["구강", "구강검진", "치과", "dental"]
+    }
+  }
+}
