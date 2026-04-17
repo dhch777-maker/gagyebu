@@ -187,11 +187,11 @@ def build_records_sheet(wb, records):
             ws.cell(row=r, column=4).number_format = "H:MM"
 
         # Formula: 근무시간
-        ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},"")'
+        ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},0)'
         ws.cell(row=r, column=5).number_format = "0.0"
         # Formula: 일 급여
         ws.cell(row=r, column=6).value = (
-            f'=IF(G{r}="시급",E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),"")'
+            f'=IF(G{r}="시급",E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),0)'
         )
         ws.cell(row=r, column=6).number_format = MONEY_FMT
         # Formula: 급여유형
@@ -215,10 +215,10 @@ def build_records_sheet(wb, records):
         if r > 1:
             ws.cell(row=r, column=3).number_format = "H:MM"
             ws.cell(row=r, column=4).number_format = "H:MM"
-        ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},"")'
+        ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},0)'
         ws.cell(row=r, column=5).number_format = "0.0"
         ws.cell(row=r, column=6).value = (
-            f'=IF(G{r}="시급",E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),"")'
+            f'=IF(G{r}="시급",E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),0)'
         )
         ws.cell(row=r, column=6).number_format = MONEY_FMT
         ws.cell(row=r, column=7).value = (
