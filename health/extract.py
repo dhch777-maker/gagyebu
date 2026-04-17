@@ -2,26 +2,23 @@
 
 PDF에서 텍스트를 추출합니다.
 - 텍스트 기반 PDF: PyMuPDF로 직접 추출
-- 이미지 기반 PDF (스캔): PyMuPDF → 이미지 변환 → Tesseract OCR
+- 이미지 기반 PDF (스캔): PyMuPDF → 이미지 변환 → OpenCV 전처리 → EasyOCR
 """
 import sys
 import os
 import json
+import numpy as np
+import cv2
 import fitz  # PyMuPDF
-import pytesseract
-from PIL import Image, ImageFilter, ImageEnhance
-from io import BytesIO
+import easyocr
 
-# Windows Tesseract 경로 설정
-TESSERACT_PATH = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-if os.path.exists(TESSERACT_PATH):
-    pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+# EasyOCR 인스턴스 (한국어+영어, GPU 미사용)
+reader = easyocr.Reader(["ko", "en"], gpu=False)
 
 
 def is_text_based_page(page):
     """페이지에 추출 가능한 텍스트가 있는지 확인"""
     text = page.get_text().strip()
-    # 의미 있는 텍스트가 10자 이상이면 텍스트 기반으로 판단
     return len(text) > 10
 
 
@@ -30,31 +27,51 @@ def extract_text_from_page(page):
     return page.get_text()
 
 
-def preprocess_image(img):
-    """OCR 정확도 향상을 위한 이미지 전처리"""
+def preprocess_image(img_array):
+    """OCR 정확도 향상을 위한 OpenCV 전처리
+
+    1. CLAHE 대비 강화 (적응형 히스토그램 균등화)
+    2. 가우시안 블러 (노이즈 제거)
+    3. 언샤프 마스크 (선명도 강화)
+    """
     # 그레이스케일 변환
-    img = img.convert("L")
-    # 대비 강화
-    img = ImageEnhance.Contrast(img).enhance(2.0)
-    # 샤프닝
-    img = img.filter(ImageFilter.SHARPEN)
-    # 이진화 (Otsu 방식 근사)
-    img = img.point(lambda x: 0 if x < 140 else 255, "1")
-    return img
+    if len(img_array.shape) == 3:
+        gray = cv2.cvtColor(img_array, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = img_array
+
+    # CLAHE 대비 강화
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(gray)
+
+    # 가우시안 블러로 노이즈 제거
+    blurred = cv2.GaussianBlur(enhanced, (3, 3), 0)
+
+    # 언샤프 마스크로 선명도 강화
+    sharpened = cv2.addWeighted(enhanced, 1.5, blurred, -0.5, 0)
+
+    return sharpened
 
 
 def extract_text_via_ocr(page, dpi=300):
-    """페이지를 이미지로 렌더링 후 Tesseract OCR로 텍스트 추출"""
+    """페이지를 이미지로 렌더링 후 EasyOCR로 텍스트 추출"""
     mat = fitz.Matrix(dpi / 72, dpi / 72)
     pix = page.get_pixmap(matrix=mat)
-    img_data = pix.tobytes("png")
-    img = Image.open(BytesIO(img_data))
-    img = preprocess_image(img)
-    text = pytesseract.image_to_string(
-        img, lang="kor+eng",
-        config="--psm 6"  # 균일한 블록 텍스트로 인식
-    )
-    return text
+
+    # PyMuPDF pixmap → numpy array
+    img_array = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
+    if pix.n == 4:  # RGBA → BGR
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_RGBA2BGR)
+    elif pix.n == 1:  # grayscale → BGR
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_GRAY2BGR)
+
+    # OpenCV 전처리
+    preprocessed = preprocess_image(img_array)
+
+    # EasyOCR 실행
+    results = reader.readtext(preprocessed, detail=0, paragraph=True)
+
+    return "\n".join(results)
 
 
 def extract_pdf(pdf_path):
@@ -89,7 +106,6 @@ def extract_pdf(pdf_path):
                 "content": text
             })
 
-        # 진행률 표시
         progress = (i + 1) / total_pages * 100
         print(f"\r  [{progress:5.1f}%] 페이지 {i+1}/{total_pages} ({method})", end="", flush=True)
 
@@ -116,7 +132,6 @@ def save_result(result, output_path):
 def main():
     health_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # 인자가 있으면 해당 파일만, 없으면 폴더 내 모든 PDF
     if len(sys.argv) > 1:
         pdf_files = [sys.argv[1]]
     else:
@@ -130,7 +145,7 @@ def main():
         print("PDF 파일이 없습니다.")
         return
 
-    data_dir = os.path.join(health_dir, "data")
+    data_dir = os.path.join(health_dir, "data", "raw")
     os.makedirs(data_dir, exist_ok=True)
 
     for pdf_path in pdf_files:
@@ -141,7 +156,6 @@ def main():
         print("=" * 60)
         result = extract_pdf(pdf_path)
 
-        # JSON 저장 (파일명 기반)
         base_name = os.path.splitext(os.path.basename(pdf_path))[0]
         output_path = os.path.join(data_dir, f"{base_name}.json")
         save_result(result, output_path)
