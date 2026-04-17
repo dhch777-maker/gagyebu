@@ -1,0 +1,205 @@
+{
+  "year": 2025,
+  "date": "2025-06-20",
+  "institution": "한신메디피아",
+  "age": 33,
+  "sex": "남",
+
+  "basic": {
+    "height":       { "value": 174.9, "unit": "cm" },
+    "weight":       { "value": 76.0,  "unit": "kg" },
+    "bmi":          { "value": 24.8,  "unit": "kg/m²", "status": "정상", "ref": "18.5-24.9" },
+    "waist":        { "value": null,  "unit": "cm",    "note": "PDF 내 수치 미확인" },
+    "bp_systolic":  { "value": 117,   "unit": "mmHg",  "status": "정상" },
+    "bp_diastolic": { "value": 76,    "unit": "mmHg",  "status": "정상" },
+    "vision_left":  { "value": 1.2,   "note": "교정" },
+    "vision_right": { "value": 1.5,   "note": "교정" },
+    "hearing_left":  { "status": "정상" },
+    "hearing_right": { "status": "정상" }
+  },
+
+  "body_composition": {
+    "body_fat_pct":       { "value": 26.2, "unit": "%",    "note": "InBody" },
+    "skeletal_muscle":    { "value": 31.9, "unit": "kg" },
+    "body_water":         { "value": 41.1, "unit": "L",    "ref": "37.8-46.2" },
+    "protein":            { "value": null, "unit": "kg" },
+    "mineral":            { "value": null, "unit": "kg" },
+    "body_fat_mass":      { "value": null, "unit": "kg" },
+    "visceral_fat_level": { "value": 7,    "ref": "1-9" },
+    "waist_hip_ratio":    { "value": 0.90, "ref": "0.80-0.90" },
+    "bmr":                { "value": 1582, "unit": "kcal", "ref": "1626-1905" },
+    "inbody_score":       { "value": 69,   "unit": "점/100" },
+    "bone_mineral":       { "value": 3.08, "unit": "kg",   "ref": "2.88-3.52" },
+    "obesity_pct":        { "value": 113,  "unit": "%",    "ref": "90-110" },
+    "ecw_ratio":          { "value": 0.368 },
+    "ideal_weight":       { "value": 67.3, "unit": "kg" },
+    "weight_control":     { "value": -8.7, "unit": "kg" },
+    "fat_control":        { "value": -9.8, "unit": "kg" },
+    "muscle_control":     { "value": 1.1,  "unit": "kg" }
+  },
+
+  "blood": {
+    "cbc": {
+      "wbc":         { "value": 5.07,  "unit": "10³/μL", "status": "정상" },
+      "rbc":         { "value": null,   "unit": "10⁶/μL" },
+      "hemoglobin":  { "value": 15.8,  "unit": "g/dL",   "status": "정상" },
+      "hematocrit":  { "value": 46,    "unit": "%",      "status": "정상" },
+      "mcv":         { "value": 91,    "unit": "fL",     "status": "정상" },
+      "mch":         { "value": 31,    "unit": "pg",     "status": "정상" },
+      "mchc":        { "value": 34,    "unit": "g/dL",   "status": "정상" },
+      "rdw":         { "value": 12.1,  "unit": "%",      "status": "정상" },
+      "platelet":    { "value": 226,   "unit": "10³/μL", "status": "정상" },
+      "neutrophil":  { "value": 73,    "unit": "%",      "status": "높음", "ref": "40-70" },
+      "lymphocyte":  { "value": 22,    "unit": "%",      "status": "정상" },
+      "monocyte":    { "value": 4,     "unit": "%",      "status": "정상" },
+      "eosinophil":  { "value": 1,     "unit": "%",      "status": "정상" },
+      "basophil":    { "value": 0,     "unit": "%",      "status": "정상" }
+    },
+    "liver": {
+      "total_protein":   { "value": 7.3,  "unit": "g/dL",  "status": "정상" },
+      "albumin":         { "value": 4.6,  "unit": "g/dL",  "status": "정상" },
+      "globulin":        { "value": 2.7,  "unit": "g/dL",  "status": "정상" },
+      "ag_ratio":        { "value": 1.7,  "status": "정상" },
+      "total_bilirubin": { "value": 0.8,  "unit": "mg/dL", "status": "정상" },
+      "direct_bilirubin":{ "value": 0.2,  "unit": "mg/dL", "status": "정상" },
+      "sgot_ast":        { "value": 26,   "unit": "U/L",   "status": "정상", "ref": "0-40" },
+      "sgpt_alt":        { "value": 49,   "unit": "U/L",   "status": "높음", "ref": "0-41" },
+      "alp":             { "value": 25,   "unit": "U/L",   "status": "정상" },
+      "gamma_gtp":       { "value": 73,   "unit": "U/L",   "status": "정상" },
+      "ldh":             { "value": 256,  "unit": "U/L",   "status": "정상" }
+    },
+    "lipid": {
+      "total_cholesterol": { "value": 236, "unit": "mg/dL", "status": "높음", "ref": "<200" },
+      "hdl":               { "value": 61,  "unit": "mg/dL", "status": "정상", "ref": "≥60" },
+      "ldl":               { "value": 163, "unit": "mg/dL", "status": "높음", "ref": "<130" },
+      "triglyceride":      { "value": 92,  "unit": "mg/dL", "status": "정상", "ref": "<150" }
+    },
+    "kidney": {
+      "bun":        { "value": 19.3, "unit": "mg/dL", "status": "정상" },
+      "creatinine": { "value": 1.11, "unit": "mg/dL", "status": "정상" },
+      "egfr":       { "value": 87,   "unit": "mL/min", "status": "정상" },
+      "uric_acid":  { "value": 5.8,  "unit": "mg/dL", "status": "정상" }
+    },
+    "diabetes": {
+      "fasting_glucose": { "value": 89, "unit": "mg/dL", "status": "정상", "ref": "<100" },
+      "hba1c":           { "value": 5.1, "unit": "%",    "status": "정상", "ref": "<5.7" }
+    },
+    "inflammation": {
+      "hs_crp":       { "value": 7.8,  "unit": "mg/L",  "status": "높음", "ref": "<3.0" },
+      "esr":          { "value": null,  "unit": "mm/hr" }
+    },
+    "cardiac": {
+      "soluble_st2":  { "value": 15.9, "unit": "ng/mL", "status": "정상", "ref": "남 0-49.6" },
+      "ck":           { "value": 384,  "unit": "U/L",   "status": "정상" }
+    },
+    "thyroid": {
+      "tsh":    { "value": null, "unit": "μIU/mL" },
+      "free_t4":{ "value": null, "unit": "ng/dL" }
+    },
+    "tumor_markers": {
+      "status": "정상",
+      "note": "모든 종양표지자 임상참고치 범위 내"
+    },
+    "electrolyte": {
+      "calcium":   { "value": null, "unit": "mg/dL" },
+      "phosphorus":{ "value": null, "unit": "mg/dL" }
+    },
+    "iron": {
+      "iron":      { "value": 116, "unit": "μg/dL", "status": "정상" },
+      "ferritin":  { "value": null, "unit": "ng/mL" }
+    }
+  },
+
+  "urine": {
+    "ph":         { "value": 6.0,   "status": "정상" },
+    "protein":    { "value": "음성", "status": "정상" },
+    "glucose":    { "value": "음성", "status": "정상" },
+    "blood":      { "value": "음성", "status": "정상" },
+    "bilirubin":  { "value": "약양성(±)", "status": "정상" },
+    "ketone":     { "value": "음성", "status": "정상" },
+    "nitrite":    { "value": "음성", "status": "정상" },
+    "wbc":        { "value": "음성", "status": "정상" },
+    "rbc":        { "value": "0-2",  "status": "정상" },
+    "specific_gravity": { "value": 1.026, "status": "정상" }
+  },
+
+  "imaging": {
+    "chest_xray":      { "status": "정상", "finding": "특이사항 없음" },
+    "chest_ct":        { "status": "정상", "finding": "양측 폐실질과 늑막 특이사항 없음" },
+    "abdominal_us":    { "status": "주의", "finding": "경도 지방간 (Mild fatty liver), 담낭 용종/담석 의심 5mm → 추적검사 권고" },
+    "thyroid_us":      { "status": "정상", "finding": "특이소견 없음" },
+    "prostate_us":     { "status": "정상", "finding": "정상 크기, 특이소견 없음" }
+  },
+
+  "endoscopy": {
+    "gastroscopy": { "status": "주의", "finding": "위염 관찰" }
+  },
+
+  "special": {
+    "ecg":              { "status": "정상", "finding": "특이소견 없음" },
+    "bone_density":     { "value": 0.1, "status": "정상" },
+    "arterial_stiffness": { "status": "정상", "finding": "동맥 경화·협착 없음, 10년 내 심혈관 위험도 낮음" },
+    "nk_cell_activity": { "value": ">2000", "unit": "pg/mL", "status": "정상" },
+    "metabolic_age": {
+      "actual_age": 32.7,
+      "metabolic_age_diff": {
+        "abdominal":   -2.8,
+        "blood_pressure": -0.2,
+        "blood_sugar": -0.6,
+        "arterial":     5.0
+      },
+      "metabolic_syndrome": "정상 (해당항목 0개)"
+    },
+    "health_type": {
+      "type": "BMH",
+      "name": "건강튼튼형",
+      "grade": "A (90점)",
+      "recommended_next_checkup": "2026-06-20",
+      "recommended_tests": ["위내시경", "갑상선 초음파", "복부 초음파"]
+    },
+    "foot_analysis": {
+      "left_arch":  "정상",
+      "right_arch": "정상",
+      "balance":    "비대칭",
+      "hallux_valgus_left":  "정상",
+      "hallux_valgus_right": "정상"
+    }
+  },
+
+  "genetics": {
+    "cardiovascular_5": {
+      "provider": "제노플랜코리아",
+      "report_date": "2025-06-26",
+      "items": {
+        "myocardial_infarction": { "risk_ratio": 3.47, "level": "높아요" },
+        "atrial_fibrillation":   { "risk_ratio": 2.80, "level": "높은 편" },
+        "parkinsons":            { "risk_ratio": 1.22, "level": "높은 편" },
+        "stroke":                { "risk_ratio": 0.92, "level": "낮은 편" },
+        "alzheimers":            { "risk_ratio": 0.54, "level": "낮은 편" }
+      }
+    },
+    "cancer_5_male": {
+      "provider": "랩지노믹스 GenoPAC",
+      "report_date": "2025-06-27",
+      "items": {
+        "colorectal":  { "risk_ratio": 1.55, "level": "주의" },
+        "lung":        { "risk_ratio": 1.41, "level": "주의" },
+        "prostate":    { "risk_ratio": 1.37, "level": "주의" },
+        "liver":       { "risk_ratio": 1.03, "level": "관심" },
+        "pancreatic":  { "risk_ratio": 0.79, "level": "관심" }
+      }
+    }
+  },
+
+  "flags": [
+    { "category": "blood",    "item": "sgpt_alt",          "value": 49,   "status": "높음", "action": "3개월 내 재검, 금주·금연 권고" },
+    { "category": "blood",    "item": "total_cholesterol",  "value": 236,  "status": "높음", "action": "1개월 생활습관 개선 후 재검, 약물치료 검토" },
+    { "category": "blood",    "item": "ldl",                "value": 163,  "status": "높음", "action": "생활습관 개선, 약물치료 검토" },
+    { "category": "blood",    "item": "hs_crp",             "value": 7.8,  "status": "높음", "action": "내과 진료 및 정밀검사" },
+    { "category": "blood",    "item": "neutrophil",         "value": 73,   "status": "높음", "action": "1개월 내 재검, 지속 시 전문의 상담" },
+    { "category": "imaging",  "item": "abdominal_us",       "value": null, "status": "주의", "action": "경도 지방간 관리, 담낭 5mm 용종/담석 추적검사" },
+    { "category": "endoscopy","item": "gastroscopy",        "value": null, "status": "주의", "action": "위염 - 증상 시 진료, 1-2년 정기검진" },
+    { "category": "genetics", "item": "myocardial_infarction","value": 3.47,"status": "높음","action": "심근경색 유전적 고위험 - 유산소 운동, 금연, 저지방 식단" },
+    { "category": "genetics", "item": "atrial_fibrillation", "value": 2.80,"status": "높음", "action": "심방세동 유전적 고위험 - 금주, 금연, 스트레스 관리" }
+  ]
+}

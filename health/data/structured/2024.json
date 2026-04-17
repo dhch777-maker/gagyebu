@@ -1,0 +1,67 @@
+{
+  "year": 2024,
+  "date": "2024-07-17",
+  "institution": "한국의료재단 IFC",
+  "age": 31,
+  "sex": "남",
+  "_note": "OCR 추출 데이터로 일부 수치 부정확할 수 있음. 원본 PDF 대조 필요",
+
+  "basic": {
+    "height":       { "value": null,  "unit": "cm",   "note": "OCR 미확인" },
+    "weight":       { "value": 75.8,  "unit": "kg" },
+    "bmi":          { "value": null,  "unit": "kg/m²", "note": "비만/목부비만 판정 있음" },
+    "waist":        { "value": 80,    "unit": "cm",    "status": "정상", "note": "남 90 미만 기준 정상" },
+    "bp_systolic":  { "value": 108,   "unit": "mmHg",  "status": "정상" },
+    "bp_diastolic": { "value": 79,    "unit": "mmHg",  "status": "정상" },
+    "vision_left":  { "status": "정상" },
+    "vision_right": { "status": "정상" },
+    "hearing_left":  { "status": "정상" },
+    "hearing_right": { "status": "정상" }
+  },
+
+  "blood": {
+    "lipid": {
+      "total_cholesterol": { "value": 216, "unit": "mg/dL", "status": "높음", "ref": "<200", "note": "심뇌혈관 위험평가표 기준" },
+      "hdl":               { "value": null, "unit": "mg/dL", "note": "OCR 판독 불가" },
+      "ldl":               { "value": 140, "unit": "mg/dL", "status": "높음", "ref": "<130" },
+      "triglyceride":      { "value": null, "unit": "mg/dL", "note": "OCR 판독 불가" }
+    },
+    "kidney": {
+      "creatinine":  { "value": 0.9, "unit": "mg/dL", "status": "정상", "ref": "0.6-1.2" }
+    },
+    "diabetes": {
+      "fasting_glucose": { "value": 97, "unit": "mg/dL", "status": "정상", "ref": "<100" }
+    }
+  },
+
+  "imaging": {
+    "chest_xray": { "status": "정상", "finding": "비활동성 폐결핵 또는 정상" }
+  },
+
+  "special": {
+    "cardiovascular_risk": {
+      "ten_year_risk": "0.5%",
+      "cv_age": 28,
+      "actual_age": 31,
+      "note": "10년 내 심뇌혈관질환 발생 위험 0.5%, 심뇌혈관 나이 28세"
+    }
+  },
+
+  "lifestyle_assessment": {
+    "smoking":   "비흡연",
+    "drinking":  "적정음주",
+    "exercise":  "주 2회",
+    "exercise_note": "신체활동량 부족, 주 5회 이상 권고"
+  },
+
+  "overall_grade": "B (정상B - 경계)",
+  "conditions": {
+    "dyslipidemia": "이상지질혈증 의심"
+  },
+
+  "flags": [
+    { "category": "blood",     "item": "total_cholesterol", "value": 216, "status": "높음", "action": "이상지질혈증 관리 필요" },
+    { "category": "blood",     "item": "ldl",               "value": 140, "status": "높음", "action": "LDL 130 미만 목표" },
+    { "category": "lifestyle", "item": "exercise",          "value": "주 2회", "status": "부족", "action": "주 5회 이상 유산소+근력 권고" }
+  ]
+}
