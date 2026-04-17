@@ -290,42 +290,46 @@ def build_summary_sheet(wb):
         r = 4 + idx
         master_row = idx + 2  # row in master sheet
 
-        # 이름: reference master
-        ws.cell(row=r, column=2, value=f"='직원 마스터'!A{master_row}")
-        # 급여유형: reference master
-        ws.cell(row=r, column=3, value=f"='직원 마스터'!B{master_row}")
+        # 재직 여부 참조 (마스터 E열)
+        status_ref = f"'직원 마스터'!E{master_row}"
 
-        # 총 근무시간: SUMIFS (date as excel time fraction, multiply by 24)
+        # 이름: 재직자만 표시
+        ws.cell(row=r, column=2).value = f'=IF({status_ref}="재직",\'직원 마스터\'!A{master_row},"")'
+        # 급여유형: 재직자만 표시
+        ws.cell(row=r, column=3).value = f'=IF({status_ref}="재직",\'직원 마스터\'!B{master_row},"")'
+
+        # 총 근무시간: 재직자만 계산
         ws.cell(row=r, column=4).value = (
-            f'=SUMPRODUCT(('
-            f"'근무 기록'!B$2:B$500=B{r})*"
+            f'=IF({status_ref}="재직",'
+            f'SUMPRODUCT(('
+            f"'근무 기록'!B$2:B$500='직원 마스터'!A{master_row})*"
             f"('근무 기록'!A$2:A$500>=J$1)*"
             f"('근무 기록'!A$2:A$500<=J$2)*"
-            f"('근무 기록'!E$2:E$500))*24"
+            f"('근무 기록'!E$2:E$500))*24,\"\")"
         )
         ws.cell(row=r, column=4).number_format = "0.0"
 
-        # 총 급여(세전): monthly=fixed, hourly=hours*rate
+        # 총 급여(세전): 재직자만 계산
         ws.cell(row=r, column=5).value = (
-            f'=IF(C{r}="월급",'
+            f'=IF({status_ref}<>"재직","",IF(C{r}="월급",'
             f"'직원 마스터'!C{master_row},"
-            f"D{r}*'직원 마스터'!C{master_row})"
+            f"D{r}*'직원 마스터'!C{master_row}))"
         )
         ws.cell(row=r, column=5).number_format = MONEY_FMT
 
-        # 3.3% 원천징수
-        ws.cell(row=r, column=6).value = f"=ROUND(E{r}*0.033,0)"
+        # 3.3% 원천징수: 재직자만
+        ws.cell(row=r, column=6).value = f'=IF(E{r}="","",ROUND(E{r}*0.033,0))'
         ws.cell(row=r, column=6).number_format = MONEY_FMT
 
-        # 실지급액
-        ws.cell(row=r, column=7).value = f"=E{r}-F{r}"
+        # 실지급액: 재직자만
+        ws.cell(row=r, column=7).value = f'=IF(E{r}="","",E{r}-F{r})'
         ws.cell(row=r, column=7).number_format = MONEY_FMT
 
-        # 입금계좌: reference master
-        ws.cell(row=r, column=8, value=f"='직원 마스터'!D{master_row}")
+        # 입금계좌: 재직자만
+        ws.cell(row=r, column=8).value = f'=IF({status_ref}="재직",\'직원 마스터\'!D{master_row},"")'
 
-        # 지급여부: dropdown
-        ws.cell(row=r, column=9, value="X")
+        # 지급여부: 재직자만 기본값
+        ws.cell(row=r, column=9).value = f'=IF({status_ref}="재직","X","")'
 
         # Styling
         for c in range(2, 10):
