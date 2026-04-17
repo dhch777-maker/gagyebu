@@ -424,7 +424,7 @@ def main():
 
     # 3. Save
     wb.save(OUTPUT_PATH)
-    print(f"\n✓ 저장 완료: {OUTPUT_PATH}")
+    print(f"\n[완료] 저장: {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
