@@ -5,9 +5,10 @@ from datetime import date, timedelta
 import calendar
 
 # === 설정 ===
+BABY_NAME = "동해"
 BABY_BIRTH_DATE = date(2025, 10, 28)
-MEAL_START_DATE = date(2026, 4, 19)  # 일요일
-OUTPUT_FILE = "EUSIK/초기_이유식_캘린더_v3.xlsx"
+MEAL_START_DATE = date(2026, 4, 19)
+OUTPUT_FILE = "EUSIK/동해_초기이유식_캘린더.xlsx"
 
 # === 28일 식단 데이터 ===
 meal_plan = {
@@ -41,43 +42,59 @@ meal_plan = {
     28: {"밥": "쌀오트밀 죽", "고기류": "소고기", "반찬": "당근, 시금치\n땅콩 소스\n또는 아보카도, 딸기"},
 }
 
-# === 스타일 ===
-HEADER_FILL = PatternFill(start_color="8B4513", end_color="8B4513", fill_type="solid")
-HEADER_FONT = Font(name="맑은 고딕", size=11, bold=True, color="FFFFFF")
-DAY_NUM_FONT = Font(name="맑은 고딕", size=10, bold=True, color="333333")
-DPLUS_FONT = Font(name="맑은 고딕", size=9, bold=True, color="C0392B")
-LABEL_FONT = Font(name="맑은 고딕", size=8, bold=True, color="8B4513")
-CONTENT_FONT = Font(name="맑은 고딕", size=8, color="333333")
-TITLE_FONT = Font(name="맑은 고딕", size=16, bold=True, color="8B4513")
-INFO_FONT = Font(name="맑은 고딕", size=10, color="666666")
-WEEKEND_FILL = PatternFill(start_color="FFF5F0", end_color="FFF5F0", fill_type="solid")
-TODAY_FILL = PatternFill(start_color="FFEAA7", end_color="FFEAA7", fill_type="solid")
-THIN_BORDER = Border(
-    left=Side(style="thin", color="D5D5D5"),
-    right=Side(style="thin", color="D5D5D5"),
-    top=Side(style="thin", color="D5D5D5"),
-    bottom=Side(style="thin", color="D5D5D5"),
-)
-THICK_BORDER = Border(
-    left=Side(style="medium", color="8B4513"),
-    right=Side(style="medium", color="8B4513"),
-    top=Side(style="medium", color="8B4513"),
-    bottom=Side(style="medium", color="8B4513"),
-)
+# === 동해바다 테마 색상 ===
+# 깊은 바다 (헤더)
+DEEP_SEA = "1B4F72"
+DEEP_SEA_LIGHT = "2471A3"
+# 바다 (요일 헤더)
+OCEAN = "2E86C1"
+# 날짜 행 배경
+DATE_ROW_COLOR = "D4E6F1"       # 하늘빛 연한 파랑
+DATE_ROW_WEEKEND_COLOR = "AED6F1"  # 조금 더 진한 하늘
+# 주말 내용 배경
+WEEKEND_BG = "EBF5FB"
+# 이유식 기간 외
+EMPTY_BG = "F2F4F4"
+# 주차별 내용 행 배경 (파도 그라데이션)
+WAVE_COLORS = ["F0F9FF", "E8F4FD", "E0F0FB", "D6ECF8", "CEEAF6"]
+# 모래사장 (참고사항)
+SAND = "F9E79F"
+SAND_LIGHT = "FEF9E7"
+# 테두리
+BORDER_COLOR = "85C1E9"
+BORDER_LIGHT = "AED6F1"
 
-WEEK_COLORS = [
-    PatternFill(start_color="FAF0E6", end_color="FAF0E6", fill_type="solid"),  # 1주차
-    PatternFill(start_color="F5F0E8", end_color="F5F0E8", fill_type="solid"),  # 2주차
-    PatternFill(start_color="F0EDE4", end_color="F0EDE4", fill_type="solid"),  # 3주차
-    PatternFill(start_color="EBE8E0", end_color="EBE8E0", fill_type="solid"),  # 4주차
-    PatternFill(start_color="E6E3DC", end_color="E6E3DC", fill_type="solid"),  # 5주차
-]
+# 스타일 객체
+THIN_BORDER = Border(
+    left=Side(style="thin", color=BORDER_COLOR),
+    right=Side(style="thin", color=BORDER_COLOR),
+    top=Side(style="thin", color=BORDER_COLOR),
+    bottom=Side(style="thin", color=BORDER_COLOR),
+)
+DATE_BORDER = Border(
+    left=Side(style="thin", color=BORDER_COLOR),
+    right=Side(style="thin", color=BORDER_COLOR),
+    top=Side(style="thin", color=BORDER_COLOR),
+    bottom=Side(style="hair", color=BORDER_LIGHT),
+)
+CONTENT_BORDER = Border(
+    left=Side(style="thin", color=BORDER_COLOR),
+    right=Side(style="thin", color=BORDER_COLOR),
+    top=Side(style="hair", color=BORDER_LIGHT),
+    bottom=Side(style="thin", color=BORDER_COLOR),
+)
+HEADER_BORDER = Border(
+    left=Side(style="medium", color=DEEP_SEA),
+    right=Side(style="medium", color=DEEP_SEA),
+    top=Side(style="medium", color=DEEP_SEA),
+    bottom=Side(style="medium", color=DEEP_SEA),
+)
 
 DOW_KR = ["월", "화", "수", "목", "금", "토", "일"]
 
 wb = openpyxl.Workbook()
 ws = wb.active
-ws.title = "초기 이유식 캘린더"
+ws.title = f"{BABY_NAME} 이유식 캘린더"
 
 # 인쇄 설정
 ws.sheet_properties.pageSetUpPr = openpyxl.worksheet.properties.PageSetupProperties(fitToPage=True)
@@ -85,37 +102,52 @@ ws.page_setup.fitToWidth = 1
 ws.page_setup.fitToHeight = 0
 ws.page_setup.orientation = "landscape"
 
-# 열 너비 (7열 = 월~일)
+# 열 너비
 for col in range(1, 8):
     ws.column_dimensions[get_column_letter(col)].width = 22
 
-# === 상단 정보 영역 ===
+# === 상단 타이틀 ===
 ws.merge_cells("A1:G1")
 cell = ws["A1"]
-cell.value = "🍚 초기 이유식 28일 식단 캘린더"
-cell.font = TITLE_FONT
+cell.value = f"🌊 {BABY_NAME}의 초기 이유식 28일 항해 🐳"
+cell.font = Font(name="맑은 고딕", size=16, bold=True, color=DEEP_SEA)
+cell.fill = PatternFill(start_color="D6EAF8", end_color="D6EAF8", fill_type="solid")
 cell.alignment = Alignment(horizontal="center", vertical="center")
-ws.row_dimensions[1].height = 40
+for c in range(1, 8):
+    ws.cell(row=1, column=c).fill = PatternFill(start_color="D6EAF8", end_color="D6EAF8", fill_type="solid")
+ws.row_dimensions[1].height = 45
 
+# === 상단 정보 ===
 ws.merge_cells("A2:C2")
-ws["A2"].value = f"👶 아기 출생일: {BABY_BIRTH_DATE.strftime('%Y-%m-%d')}"
-ws["A2"].font = Info_font = Font(name="맑은 고딕", size=10, color="666666")
+ws["A2"].value = f"🐣 {BABY_NAME} 탄생일: {BABY_BIRTH_DATE.strftime('%Y-%m-%d')}"
+ws["A2"].font = Font(name="맑은 고딕", size=10, bold=True, color=DEEP_SEA_LIGHT)
+ws["A2"].fill = PatternFill(start_color="EBF5FB", end_color="EBF5FB", fill_type="solid")
 ws["A2"].alignment = Alignment(horizontal="left", vertical="center")
 
 ws.merge_cells("D2:G2")
-ws["D2"].value = f"🥄 이유식 시작일: {MEAL_START_DATE.strftime('%Y-%m-%d')}  (D+{(MEAL_START_DATE - BABY_BIRTH_DATE).days})"
-ws["D2"].font = Font(name="맑은 고딕", size=10, color="666666")
+d_start = (MEAL_START_DATE - BABY_BIRTH_DATE).days
+ws["D2"].value = f"🥄 이유식 시작일: {MEAL_START_DATE.strftime('%Y-%m-%d')}  (D+{d_start})"
+ws["D2"].font = Font(name="맑은 고딕", size=10, bold=True, color=DEEP_SEA_LIGHT)
+ws["D2"].fill = PatternFill(start_color="EBF5FB", end_color="EBF5FB", fill_type="solid")
 ws["D2"].alignment = Alignment(horizontal="left", vertical="center")
-ws.row_dimensions[2].height = 25
 
-# 빈 행
-ws.row_dimensions[3].height = 10
+for c in range(1, 8):
+    ws.cell(row=2, column=c).fill = PatternFill(start_color="EBF5FB", end_color="EBF5FB", fill_type="solid")
+ws.row_dimensions[2].height = 28
+
+# 물결 구분선
+ws.merge_cells("A3:G3")
+ws["A3"].value = "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
+ws["A3"].font = Font(name="맑은 고딕", size=8, color=OCEAN)
+ws["A3"].alignment = Alignment(horizontal="center", vertical="center")
+ws["A3"].fill = PatternFill(start_color="EBF5FB", end_color="EBF5FB", fill_type="solid")
+for c in range(1, 8):
+    ws.cell(row=3, column=c).fill = PatternFill(start_color="EBF5FB", end_color="EBF5FB", fill_type="solid")
+ws.row_dimensions[3].height = 14
 
 # === 캘린더 생성 ===
-# 이유식 기간이 걸치는 월을 계산
 end_date = MEAL_START_DATE + timedelta(days=27)
 
-# 해당 기간의 모든 월 구하기
 months = []
 current = MEAL_START_DATE.replace(day=1)
 while current <= end_date:
@@ -131,14 +163,14 @@ for year, month in months:
     # 월 헤더
     ws.merge_cells(start_row=row_cursor, start_column=1, end_row=row_cursor, end_column=7)
     month_cell = ws.cell(row=row_cursor, column=1)
-    month_cell.value = f"{year}년 {month}월"
+    month_cell.value = f"⚓ {year}년 {month}월"
     month_cell.font = Font(name="맑은 고딕", size=13, bold=True, color="FFFFFF")
-    month_cell.fill = HEADER_FILL
+    month_cell.fill = PatternFill(start_color=DEEP_SEA, end_color=DEEP_SEA, fill_type="solid")
     month_cell.alignment = Alignment(horizontal="center", vertical="center")
     for c in range(1, 8):
-        ws.cell(row=row_cursor, column=c).fill = HEADER_FILL
-        ws.cell(row=row_cursor, column=c).border = THICK_BORDER
-    ws.row_dimensions[row_cursor].height = 30
+        ws.cell(row=row_cursor, column=c).fill = PatternFill(start_color=DEEP_SEA, end_color=DEEP_SEA, fill_type="solid")
+        ws.cell(row=row_cursor, column=c).border = HEADER_BORDER
+    ws.row_dimensions[row_cursor].height = 32
     row_cursor += 1
 
     # 요일 헤더
@@ -146,32 +178,17 @@ for year, month in months:
         cell = ws.cell(row=row_cursor, column=i + 1)
         cell.value = dow
         cell.font = Font(name="맑은 고딕", size=10, bold=True, color="FFFFFF")
-        cell.fill = PatternFill(start_color="A0522D", end_color="A0522D", fill_type="solid")
+        cell.fill = PatternFill(start_color=OCEAN, end_color=OCEAN, fill_type="solid")
         cell.alignment = Alignment(horizontal="center", vertical="center")
         cell.border = THIN_BORDER
-    ws.row_dimensions[row_cursor].height = 22
+    ws.row_dimensions[row_cursor].height = 24
     row_cursor += 1
 
-    # 달력 본체 (각 주 = 날짜 행 + 내용 행)
+    # 달력 본체
     cal = calendar.monthcalendar(year, month)
 
-    DATE_ROW_FILL = PatternFill(start_color="F5E6D3", end_color="F5E6D3", fill_type="solid")
-    DATE_ROW_WEEKEND = PatternFill(start_color="F0D5C0", end_color="F0D5C0", fill_type="solid")
-    DATE_BORDER = Border(
-        left=Side(style="thin", color="D5D5D5"),
-        right=Side(style="thin", color="D5D5D5"),
-        top=Side(style="thin", color="D5D5D5"),
-        bottom=Side(style="hair", color="D5D5D5"),
-    )
-    CONTENT_BORDER = Border(
-        left=Side(style="thin", color="D5D5D5"),
-        right=Side(style="thin", color="D5D5D5"),
-        top=Side(style="hair", color="D5D5D5"),
-        bottom=Side(style="thin", color="D5D5D5"),
-    )
-
     for week_idx, week in enumerate(cal):
-        week_fill = WEEK_COLORS[week_idx % len(WEEK_COLORS)]
+        wave = WAVE_COLORS[week_idx % len(WAVE_COLORS)]
         date_row = row_cursor
         content_row = row_cursor + 1
 
@@ -185,29 +202,27 @@ for year, month in months:
             c_cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
 
             if day == 0:
-                empty_fill = PatternFill(start_color="F5F5F5", end_color="F5F5F5", fill_type="solid")
-                d_cell.fill = empty_fill
-                c_cell.fill = empty_fill
+                empty = PatternFill(start_color=EMPTY_BG, end_color=EMPTY_BG, fill_type="solid")
+                d_cell.fill = empty
+                c_cell.fill = empty
                 continue
 
             current_date = date(year, month, day)
             d_plus = (current_date - BABY_BIRTH_DATE).days
             meal_day = (current_date - MEAL_START_DATE).days + 1
-
             is_weekend = col_idx >= 5
 
-            # 날짜 행: 배경색 구분
             if is_weekend:
-                d_cell.fill = DATE_ROW_WEEKEND
-                c_cell.fill = WEEKEND_FILL
+                d_cell.fill = PatternFill(start_color=DATE_ROW_WEEKEND_COLOR, end_color=DATE_ROW_WEEKEND_COLOR, fill_type="solid")
+                c_cell.fill = PatternFill(start_color=WEEKEND_BG, end_color=WEEKEND_BG, fill_type="solid")
             else:
-                d_cell.fill = DATE_ROW_FILL
-                c_cell.fill = week_fill
+                d_cell.fill = PatternFill(start_color=DATE_ROW_COLOR, end_color=DATE_ROW_COLOR, fill_type="solid")
+                c_cell.fill = PatternFill(start_color=wave, end_color=wave, fill_type="solid")
 
             if 1 <= meal_day <= 28:
                 # 날짜 행
                 d_cell.value = f"{day}일  D+{d_plus}  [{meal_day}일차]"
-                d_cell.font = Font(name="맑은 고딕", size=9, bold=True, color="333333")
+                d_cell.font = Font(name="맑은 고딕", size=9, bold=True, color=DEEP_SEA)
 
                 # 내용 행
                 meal = meal_plan[meal_day]
@@ -219,46 +234,57 @@ for year, month in months:
                 if meal["반찬"]:
                     lines.append(f"🥬 {meal['반찬'].replace(chr(10), ' ')}")
                 c_cell.value = "\n".join(lines)
-                c_cell.font = Font(name="맑은 고딕", size=8, color="333333")
+                c_cell.font = Font(name="맑은 고딕", size=8, color="2C3E50")
             else:
-                # 이유식 기간 외 날짜
                 d_cell.value = f"{day}일  D+{d_plus}"
-                d_cell.font = Font(name="맑은 고딕", size=9, color="AAAAAA")
+                d_cell.font = Font(name="맑은 고딕", size=9, color="85C1E9")
                 c_cell.value = ""
 
         ws.row_dimensions[date_row].height = 22
         ws.row_dimensions[content_row].height = 80
         row_cursor += 2
 
-    # 월 사이 간격
-    ws.row_dimensions[row_cursor].height = 15
+    # 월 사이 물결
+    ws.merge_cells(start_row=row_cursor, start_column=1, end_row=row_cursor, end_column=7)
+    ws.cell(row=row_cursor, column=1).value = "~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~"
+    ws.cell(row=row_cursor, column=1).font = Font(name="맑은 고딕", size=7, color=BORDER_COLOR)
+    ws.cell(row=row_cursor, column=1).alignment = Alignment(horizontal="center")
+    ws.row_dimensions[row_cursor].height = 12
     row_cursor += 1
 
-# === 하단 참고사항 ===
+# === 하단 참고사항 (모래사장 테마) ===
 ws.merge_cells(start_row=row_cursor, start_column=1, end_row=row_cursor, end_column=7)
-note_cell = ws.cell(row=row_cursor, column=1)
-note_cell.value = "📌 참고사항"
-note_cell.font = Font(name="맑은 고딕", size=11, bold=True, color="8B4513")
+note_header = ws.cell(row=row_cursor, column=1)
+note_header.value = f"🐚 {BABY_NAME}의 이유식 항해 안내서"
+note_header.font = Font(name="맑은 고딕", size=11, bold=True, color=DEEP_SEA)
+note_header.fill = PatternFill(start_color=SAND, end_color=SAND, fill_type="solid")
+note_header.alignment = Alignment(horizontal="center", vertical="center")
+for c in range(1, 8):
+    ws.cell(row=row_cursor, column=c).fill = PatternFill(start_color=SAND, end_color=SAND, fill_type="solid")
+ws.row_dimensions[row_cursor].height = 28
 row_cursor += 1
 
 notes = [
-    "• 소고기는 매일, 닭고기는 어쩌다, 생선은 일주일에 2회 이하로 주는 것이 좋습니다.",
-    "• 계란은 흰자 노른자 같이 줘도 됩니다.",
-    "• 땅콩은 일주일에 3번 정도 주면 됩니다.",
-    "• 한 번 첨가한 음식은 다음에 편하게 첨가해도 됩니다.",
-    "• 2주가 지나면 양배추, 시금치, 당근 같은 상세 식재료를 기본 반찬으로 사용할 수 있습니다.",
-    "• 미음으로 시작하지 말고 질감 있는 죽으로 시작하세요.",
-    "• 이유식 초기에 잡곡을 50% 정도 첨가해서 먹여도 됩니다.",
+    "🐟 소고기는 매일, 닭고기는 어쩌다, 생선은 일주일에 2회 이하로 주는 것이 좋습니다.",
+    "🥚 계란은 흰자 노른자 같이 줘도 됩니다.",
+    "🥜 땅콩은 일주일에 3번 정도 주면 됩니다.",
+    "🌿 한 번 첨가한 음식은 다음에 편하게 첨가해도 됩니다.",
+    "🥕 2주가 지나면 양배추, 시금치, 당근 같은 상세 식재료를 기본 반찬으로 사용할 수 있습니다.",
+    "🥣 미음으로 시작하지 말고 질감 있는 죽으로 시작하세요.",
+    "🌾 이유식 초기에 잡곡을 50% 정도 첨가해서 먹여도 됩니다.",
 ]
 
 for note in notes:
     ws.merge_cells(start_row=row_cursor, start_column=1, end_row=row_cursor, end_column=7)
     cell = ws.cell(row=row_cursor, column=1)
     cell.value = note
-    cell.font = Font(name="맑은 고딕", size=9, color="555555")
+    cell.font = Font(name="맑은 고딕", size=9, color="2C3E50")
+    cell.fill = PatternFill(start_color=SAND_LIGHT, end_color=SAND_LIGHT, fill_type="solid")
     cell.alignment = Alignment(horizontal="left", vertical="center")
-    ws.row_dimensions[row_cursor].height = 18
+    for c in range(1, 8):
+        ws.cell(row=row_cursor, column=c).fill = PatternFill(start_color=SAND_LIGHT, end_color=SAND_LIGHT, fill_type="solid")
+    ws.row_dimensions[row_cursor].height = 20
     row_cursor += 1
 
 wb.save(OUTPUT_FILE)
-print(f"✅ 캘린더 저장 완료: {OUTPUT_FILE}")
+print(f"Done: {OUTPUT_FILE}")
