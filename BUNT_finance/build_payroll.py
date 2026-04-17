@@ -299,21 +299,31 @@ def build_summary_sheet(wb):
         ws.cell(row=r, column=3).value = f'=IF({status_ref}="재직",\'직원 마스터\'!B{master_row},"")'
 
         # 총 근무시간: 재직자만 계산
+        name_ref = f"'직원 마스터'!A{master_row}"
         ws.cell(row=r, column=4).value = (
             f'=IF({status_ref}="재직",'
             f'SUMPRODUCT(('
-            f"'근무 기록'!B$2:B$500='직원 마스터'!A{master_row})*"
+            f"'근무 기록'!B$2:B$500={name_ref})*"
             f"('근무 기록'!A$2:A$500>=J$1)*"
             f"('근무 기록'!A$2:A$500<=J$2)*"
             f"('근무 기록'!E$2:E$500))*24,\"\")"
         )
         ws.cell(row=r, column=4).number_format = "0.0"
 
-        # 총 급여(세전): 재직자만 계산
+        # 일 급여 합산 (근무기록 F열 합산)
+        daily_pay_sum = (
+            f'SUMPRODUCT(('
+            f"'근무 기록'!B$2:B$500={name_ref})*"
+            f"('근무 기록'!A$2:A$500>=J$1)*"
+            f"('근무 기록'!A$2:A$500<=J$2)*"
+            f"('근무 기록'!F$2:F$500))"
+        )
+
+        # 총 급여(세전): 근무기록 일급여 합산 > 0이면 합산값, 아니면 월급제 고정액
         ws.cell(row=r, column=5).value = (
-            f'=IF({status_ref}<>"재직","",IF(C{r}="월급",'
-            f"'직원 마스터'!C{master_row},"
-            f"D{r}*'직원 마스터'!C{master_row}))"
+            f'=IF({status_ref}<>"재직","",'
+            f"IF({daily_pay_sum}>0,{daily_pay_sum},"
+            f"IF(C{r}=\"월급\",'직원 마스터'!C{master_row},0)))"
         )
         ws.cell(row=r, column=5).number_format = MONEY_FMT
 
