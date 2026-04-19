@@ -45,6 +45,49 @@ EMPLOYEES = [
 # 근무기록 수식들은 이 범위를 직원 마스터 조회 대상으로 참조
 MASTER_LAST_ROW = len(EMPLOYEES) + 21  # header row(1) + data rows + 20 buffer
 
+# 지급 이력 — xlsb 원본에서 추출한 (이름, YYYYMM, 지급여부) 튜플
+# - 이름: 직원 마스터의 이름과 일치
+# - YYYYMM: 지급 대상 월 (xlsb 지급일을 기준월로 정규화: 1~10일=전월분, 11일 이후=당월분)
+# - 지급여부: 해당 월의 모든 지급 기록이 xlsb에서 'O' 표시된 경우 "O", 하나라도 누락 시 "X"
+# 과거 지급 이력 수정이나 신규 지급 반영 시 이 리스트 또는 "지급 이력" 시트에 직접 행 추가
+PAYMENT_HISTORY = [
+    ("고경민", 202501, "O"),
+    ("유은비", 202501, "O"),
+    ("장예원", 202501, "O"),
+    ("고경민", 202502, "O"),
+    ("유은비", 202502, "O"),
+    ("장예원", 202502, "O"),
+    ("전민아", 202502, "O"),
+    ("고경민", 202503, "O"),
+    ("장예원", 202503, "O"),
+    ("전민아", 202503, "O"),
+    ("고경민", 202504, "O"),
+    ("장예원", 202504, "O"),
+    ("전민아", 202504, "O"),
+    ("고경민", 202505, "X"),
+    ("장예원", 202505, "X"),
+    ("전민아", 202505, "X"),
+    ("고경민", 202506, "X"),
+    ("김채현", 202506, "X"),
+    ("장예원", 202506, "X"),
+    ("전민아", 202506, "X"),
+    ("고경민", 202507, "O"),
+    ("김채현", 202507, "O"),
+    ("전민아", 202507, "O"),
+    ("고경민", 202508, "O"),
+    ("김채현", 202508, "O"),
+    ("전민아", 202508, "O"),
+    ("고경민", 202509, "O"),
+    ("김채현", 202509, "O"),
+    ("전민아", 202509, "O"),
+    ("고경민", 202510, "O"),
+    ("이진화", 202510, "O"),
+    ("전민아", 202510, "O"),
+    ("고경민", 202511, "X"),
+    ("이진화", 202511, "X"),
+    ("전민아", 202511, "X"),
+]
+
 EXCEL_EPOCH = datetime(1899, 12, 30)
 
 # ── Styles ─────────────────────────────────────────────────────────────
@@ -286,6 +329,43 @@ def build_records_sheet(wb, records):
     return ws
 
 
+def build_payment_history_sheet(wb):
+    """Sheet: 지급 이력 — (이름, 월, 지급여부) 룩업 테이블
+    급여 요약 I열 수식이 (이름, 선택월) 조합으로 이 시트를 조회한다.
+    과거 이력 수정 또는 신규 지급 반영 시 이 시트에 직접 행 추가 가능.
+    """
+    ws = wb.create_sheet("지급 이력")
+    ws.sheet_properties.tabColor = "A5A5A5"
+
+    headers = ["이름", "월", "지급여부"]
+    widths = [12, 10, 12]
+
+    for i, h in enumerate(headers, 1):
+        ws.cell(row=1, column=i, value=h)
+    apply_header_style(ws, 1, len(headers))
+
+    for i, w in enumerate(widths, 1):
+        ws.column_dimensions[get_column_letter(i)].width = w
+
+    for idx, (name, ym, paid) in enumerate(PAYMENT_HISTORY):
+        r = idx + 2
+        ws.cell(row=r, column=1, value=name)
+        ws.cell(row=r, column=2, value=ym)
+        ws.cell(row=r, column=2).number_format = "0"
+        ws.cell(row=r, column=3, value=paid)
+        for c in range(1, 4):
+            cell = ws.cell(row=r, column=c)
+            cell.border = THIN_BORDER
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            if paid == "O":
+                cell.fill = GREEN_FILL
+            elif paid == "X":
+                cell.fill = RED_FILL
+
+    ws.auto_filter.ref = f"A1:C{len(PAYMENT_HISTORY) + 1}"
+    return ws
+
+
 def build_summary_sheet(wb):
     """Sheet 3: 급여 요약
     - 선택한 월에 재직 중이던 직원만 표시 (입사월~퇴사월 범위)
@@ -388,8 +468,16 @@ def build_summary_sheet(wb):
         # 입금계좌
         ws.cell(row=r, column=8).value = f'=IF(B{r}="","",\'직원 마스터\'!D{mr})'
 
-        # 지급여부
-        ws.cell(row=r, column=9).value = f'=IF(B{r}="","","X")'
+        # 지급여부: 지급 이력 시트에서 (이름, 선택월)로 조회, 없으면 "X"(미지급)
+        paid_last_row = len(PAYMENT_HISTORY) + 51  # data rows + 50 buffer for future additions
+        ws.cell(row=r, column=9).value = (
+            f'=IF(B{r}="","",'
+            f'IFERROR(INDEX(\'지급 이력\'!C$2:C${paid_last_row},'
+            f'MATCH(1,'
+            f"('지급 이력'!A$2:A${paid_last_row}=B{r})*"
+            f"('지급 이력'!B$2:B${paid_last_row}=$B$1),"
+            f'0)),"X"))'
+        )
 
         # Styling
         for c in range(2, 10):
@@ -473,6 +561,9 @@ def main():
 
     build_records_sheet(wb, records)
     print("  → [근무 기록] 시트 생성 완료")
+
+    build_payment_history_sheet(wb)
+    print("  → [지급 이력] 시트 생성 완료")
 
     build_summary_sheet(wb)
     print("  → [급여 요약] 시트 생성 완료")
