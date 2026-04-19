@@ -129,7 +129,7 @@ def build_master_sheet(wb):
     ws.title = "직원 마스터"
     ws.sheet_properties.tabColor = "4472C4"
 
-    headers = ["이름", "급여유형", "금액", "입금계좌", "재직상태", "입사월", "퇴사월", "비고"]
+    headers = ["이름", "급여유형", "금액", "입금계좌", "재직상태", "적용시작월", "적용종료월", "비고"]
     col_widths = [12, 12, 15, 30, 12, 12, 12, 20]
 
     for i, h in enumerate(headers, 1):
