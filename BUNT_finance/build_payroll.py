@@ -123,6 +123,32 @@ def apply_cell_style(cell, fill=None, fmt=None):
         cell.number_format = fmt
 
 
+def master_lookup_formula(name_ref, date_ref, return_col, master_last_row=30):
+    """
+    직원 마스터에서 특정 시점에 활성인 구간을 찾아 지정 컬럼 값을 반환하는 수식.
+    - name_ref: 근무자 이름 셀 참조 (예: "B5")
+    - date_ref: 날짜 셀 참조 (예: "A5")
+    - return_col: 반환할 마스터 컬럼 문자 (예: "B" = 급여유형, "C" = 금액)
+    - master_last_row: 마스터 조회 범위 끝 행 (여유 있게 30)
+
+    매칭 조건: 이름 일치 AND 적용시작월 <= 근무월 AND (적용종료월 공란 또는 >= 근무월)
+    근무월 = YEAR*100 + MONTH
+    """
+    ym = f'(YEAR({date_ref})*100+MONTH({date_ref}))'
+    master_a = f"'직원 마스터'!A$2:A${master_last_row}"
+    master_f = f"'직원 마스터'!F$2:F${master_last_row}"
+    master_g = f"'직원 마스터'!G$2:G${master_last_row}"
+    master_ret = f"'직원 마스터'!{return_col}$2:{return_col}${master_last_row}"
+    match_expr = (
+        f'MATCH(1,'
+        f'({master_a}={name_ref})*'
+        f'({master_f}<={ym})*'
+        f'(({master_g}="")+({master_g}>={ym})),'
+        f'0)'
+    )
+    return f'INDEX({master_ret},{match_expr})'
+
+
 def build_master_sheet(wb):
     """Sheet 1: 직원 마스터"""
     ws = wb.active
@@ -208,10 +234,9 @@ def build_records_sheet(wb, records):
         ws.cell(row=r, column=6, value=int(rec["daily_pay"]) if rec["daily_pay"] else 0)
         ws.cell(row=r, column=6).number_format = MONEY_FMT
 
-        # 급여유형: 수식
-        ws.cell(row=r, column=7).value = (
-            f'=IF(B{r}<>"",VLOOKUP(B{r},\'직원 마스터\'!A:B,2,FALSE),"")'
-        )
+        # 급여유형: 날짜 기반 기간 조회
+        lookup = master_lookup_formula(f"B{r}", f"A{r}", "B")
+        ws.cell(row=r, column=7).value = f'=IFERROR(IF(B{r}<>"",{lookup},""),"")'
 
         for c in range(1, len(headers) + 1):
             cell = ws.cell(row=r, column=c)
@@ -230,13 +255,13 @@ def build_records_sheet(wb, records):
         ws.cell(row=r, column=5).value = f'=IF(AND(C{r}<>"",D{r}<>""),D{r}-C{r},0)'
         ws.cell(row=r, column=5).number_format = "0.0"
         # 신규 행만 수식으로 일 급여 계산
+        lookup_amount = master_lookup_formula(f"B{r}", f"A{r}", "C")
         ws.cell(row=r, column=6).value = (
-            f'=IF(AND(B{r}<>"",G{r}="시급"),E{r}*24*VLOOKUP(B{r},\'직원 마스터\'!A:C,3,FALSE),0)'
+            f'=IFERROR(IF(AND(B{r}<>"",G{r}="시급"),E{r}*24*{lookup_amount},0),0)'
         )
         ws.cell(row=r, column=6).number_format = MONEY_FMT
-        ws.cell(row=r, column=7).value = (
-            f'=IF(B{r}<>"",VLOOKUP(B{r},\'직원 마스터\'!A:B,2,FALSE),"")'
-        )
+        lookup_type = master_lookup_formula(f"B{r}", f"A{r}", "B")
+        ws.cell(row=r, column=7).value = f'=IFERROR(IF(B{r}<>"",{lookup_type},""),"")'
         for c in range(1, len(headers) + 1):
             cell = ws.cell(row=r, column=c)
             if c in INPUT_COLS:
