@@ -369,8 +369,8 @@ def build_payment_history_sheet(wb):
 
 def build_summary_sheet(wb):
     """Sheet 3: 급여 요약
-    - 선택한 월에 재직 중이던 직원만 표시 (입사월~퇴사월 범위)
-    - 총 급여 = 근무기록 일 급여 합산 (>0이면), 없으면 월급제 고정액
+    - 선택한 월에 활성 구간인 직원만 표시 (적용시작월~적용종료월 범위)
+    - 총 급여 = 월급제면 마스터 고정액, 시급제면 해당월 근무기록 일급여 합산
     """
     ws = wb.create_sheet("급여 요약")
     ws.sheet_properties.tabColor = "ED7D31"
@@ -450,11 +450,11 @@ def build_summary_sheet(wb):
             f"('근무 기록'!F$2:F$500))"
         )
 
-        # 총 급여: 일급여 합산 > 0이면 합산, 아니면 월급제 고정액
+        # 총 급여: 월급제면 마스터 고정액, 시급제면 해당월 일급여 합산
+        # (월급제 구간에 근무기록 일급 기록이 남아있어도 월급액이 우선)
         ws.cell(row=r, column=5).value = (
             f'=IF(B{r}="","",'
-            f"IF({daily_sum}>0,{daily_sum},"
-            f"IF(C{r}=\"월급\",'직원 마스터'!C{mr},0)))"
+            f"IF(C{r}=\"월급\",'직원 마스터'!C{mr},{daily_sum}))"
         )
         ws.cell(row=r, column=5).number_format = MONEY_FMT
 
