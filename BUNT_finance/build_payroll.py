@@ -18,11 +18,17 @@ XLSB_PATH = os.path.join(os.path.dirname(__file__), "분트 재무제표(25.12�
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "분트_인건비관리.xlsx")
 SHEET_NAME = "2. 인건비 계산"
 
-# 직원 마스터 (원본 데이터 기준 입사월/퇴사월 반영)
-# pay_type/amount는 현재 기준 (급여 요약에서는 근무기록 원본값 우선 사용)
+# 직원 급여 이력 (한 직원 여러 행 가능, 각 행은 하나의 급여 구간)
+# start_month ~ end_month는 해당 급여유형/금액이 적용되는 기간 (YYYYMM)
+# 같은 이름의 여러 행은 기간이 서로 겹치지 않아야 함 (불변 조건)
 EMPLOYEES = [
+    # 고경민: 월급(1,2월) → 시급(3~9월) → 월급(10월~)
+    {"name": "고경민", "pay_type": "월급", "amount": 1200000, "account": "국민은행 82240104164295",
+     "status": "재직", "start_month": 202501, "end_month": 202502},
+    {"name": "고경민", "pay_type": "시급", "amount": 12000,   "account": "국민은행 82240104164295",
+     "status": "재직", "start_month": 202503, "end_month": 202509},
     {"name": "고경민", "pay_type": "월급", "amount": 1300000, "account": "국민은행 82240104164295",
-     "status": "재직", "start_month": 202502, "end_month": None},
+     "status": "재직", "start_month": 202510, "end_month": None},
     {"name": "장예원", "pay_type": "시급", "amount": 12000, "account": "카카오뱅크 3333-07-7072641",
      "status": "퇴직", "start_month": 202502, "end_month": 202507},
     {"name": "유은비", "pay_type": "시급", "amount": 12000, "account": "우리 1002-533-898534",
