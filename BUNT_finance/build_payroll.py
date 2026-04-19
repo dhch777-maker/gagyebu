@@ -15,7 +15,7 @@ from openpyxl.formatting.rule import CellIsRule
 
 # ── Constants ──────────────────────────────────────────────────────────
 XLSB_PATH = os.path.join(os.path.dirname(__file__), "분트 재무제표(25.12월).xlsb")
-OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "분트_인건비관리.xlsx")
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "분트_인건비관리_v2.xlsx")
 SHEET_NAME = "2. 인건비 계산"
 
 # 직원 급여 이력 (한 직원 여러 행 가능, 각 행은 하나의 급여 구간)
