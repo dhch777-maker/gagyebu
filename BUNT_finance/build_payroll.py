@@ -354,16 +354,15 @@ def build_records_sheet(wb, records):
 
 
 def build_payment_history_sheet(wb):
-    """Sheet: 지급 이력 — (이름, 월, 지급여부, 지급액) 룩업 테이블
-    - 급여 요약 총급여 수식은 (이름, 선택월) 조합으로 지급액을 우선 조회한다.
-    - 지급여부도 같은 조합으로 조회.
-    - 과거 이력 수정이나 신규 지급 반영 시 이 시트에 직접 행 추가 가능.
+    """Sheet: 지급 이력 — (이름, 월, 지급여부, 지급액, 이름월키) 룩업 테이블
+    - E열은 "이름+월" 단일 키 (A&B). 급여 요약이 VLOOKUP/INDEX+MATCH로 이 키를 조회.
+    - Excel 버전 호환을 위해 배열 수식 대신 단일 키 조회 사용.
     """
     ws = wb.create_sheet("지급 이력")
     ws.sheet_properties.tabColor = "A5A5A5"
 
-    headers = ["이름", "월", "지급여부", "지급액"]
-    widths = [12, 10, 12, 14]
+    headers = ["이름", "월", "지급여부", "지급액", "이름월키"]
+    widths = [12, 10, 12, 14, 16]
 
     for i, h in enumerate(headers, 1):
         ws.cell(row=1, column=i, value=h)
@@ -380,7 +379,9 @@ def build_payment_history_sheet(wb):
         ws.cell(row=r, column=3, value=paid)
         ws.cell(row=r, column=4, value=amount)
         ws.cell(row=r, column=4).number_format = MONEY_FMT
-        for c in range(1, 5):
+        # E열: 조회용 단일 키 — 수식으로 A&B 계산 (행 추가 시 자동 확장 용이)
+        ws.cell(row=r, column=5).value = f'=A{r}&B{r}'
+        for c in range(1, 6):
             cell = ws.cell(row=r, column=c)
             cell.border = THIN_BORDER
             cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -389,7 +390,7 @@ def build_payment_history_sheet(wb):
             elif paid == "X":
                 cell.fill = RED_FILL
 
-    ws.auto_filter.ref = f"A1:D{len(PAYMENT_HISTORY) + 1}"
+    ws.auto_filter.ref = f"A1:E{len(PAYMENT_HISTORY) + 1}"
     return ws
 
 
@@ -476,16 +477,12 @@ def build_summary_sheet(wb):
             f"('근무 기록'!F$2:F$500))"
         )
 
-        # 총 급여: 지급 이력에 실지급액이 있으면 그 값 우선, 없으면 마스터 기반 계산
-        # 1순위: 지급 이력 D열 (이름+선택월 매칭)
-        # 2순위(예측): 월급제 → 마스터 고정액 / 시급제 → 근무기록 일급여 합산
+        # 총 급여: 지급 이력 D열 우선, 없으면 마스터 기반 계산
+        # 단일 키 조회 (B{r}&$B$1) → 지급이력 E열(이름월키) MATCH → D열 반환
         paid_last_row = len(PAYMENT_HISTORY) + 51
         paid_lookup = (
             f'INDEX(\'지급 이력\'!D$2:D${paid_last_row},'
-            f'MATCH(1,'
-            f"('지급 이력'!A$2:A${paid_last_row}=B{r})*"
-            f"('지급 이력'!B$2:B${paid_last_row}=$B$1),"
-            f'0))'
+            f'MATCH(B{r}&$B$1,\'지급 이력\'!E$2:E${paid_last_row},0))'
         )
         fallback = f"IF(C{r}=\"월급\",'직원 마스터'!C{mr},{daily_sum})"
         ws.cell(row=r, column=5).value = (
@@ -504,15 +501,11 @@ def build_summary_sheet(wb):
         # 입금계좌
         ws.cell(row=r, column=8).value = f'=IF(B{r}="","",\'직원 마스터\'!D{mr})'
 
-        # 지급여부: 지급 이력 시트에서 (이름, 선택월)로 조회, 없으면 "X"(미지급)
-        paid_last_row = len(PAYMENT_HISTORY) + 51  # data rows + 50 buffer for future additions
+        # 지급여부: 지급 이력 E열(이름월키) 단일 키 조회 → C열 반환, 없으면 "X"
         ws.cell(row=r, column=9).value = (
             f'=IF(B{r}="","",'
             f'IFERROR(INDEX(\'지급 이력\'!C$2:C${paid_last_row},'
-            f'MATCH(1,'
-            f"('지급 이력'!A$2:A${paid_last_row}=B{r})*"
-            f"('지급 이력'!B$2:B${paid_last_row}=$B$1),"
-            f'0)),"X"))'
+            f'MATCH(B{r}&$B$1,\'지급 이력\'!E$2:E${paid_last_row},0)),"X"))'
         )
 
         # Styling
