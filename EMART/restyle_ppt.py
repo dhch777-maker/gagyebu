@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-원본 PPT 구조 그대로 유지하면서 컬러만 이마트 톤으로 전환.
-컨셉: 검정(바탕) + 노랑(포인트) + 화이트(콘텐츠 카드/텍스트)
+원본 PPT 구조 유지하면서 컬러만 이마트 톤(검정 바탕 + 노랑 + 화이트)으로.
 
-원본: 이마트에브리데이 사업제안서_260301.pptx (블루+네이비 톤, 흰 배경)
-산출: 이마트에브리데이_사업제안서_v2_260301.pptx (검정 바탕, 노랑 포인트, 흰 카드)
+텍스트 색은 '그 텍스트가 올라가 있는 셰이프의 배경 밝기'에 따라 자동 결정:
+  - 셰이프에 밝은 fill → 검정 텍스트 (흰 카드 위)
+  - 셰이프에 어두운 fill / 노랑 강조 fill → 상황에 맞게 (노랑 위면 검정)
+  - 셰이프에 fill 없음 → 슬라이드 배경(검정) 위니까 흰 텍스트
+
+원본 강조(블루)는 노랑 액센트로 후처리.
 """
 import sys
 import shutil
@@ -12,9 +15,7 @@ from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.util import Inches, Pt, Emu
 from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.oxml.ns import qn
-from lxml import etree
+from pptx.enum.text import PP_ALIGN
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -22,38 +23,23 @@ SRC = "이마트에브리데이 사업제안서_260301.pptx"
 OUT = "이마트에브리데이_사업제안서_v2_260301.pptx"
 
 # ============================================================
-# 이마트 컨셉 컬러
+# 이마트 컬러
 # ============================================================
-YELLOW = RGBColor(0xFF, 0xD2, 0x00)       # 이마트 옐로우
-YELLOW_SOFT = RGBColor(0xFF, 0xEA, 0x80)   # 연노랑
-BLACK = RGBColor(0x15, 0x15, 0x15)         # 바탕 검정
-BLACK_DEEP = RGBColor(0x00, 0x00, 0x00)
-GRAY = RGBColor(0x66, 0x66, 0x66)
+YELLOW = RGBColor(0xFF, 0xD2, 0x00)
+YELLOW_SOFT = RGBColor(0xFF, 0xEA, 0x80)
+BLACK = RGBColor(0x15, 0x15, 0x15)
+GRAY_MID = RGBColor(0x55, 0x55, 0x55)
 LIGHT_GRAY = RGBColor(0xBB, 0xBB, 0xBB)
-CARD_GRAY = RGBColor(0xEE, 0xEE, 0xEE)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 
 # ============================================================
-# 원본 팔레트 → 신규 매핑
-# 원본: 002B5B(네이비), 1F6BBA(블루), 74A9D8(연블루), F0F4F8(배경)
+# 원본 FILL 매핑
 # ============================================================
-# TEXT: 원본 네이비 텍스트는 제목(검정 배경 위) → 흰색
-#       원본 블루는 강조 → 노랑
-#       카드 안 회색/흰색 텍스트는 원래 밝은 카드 위였으므로 검정으로
-TEXT_MAP = {
-    "002B5B": WHITE,       # 네이비 제목 → 흰색 (검정 배경 위)
-    "1F6BBA": YELLOW,      # 블루 강조 → 노랑
-    "74A9D8": LIGHT_GRAY,  # 연블루 서브 → 라이트 그레이
-    "666666": BLACK,       # 카드 내부 서브 텍스트 → 검정 (흰 카드 위)
-    "FFFFFF": BLACK,       # 원본 네이비 블록 위 흰 글자 → 노랑 블록 위에선 검정
-}
-
-# FILL: 흰 카드 배경은 유지, 블루 강조는 노랑으로, 네이비 블록은 노랑으로
 FILL_MAP = {
-    "002B5B": YELLOW,      # 네이비 강조 블록 → 노랑
-    "1F6BBA": YELLOW,      # 블루 강조 → 노랑
-    "74A9D8": YELLOW_SOFT, # 연블루 → 연노랑
-    "F0F4F8": WHITE,       # 연한 카드 배경 → 흰색
+    "002B5B": YELLOW,       # 원본 네이비 강조 블록 → 노랑
+    "1F6BBA": YELLOW,       # 원본 블루 강조 → 노랑
+    "74A9D8": YELLOW_SOFT,  # 연블루 → 연노랑
+    "F0F4F8": WHITE,        # 연한 카드 배경 → 흰색
     "FFFFFF": WHITE,
 }
 
@@ -65,17 +51,13 @@ LINE_MAP = {
     "E5E5E5": LIGHT_GRAY,
 }
 
-
-def recolor_text(run):
-    try:
-        if run.font.color and run.font.color.type is not None:
-            hex_col = str(run.font.color.rgb).upper()
-            if hex_col in TEXT_MAP:
-                run.font.color.rgb = TEXT_MAP[hex_col]
-    except Exception:
-        pass
+# 원본 텍스트 컬러 중 "강조"로 간주되어 노랑으로 바꿀 것들
+ACCENT_TEXT_COLORS = {"1F6BBA"}
 
 
+# ============================================================
+# Fill 리컬러
+# ============================================================
 def recolor_fill(shape):
     try:
         if shape.fill.type == 1:
@@ -96,41 +78,176 @@ def recolor_line(shape):
         pass
 
 
-def walk_shapes(shapes):
-    for shape in shapes:
-        if shape.shape_type == 6:  # GROUP
+# ============================================================
+# 셰이프의 '배경 밝기' 판별
+# ============================================================
+def luminance(rgb_hex):
+    r = int(rgb_hex[0:2], 16)
+    g = int(rgb_hex[2:4], 16)
+    b = int(rgb_hex[4:6], 16)
+    return 0.299 * r + 0.587 * g + 0.114 * b
+
+
+def shape_own_fill_light(shape):
+    """이 셰이프 자신에 솔리드 fill이 있고 밝은 색이면 True."""
+    try:
+        if shape.fill.type == 1:
+            hex_col = str(shape.fill.fore_color.rgb).upper()
+            return luminance(hex_col) > 170
+    except Exception:
+        pass
+    return None
+
+
+def _bbox(shape):
+    try:
+        x, y = shape.left, shape.top
+        w, h = shape.width, shape.height
+        if x is None or y is None or w is None or h is None:
+            return None
+        return (x, y, x + w, y + h, max(1, w * h))
+    except Exception:
+        return None
+
+
+def text_sits_on_light_block(shape, z_below_shapes):
+    """텍스트 셰이프 위치가 z-order상 아래에 깔린 밝은 fill 셰이프와 50% 이상 겹치는가."""
+    tb = _bbox(shape)
+    if tb is None:
+        return False
+    tx1, ty1, tx2, ty2, tarea = tb
+    for other in z_below_shapes:
+        if other is shape:
+            continue
+        try:
+            if other.fill.type != 1:
+                continue
+            hex_col = str(other.fill.fore_color.rgb).upper()
+            if luminance(hex_col) <= 170:
+                continue
+        except Exception:
+            continue
+        ob = _bbox(other)
+        if ob is None:
+            continue
+        ox1, oy1, ox2, oy2, _ = ob
+        ix = max(0, min(tx2, ox2) - max(tx1, ox1))
+        iy = max(0, min(ty2, oy2) - max(ty1, oy1))
+        if ix * iy / tarea > 0.5:
+            return True
+    return False
+
+
+def decide_text_color(shape, original_hex, z_below):
+    bg_light = shape_own_fill_light(shape)
+    if bg_light is None:
+        # 자기 fill 없음 → z-order상 아래 셰이프 체크
+        if text_sits_on_light_block(shape, z_below):
+            bg_light = True
+        else:
+            bg_light = False
+
+    is_accent = original_hex and original_hex.upper() in ACCENT_TEXT_COLORS
+    if is_accent:
+        return BLACK if bg_light else YELLOW
+    return BLACK if bg_light else WHITE
+
+
+def recolor_text_in_shape(shape, z_below):
+    if not shape.has_text_frame:
+        return
+    for para in shape.text_frame.paragraphs:
+        for run in para.runs:
+            orig = None
             try:
-                walk_shapes(shape.shapes)
+                if run.font.color and run.font.color.type is not None:
+                    orig = str(run.font.color.rgb).upper()
+            except Exception:
+                orig = None
+            color = decide_text_color(shape, orig, z_below)
+            try:
+                run.font.color.rgb = color
             except Exception:
                 pass
-        if shape.has_text_frame:
-            for para in shape.text_frame.paragraphs:
+
+
+# ============================================================
+# 테이블 셀 처리
+# ============================================================
+def recolor_table(shape):
+    if not shape.has_table:
+        return
+    tbl = shape.table
+    for row in tbl.rows:
+        for cell in row.cells:
+            # 셀 fill 리컬러
+            try:
+                if cell.fill.type == 1:
+                    hex_col = str(cell.fill.fore_color.rgb).upper()
+                    if hex_col in FILL_MAP:
+                        cell.fill.fore_color.rgb = FILL_MAP[hex_col]
+            except Exception:
+                pass
+
+            # 셀 배경 밝기로 텍스트 색 결정
+            cell_bg_light = None
+            try:
+                if cell.fill.type == 1:
+                    hex_col = str(cell.fill.fore_color.rgb).upper()
+                    cell_bg_light = luminance(hex_col) > 170
+            except Exception:
+                pass
+
+            text_color = BLACK if cell_bg_light else WHITE
+            for para in cell.text_frame.paragraphs:
                 for run in para.runs:
-                    recolor_text(run)
-        try:
-            recolor_fill(shape)
-        except Exception:
-            pass
-        try:
-            recolor_line(shape)
-        except Exception:
-            pass
-        if shape.has_table:
-            tbl = shape.table
-            for row in tbl.rows:
-                for cell in row.cells:
+                    orig = None
                     try:
-                        if cell.fill.type == 1:
-                            hex_col = str(cell.fill.fore_color.rgb).upper()
-                            if hex_col in FILL_MAP:
-                                cell.fill.fore_color.rgb = FILL_MAP[hex_col]
+                        if run.font.color and run.font.color.type is not None:
+                            orig = str(run.font.color.rgb).upper()
                     except Exception:
                         pass
-                    for para in cell.text_frame.paragraphs:
-                        for run in para.runs:
-                            recolor_text(run)
+                    if orig and orig in ACCENT_TEXT_COLORS and not cell_bg_light:
+                        run.font.color.rgb = YELLOW
+                    else:
+                        try:
+                            run.font.color.rgb = text_color
+                        except Exception:
+                            pass
 
 
+# ============================================================
+# 셰이프 트리 순회 (두 패스: 1) fill/line 전부 리컬러 → 2) 텍스트 리컬러)
+# ============================================================
+def _flatten(shapes):
+    out = []
+    for shape in shapes:
+        if shape.shape_type == 6:
+            try:
+                out.extend(_flatten(shape.shapes))
+                continue
+            except Exception:
+                pass
+        out.append(shape)
+    return out
+
+
+def process_shapes(shapes):
+    flat = _flatten(shapes)
+    # Pass 1: fill/line 리컬러
+    for shape in flat:
+        recolor_fill(shape)
+        recolor_line(shape)
+        recolor_table(shape)
+    # Pass 2: 텍스트 리컬러 (자기 아래 z-order 셰이프 참조)
+    for i, shape in enumerate(flat):
+        z_below = flat[:i]
+        recolor_text_in_shape(shape, z_below)
+
+
+# ============================================================
+# 차트 리컬러
+# ============================================================
 def recolor_chart(shape):
     if not shape.has_chart:
         return
@@ -170,12 +287,10 @@ def recolor_chart(shape):
                     dl.font.size = Pt(11)
                 except Exception:
                     pass
-        # 축 글자 흰색화
         try:
             for ax in (chart.category_axis, chart.value_axis):
                 ax.tick_labels.font.color.rgb = WHITE
                 ax.tick_labels.font.size = Pt(10)
-                ax.format.line.color.rgb = WHITE
         except Exception:
             pass
     except Exception as e:
@@ -183,7 +298,7 @@ def recolor_chart(shape):
 
 
 # ============================================================
-# 배경을 검정으로 설정
+# 배경 검정화
 # ============================================================
 def set_black_background(slide):
     bg = slide.background
@@ -193,7 +308,7 @@ def set_black_background(slide):
 
 
 # ============================================================
-# 셰이프 유틸
+# 이마트 프레임 (좌측 노랑바 + 상단 띠 + 페이지번호)
 # ============================================================
 def add_rect(slide, x, y, w, h, fill):
     shp = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, w, h)
@@ -204,14 +319,7 @@ def add_rect(slide, x, y, w, h, fill):
     return shp
 
 
-def move_to_back(shape):
-    el = shape._element
-    parent = el.getparent()
-    parent.remove(el)
-    parent.insert(2, el)
-
-
-def add_text(slide, x, y, w, h, text, *, size=14, bold=False, color=WHITE,
+def add_text(slide, x, y, w, h, text, *, size=10, bold=True, color=YELLOW,
              align=PP_ALIGN.LEFT):
     tb = slide.shapes.add_textbox(x, y, w, h)
     tf = tb.text_frame
@@ -228,43 +336,23 @@ def add_text(slide, x, y, w, h, text, *, size=14, bold=False, color=WHITE,
     return tb
 
 
-# ============================================================
-# 이마트 프레임 추가 (상단 노랑 헤드라인 + 좌측 옐로우 바)
-# ============================================================
 def add_emart_frame(slide, idx, total, sw, sh):
-    # 좌측 노랑 세로바
-    left_bar = add_rect(slide, 0, 0, Inches(0.08), sh, YELLOW)
-    # 상단 노랑 얇은 띠
-    top_strip = add_rect(slide, 0, 0, sw, Inches(0.08), YELLOW)
-    # 브랜드 식별
-    brand = add_text(
-        slide, Inches(0.3), Inches(0.25), Inches(5), Inches(0.3),
-        "EMART EVERYDAY  ·  사업제안",
-        size=9, bold=True, color=YELLOW, align=PP_ALIGN.LEFT,
-    )
-    # 페이지 번호
-    page = add_text(
-        slide, sw - Inches(1.5), Inches(0.25), Inches(1.2), Inches(0.3),
-        f"{idx:02d} / {total:02d}",
-        size=9, bold=True, color=YELLOW, align=PP_ALIGN.RIGHT,
-    )
+    add_rect(slide, 0, 0, Inches(0.08), sh, YELLOW)     # 좌측 세로바
+    add_rect(slide, 0, 0, sw, Inches(0.08), YELLOW)     # 상단 띠
+    add_text(slide, Inches(0.2), Inches(0.2), Inches(5), Inches(0.3),
+             "EMART EVERYDAY  ·  사업제안", size=9, color=YELLOW)
+    add_text(slide, sw - Inches(1.5), Inches(0.2), Inches(1.2), Inches(0.3),
+             f"{idx:02d} / {total:02d}", size=9, color=YELLOW, align=PP_ALIGN.RIGHT)
 
 
-# ============================================================
-# 표지 특별 스타일
-# ============================================================
 def style_cover(slide, sw, sh):
-    # 상단 두꺼운 노랑 밴드 (인상 주기)
-    band = add_rect(slide, 0, 0, sw, Inches(0.25), YELLOW)
-    # 하단 얇은 노랑 띠
-    bot = add_rect(slide, 0, sh - Inches(0.15), sw, Inches(0.15), YELLOW)
-    # 중앙 포인트: 좌측 커다란 노랑 직사각형 블록
-    block = add_rect(slide, 0, Inches(1.0), Inches(0.4), Inches(3.5), YELLOW)
+    add_rect(slide, 0, 0, sw, Inches(0.25), YELLOW)
+    add_rect(slide, 0, sh - Inches(0.15), sw, Inches(0.15), YELLOW)
 
 
 def style_closing(slide, sw, sh):
-    band_top = add_rect(slide, 0, 0, sw, Inches(0.15), YELLOW)
-    band_bot = add_rect(slide, 0, sh - Inches(0.25), sw, Inches(0.25), YELLOW)
+    add_rect(slide, 0, 0, sw, Inches(0.15), YELLOW)
+    add_rect(slide, 0, sh - Inches(0.25), sw, Inches(0.25), YELLOW)
 
 
 # ============================================================
@@ -278,20 +366,11 @@ def main():
     total = len(prs.slides)
 
     for idx, slide in enumerate(prs.slides, start=1):
-        # 1) 배경 검정화
         set_black_background(slide)
-
-        # 2) 기존 셰이프 리컬러
-        walk_shapes(slide.shapes)
-
-        # 3) 차트 리컬러
+        process_shapes(slide.shapes)
         for shape in list(slide.shapes):
             recolor_chart(shape)
-
-        # 4) 이마트 프레임 (좌측바 + 상단띠 + 페이지번호)
         add_emart_frame(slide, idx, total, sw, sh)
-
-        # 5) 표지·마무리 특별 스타일
         if idx == 1:
             style_cover(slide, sw, sh)
         elif idx == total:
