@@ -41,6 +41,10 @@ EMPLOYEES = [
      "status": "재직", "start_month": 202511, "end_month": None},
 ]
 
+# 직원 마스터 조회 범위 끝 행 — EMPLOYEES 길이 + 신규 추가 여유분(20)
+# 근무기록 수식들은 이 범위를 직원 마스터 조회 대상으로 참조
+MASTER_LAST_ROW = len(EMPLOYEES) + 21  # header row(1) + data rows + 20 buffer
+
 EXCEL_EPOCH = datetime(1899, 12, 30)
 
 # ── Styles ─────────────────────────────────────────────────────────────
@@ -123,17 +127,19 @@ def apply_cell_style(cell, fill=None, fmt=None):
         cell.number_format = fmt
 
 
-def master_lookup_formula(name_ref, date_ref, return_col, master_last_row=30):
+def master_lookup_formula(name_ref, date_ref, return_col, master_last_row=None):
     """
     직원 마스터에서 특정 시점에 활성인 구간을 찾아 지정 컬럼 값을 반환하는 수식.
     - name_ref: 근무자 이름 셀 참조 (예: "B5")
     - date_ref: 날짜 셀 참조 (예: "A5")
     - return_col: 반환할 마스터 컬럼 문자 (예: "B" = 급여유형, "C" = 금액)
-    - master_last_row: 마스터 조회 범위 끝 행 (여유 있게 30)
+    - master_last_row: 마스터 조회 범위 끝 행 (기본값: MASTER_LAST_ROW = len(EMPLOYEES)+21)
 
     매칭 조건: 이름 일치 AND 적용시작월 <= 근무월 AND (적용종료월 공란 또는 >= 근무월)
     근무월 = YEAR*100 + MONTH
     """
+    if master_last_row is None:
+        master_last_row = MASTER_LAST_ROW
     ym = f'(YEAR({date_ref})*100+MONTH({date_ref}))'
     master_a = f"'직원 마스터'!A$2:A${master_last_row}"
     master_f = f"'직원 마스터'!F$2:F${master_last_row}"
