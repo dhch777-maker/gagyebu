@@ -14,8 +14,10 @@ A안 보존형 리컬러: 원본 흰 배경/레이아웃 유지, 파란 계열 �
 import sys
 import shutil
 from io import BytesIO
+from lxml import etree
 from pptx import Presentation
 from pptx.dml.color import RGBColor
+from pptx.oxml.ns import qn
 from pptx.util import Pt
 from PIL import Image
 
@@ -181,6 +183,160 @@ def recolor_chart(shape):
         print(f"  chart warn: {e}")
 
 
+def set_text_outline(run, rgb_hex="151515", width_pt=0.75):
+    """런 텍스트에 검정 아웃라인(stroke) 추가 — 노란 위 흰 글씨 가독성용."""
+    rPr = run._r.get_or_add_rPr()
+    for old in rPr.findall(qn("a:ln")):
+        rPr.remove(old)
+    ln = etree.SubElement(rPr, qn("a:ln"))
+    ln.set("w", str(int(round(width_pt * 12700))))  # 1pt = 12700 EMU
+    solid = etree.SubElement(ln, qn("a:solidFill"))
+    clr = etree.SubElement(solid, qn("a:srgbClr"))
+    clr.set("val", rgb_hex)
+    # CT_TextCharacterProperties 스키마상 a:ln 은 rPr 의 첫 자식
+    rPr.remove(ln)
+    rPr.insert(0, ln)
+
+
+def collect_yellow_bboxes(slide):
+    """슬라이드 내 모든 노란 fill 셰이프의 (shape, bbox) 리스트."""
+    out = []
+    for s in _flatten(slide.shapes):
+        try:
+            if s.fill.type == 1 and _hex(s.fill.fore_color.rgb) == "FFD200":
+                if s.left is None or s.top is None or s.width is None or s.height is None:
+                    continue
+                out.append((s, s.left, s.top, s.left + s.width, s.top + s.height))
+        except Exception:
+            continue
+    return out
+
+
+def _shape_bbox(shape):
+    try:
+        x, y, w, h = shape.left, shape.top, shape.width, shape.height
+        if None in (x, y, w, h):
+            return None
+        return x, y, x + w, y + h, max(1, w * h)
+    except Exception:
+        return None
+
+
+def outline_white_text_on_yellow(slide, yellow_bboxes):
+    """자기 셰이프는 노랑이 아니지만 노랑 bbox와 겹치는(>=50%) 흰 텍스트에 검정 아웃라인."""
+    if not yellow_bboxes:
+        return
+    for shape in _flatten(slide.shapes):
+        if not shape.has_text_frame:
+            continue
+        # 자기 fill 이 노랑이면 이미 다른 규칙이 처리
+        try:
+            if shape.fill.type == 1 and _hex(shape.fill.fore_color.rgb) == "FFD200":
+                continue
+        except Exception:
+            pass
+        bb = _shape_bbox(shape)
+        if bb is None:
+            continue
+        sx1, sy1, sx2, sy2, sarea = bb
+        hit = False
+        for _, yx1, yy1, yx2, yy2 in yellow_bboxes:
+            ix = max(0, min(sx2, yx2) - max(sx1, yx1))
+            iy = max(0, min(sy2, yy2) - max(sy1, yy1))
+            if ix * iy / sarea >= 0.5:
+                hit = True
+                break
+        if not hit:
+            continue
+        for para in shape.text_frame.paragraphs:
+            for run in para.runs:
+                try:
+                    if run.font.color and run.font.color.type is not None:
+                        if _hex(run.font.color.rgb) == "FFFFFF":
+                            set_text_outline(run, "151515", 0.75)
+                except Exception:
+                    pass
+
+
+def find_container(pic, yellow_bboxes):
+    """그림의 중심을 포함하는 가장 작은 노란 셰이프 반환 (혹은 None)."""
+    bb = _shape_bbox(pic)
+    if bb is None:
+        return None
+    sx1, sy1, sx2, sy2, _ = bb
+    cx = (sx1 + sx2) / 2
+    cy = (sy1 + sy2) / 2
+    best = None
+    best_area = None
+    for ys, yx1, yy1, yx2, yy2 in yellow_bboxes:
+        if ys is pic:
+            continue
+        if yx1 <= cx <= yx2 and yy1 <= cy <= yy2:
+            area = (yx2 - yx1) * (yy2 - yy1)
+            if best is None or area < best_area:
+                best = ys
+                best_area = area
+    return best
+
+
+def fit_icon_in_container(pic, container):
+    """
+    아이콘을 컨테이너에 맞춰 리사이즈 + 종횡비 보정 + 중앙 정렬.
+    - 목표 occupy = min(현재 occupy, 0.60) — 이미 여유 있으면 유지, 꽉 차면 줄임
+    - 원본 PNG 종횡비를 유지하면서 컨테이너의 target_occupy 박스 안에 맞춤
+    - 거의 변화 없으면(< 2% 오차) 건드리지 않음
+    """
+    try:
+        im = Image.open(BytesIO(pic.image.blob))
+        iw, ih = im.size
+    except Exception:
+        return False
+    if iw <= 0 or ih <= 0:
+        return False
+    native_ar = iw / ih
+
+    cw, ch = container.width, container.height
+    ccx = container.left + cw / 2
+    ccy = container.top + ch / 2
+
+    cur_w, cur_h = pic.width, pic.height
+    cur_occupy = max(cur_w / cw, cur_h / ch)
+    target_occupy = min(cur_occupy, 0.60)
+
+    # 컨테이너 정사각 기준 target box
+    target_max_w = cw * target_occupy
+    target_max_h = ch * target_occupy
+    # 원본 종횡비 맞게 축약
+    box_ar = target_max_w / target_max_h
+    if native_ar > box_ar:
+        new_w = target_max_w
+        new_h = target_max_w / native_ar
+    else:
+        new_h = target_max_h
+        new_w = target_max_h * native_ar
+
+    # 거의 같으면 skip
+    if (abs(new_w - cur_w) < cur_w * 0.02) and (abs(new_h - cur_h) < cur_h * 0.02):
+        return False
+
+    pic.width = int(round(new_w))
+    pic.height = int(round(new_h))
+    pic.left = int(round(ccx - new_w / 2))
+    pic.top = int(round(ccy - new_h / 2))
+    return True
+
+
+def reposition_icons(slide, yellow_bboxes):
+    """노란 컨테이너를 가진 PICTURE 를 종횡비 복원 + 과밀시 축소."""
+    for shape in _flatten(slide.shapes):
+        if shape.shape_type != 13:  # PICTURE
+            continue
+        container = find_container(shape, yellow_bboxes)
+        if container is None:
+            continue
+        fit_icon_in_container(shape, container)
+
+
 def recolor_png_blue_to_black(blob):
     """
     단색 파란 아이콘(PNG)을 검정으로. 반환: (new_blob, did_change).
@@ -270,6 +426,10 @@ def process_slide(slide):
         recolor_table(shape)
         recolor_chart(shape)
         recolor_blue_text(shape)
+    # 노란 fill 셰이프 bbox 확정 후 후처리
+    yellow_bboxes = collect_yellow_bboxes(slide)
+    outline_white_text_on_yellow(slide, yellow_bboxes)
+    reposition_icons(slide, yellow_bboxes)
 
 
 def main():
