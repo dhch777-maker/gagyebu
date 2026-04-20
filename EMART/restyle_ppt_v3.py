@@ -32,6 +32,10 @@ OUT = "이마트에브리데이_사업제안서_v3_260301.pptx"
 YELLOW = RGBColor(0xFF, 0xD2, 0x00)
 BLACK = RGBColor(0x15, 0x15, 0x15)
 
+# 표지 전용 연노랑 (샛노랑 톤다운)
+COVER_YELLOW_RGB = (0xFF, 0xE8, 0x80)
+COVER_YELLOW = RGBColor(*COVER_YELLOW_RGB)
+
 BLUE_FILLS = {"002B5B", "1F6BBA", "74A9D8"}
 BLUE_LINES = {"002B5B", "1F6BBA", "74A9D8"}
 BORDER_WIDTH = Pt(1.25)
@@ -341,6 +345,82 @@ def fit_icon_in_container(pic, container):
     return True
 
 
+def _interp_rgb(c1, c2, t):
+    return (
+        int(round(c1[0] + (c2[0] - c1[0]) * t)),
+        int(round(c1[1] + (c2[1] - c1[1]) * t)),
+        int(round(c1[2] + (c2[2] - c1[2]) * t)),
+    )
+
+
+def _yellow_gradient(n):
+    """연노랑 → 기본 노랑 → 진한 노랑 n 단계 팔레트. 모두 노랑 계열 유지."""
+    start = (0xFF, 0xF0, 0xA0)   # 연노랑
+    mid = (0xFF, 0xD2, 0x00)     # 기본 노랑
+    end = (0xE6, 0x9E, 0x00)     # 진한 노랑
+    out = []
+    for i in range(n):
+        t = i / (n - 1) if n > 1 else 0.0
+        if t <= 0.5:
+            c = _interp_rgb(start, mid, t * 2)
+        else:
+            c = _interp_rgb(mid, end, (t - 0.5) * 2)
+        out.append(RGBColor(*c))
+    return out
+
+
+ARROW_SHAPE_TYPES = {
+    MSO_SHAPE.RIGHT_ARROW,
+    MSO_SHAPE.LEFT_ARROW,
+    MSO_SHAPE.UP_ARROW,
+    MSO_SHAPE.DOWN_ARROW,
+    MSO_SHAPE.LEFT_RIGHT_ARROW,
+    MSO_SHAPE.PENTAGON,
+    MSO_SHAPE.CHEVRON,
+}
+
+
+def apply_process_gradient(slide):
+    """
+    프로세스 도식 슬라이드(3p, 7p) 전용:
+      - OVAL 셰이프들을 x 좌표 오름차순으로 정렬 → 노랑 그라데이션(연→진)
+      - 화살표 계열 셰이프 fill/line → 검정
+    """
+    ovals, arrows = [], []
+    for s in _flatten(slide.shapes):
+        try:
+            ast = s.auto_shape_type
+        except Exception:
+            continue
+        if ast == MSO_SHAPE.OVAL:
+            ovals.append(s)
+        elif ast in ARROW_SHAPE_TYPES:
+            arrows.append(s)
+
+    ovals.sort(key=lambda s: s.left if s.left is not None else 0)
+    if len(ovals) >= 2:
+        palette = _yellow_gradient(len(ovals))
+        for oval, color in zip(ovals, palette):
+            oval.fill.solid()
+            oval.fill.fore_color.rgb = color
+            try:
+                oval.line.color.rgb = BLACK
+                oval.line.width = Pt(1.25)
+            except Exception:
+                pass
+
+    for arr in arrows:
+        try:
+            arr.fill.solid()
+            arr.fill.fore_color.rgb = BLACK
+        except Exception:
+            pass
+        try:
+            arr.line.color.rgb = BLACK
+        except Exception:
+            pass
+
+
 def reposition_icons(slide, yellow_bboxes):
     """노란 컨테이너를 가진 PICTURE 를 종횡비 복원 + 과밀시 축소."""
     for shape in _flatten(slide.shapes):
@@ -447,29 +527,24 @@ def _duotone(img, dark, light):
     return Image.merge("RGB", (r, g, b))
 
 
-def make_cover_background(src_path, out_path, w_px, h_px):
+def make_cover_background(src_path, out_path, w_px, h_px, light_rgb=(0xFF, 0xD2, 0x00)):
     """
-    표지 우측 배경: 이마트 간판 사진 → 노랑/검정 듀오톤 + 약한 블러 + 좌측 엣지 노랑 페이드.
-    알아볼 수 있는 수준의 약한 블러 (<0.3% of height).
+    표지 우측 배경: 이마트 간판 사진 → 듀오톤(검정↔light_rgb) + 약한 블러 + 좌측 엣지 페이드.
+    light_rgb 를 연노랑으로 주면 전체 톤이 가라앉음.
     """
     img = Image.open(src_path).convert("RGB")
     img = _fit_crop(img, w_px, h_px)
 
-    # 듀오톤 (어두움=검정, 밝음=노랑) — 원본 파랑간판의 파랑은 어두운 톤이라 검정으로,
-    # 노랑 "everyday" 는 그대로 노랑 유지 (브랜드 컬러 일관)
-    img = _duotone(img, (0x10, 0x10, 0x10), (0xFF, 0xD2, 0x00))
-
-    # 약한 블러 (로고 글자 형태는 인식 가능)
+    img = _duotone(img, (0x10, 0x10, 0x10), light_rgb)
     img = img.filter(ImageFilter.GaussianBlur(radius=max(2, int(h_px * 0.0025))))
 
-    # 좌측 20% 영역 → 노랑으로 자연스럽게 페이드 (좌측 노랑 블록과 연결감)
     fade_w = int(w_px * 0.20)
     fade_row = Image.new("L", (w_px, 1), 255)
     for x in range(fade_w):
         fade_row.putpixel((x, 0), int(255 * (x / max(fade_w - 1, 1))))
     fade = fade_row.resize((w_px, h_px), Image.BILINEAR)
-    yellow_bg = Image.new("RGB", (w_px, h_px), (0xFF, 0xD2, 0x00))
-    img = Image.composite(img, yellow_bg, fade)
+    bg = Image.new("RGB", (w_px, h_px), light_rgb)
+    img = Image.composite(img, bg, fade)
 
     img.save(out_path, "PNG")
 
@@ -535,8 +610,8 @@ def style_cover_slide(slide, prs, bg_path):
     def _in(x):  # inches → EMU
         return Emu(int(round(x * 914400)))
 
-    # 1) 좌측 절반 노랑 / 우측 절반 사진 (둘 다 맨 뒤)
-    left_rect = _add_rect(slide, 0, 0, half, sh, YELLOW)
+    # 1) 좌측 절반 연노랑 / 우측 절반 사진 (둘 다 맨 뒤)
+    left_rect = _add_rect(slide, 0, 0, half, sh, COVER_YELLOW)
     move_shape_to_back(left_rect)
     pic = slide.shapes.add_picture(bg_path, half, 0, sw - half, sh)
     move_shape_to_back(pic)
@@ -546,19 +621,19 @@ def style_cover_slide(slide, prs, bg_path):
     _add_rect(slide, 0, 0, sw, top_bar_h, BLACK)
     _add_rect(slide, 0, sh - _in(0.08), sw, _in(0.08), BLACK)
 
-    # 3) 상단 바 좌측: 메타 레이블 (노랑)
+    # 3) 상단 바 좌측: 메타 레이블 (연노랑)
     _add_textbox(
         slide,
         _in(0.40), _in(0.08), _in(7.0), _in(0.25),
         "EMART EVERYDAY   ·   PROPOSAL   ·   2026.03",
-        size_pt=10, bold=True, color=YELLOW, font_name="Consolas",
+        size_pt=10, bold=True, color=COVER_YELLOW, font_name="Consolas",
     )
 
-    # 4) 상단 바 우측: NO.01 (노랑)
+    # 4) 상단 바 우측: NO.01 (연노랑)
     _add_textbox(
         slide,
         _in(7.6), _in(0.06), _in(2.0), _in(0.28),
-        "NO.01 / 01", size_pt=12, bold=True, color=YELLOW,
+        "NO.01 / 01", size_pt=12, bold=True, color=COVER_YELLOW,
         align=PP_ALIGN.RIGHT, font_name="Consolas",
     )
 
@@ -646,18 +721,24 @@ def main():
     shutil.copy(SRC, OUT)
     prs = Presentation(OUT)
 
-    # 표지: 사용자가 제공한 간판 클로즈업 사진을 듀오톤으로 가공해 우측 배경
+    # 표지: 사용자가 제공한 간판 클로즈업 사진을 연노랑 듀오톤으로 가공해 우측 배경
     here = os.path.dirname(os.path.abspath(__file__))
     src_photo = os.path.join(here, "이마트 간판.jpg")
     bg_path = os.path.join(here, "_cover_bg.png")
     sw_in = prs.slide_width / 914400
     sh_in = prs.slide_height / 914400
-    make_cover_background(src_photo, bg_path, int(sw_in / 2 * 300), int(sh_in * 300))
+    make_cover_background(
+        src_photo, bg_path,
+        int(sw_in / 2 * 300), int(sh_in * 300),
+        light_rgb=COVER_YELLOW_RGB,
+    )
 
     for idx, slide in enumerate(prs.slides, start=1):
         process_slide(slide)
         if idx == 1:
             style_cover_slide(slide, prs, bg_path)
+        if idx in (3, 7):
+            apply_process_gradient(slide)
     recolor_all_picture_parts(prs)
     prs.save(OUT)
     print(f"SAVED: {OUT}")
