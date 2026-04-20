@@ -11,15 +11,17 @@ A안 보존형 리컬러: 원본 흰 배경/레이아웃 유지, 파란 계열 �
 - 텍스트 원본 유지. 단, 파란 블록 안에 있던 흰 텍스트만 검정으로 교체(가독성)
 - 배경/프레임/페이지번호 변경 없음
 """
+import os
 import sys
 import shutil
 from io import BytesIO
 from lxml import etree
 from pptx import Presentation
 from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
 from pptx.oxml.ns import qn
-from pptx.util import Pt
-from PIL import Image
+from pptx.util import Emu, Pt
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -415,6 +417,110 @@ def recolor_all_picture_parts(prs):
     print(f"  icons: {changed}/{total} PNG parts recolored")
 
 
+def make_signboard_png(path, w_px, h_px):
+    """
+    '이마트 간판을 확대·블러 처리한 느낌'의 배경 이미지 생성.
+    - 위에서 아래로 살짝 어두워지는 노랑 그라디언트
+    - 크게 쓰인 '이마트' / 'EVERYDAY' (Malgun Gothic Bold, 검정)
+    - 강한 가우시안 블러로 디테일 흐릿하게
+    """
+    # 1) 그라디언트 노랑 베이스 (1px 열을 리사이즈)
+    col = Image.new("RGB", (1, h_px))
+    for y in range(h_px):
+        f = 1.0 - 0.20 * (y / max(h_px - 1, 1))
+        col.putpixel((0, y), (int(0xFF * f), int(0xD2 * f), int(0x10 * f)))
+    img = col.resize((w_px, h_px), Image.NEAREST)
+
+    # 2) 큰 텍스트 그려 넣기 (나중에 블러)
+    draw = ImageDraw.Draw(img)
+    try:
+        font_main = ImageFont.truetype("C:/Windows/Fonts/malgunbd.ttf", size=int(h_px * 0.42))
+        font_sub = ImageFont.truetype("C:/Windows/Fonts/malgunbd.ttf", size=int(h_px * 0.13))
+    except Exception:
+        font_main = ImageFont.load_default()
+        font_sub = ImageFont.load_default()
+
+    def _draw_centered(text, font, y_frac):
+        bb = draw.textbbox((0, 0), text, font=font)
+        tw = bb[2] - bb[0]
+        x = (w_px - tw) / 2 - bb[0]
+        y = h_px * y_frac - bb[1]
+        draw.text((x, y), text, fill=(0x15, 0x15, 0x15), font=font)
+
+    _draw_centered("이마트", font_main, 0.20)
+    _draw_centered("EVERYDAY", font_sub, 0.68)
+
+    # 3) 강한 블러
+    img = img.filter(ImageFilter.GaussianBlur(radius=int(h_px * 0.035)))
+
+    img.save(path, "PNG")
+
+
+def move_shape_to_back(shape):
+    """해당 셰이프 요소를 spTree 맨 앞으로 옮겨서 z-order 최하단으로."""
+    sp = shape._element
+    spTree = sp.getparent()
+    spTree.remove(sp)
+    # spTree 의 첫 두 자식(nvGrpSpPr, grpSpPr) 뒤, 즉 인덱스 2 위치에 삽입
+    spTree.insert(2, sp)
+
+
+def style_cover_slide(slide, prs, sign_path):
+    """
+    표지(슬라이드 1)에 좌측 노랑 블록 + 우측 간판-느낌 이미지 합성.
+    기존 텍스트는 좌측 노랑 위로 배치하고 검정 볼드로.
+    """
+    sw = prs.slide_width
+    sh = prs.slide_height
+    half = sw // 2
+
+    # 좌측 노랑 사각형
+    rect = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, half, sh)
+    rect.fill.solid()
+    rect.fill.fore_color.rgb = YELLOW
+    rect.line.fill.background()
+    rect.shadow.inherit = False
+    move_shape_to_back(rect)
+
+    # 우측 간판 이미지
+    pic = slide.shapes.add_picture(sign_path, half, 0, sw - half, sh)
+    move_shape_to_back(pic)
+
+    # 기존 텍스트 재배치/스타일
+    for shape in list(slide.shapes):
+        if not shape.has_text_frame:
+            continue
+        name = shape.name
+        if name == "Text 1":
+            # 타이틀/서브타이틀: 좌측 절반 안으로
+            shape.left = Emu(int(0.45 * 914400))
+            shape.top = Emu(int(1.40 * 914400))
+            shape.width = Emu(int(4.3 * 914400))
+            shape.height = Emu(int(2.8 * 914400))
+            for i, para in enumerate(shape.text_frame.paragraphs):
+                for run in para.runs:
+                    strip_text_outline(run)
+                    run.font.color.rgb = BLACK
+                    run.font.bold = True
+                    if i == 0:
+                        run.font.size = Pt(30)
+                    else:
+                        run.font.size = Pt(16)
+                        run.font.bold = False
+        elif name in ("Text 2", "Text 3", "Text 4"):
+            # 하단 정보: 전부 좌측 절반에 일렬 배치
+            idx = {"Text 2": 0, "Text 3": 1, "Text 4": 2}[name]
+            shape.left = Emu(int(0.45 * 914400))
+            shape.top = Emu(int((4.65 + 0.28 * idx) * 914400))
+            shape.width = Emu(int(4.3 * 914400))
+            shape.height = Emu(int(0.30 * 914400))
+            for para in shape.text_frame.paragraphs:
+                for run in para.runs:
+                    strip_text_outline(run)
+                    run.font.color.rgb = BLACK
+                    run.font.size = Pt(11)
+
+
 def _flatten(shapes):
     out = []
     for shape in shapes:
@@ -447,8 +553,17 @@ def process_slide(slide):
 def main():
     shutil.copy(SRC, OUT)
     prs = Presentation(OUT)
+
+    # 표지 간판 이미지 미리 생성 (물리적 픽셀 기준 약 300dpi)
+    sign_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_cover_sign.png")
+    sw_in = prs.slide_width / 914400
+    sh_in = prs.slide_height / 914400
+    make_signboard_png(sign_path, int(sw_in / 2 * 300), int(sh_in * 300))
+
     for idx, slide in enumerate(prs.slides, start=1):
         process_slide(slide)
+        if idx == 1:
+            style_cover_slide(slide, prs, sign_path)
     recolor_all_picture_parts(prs)
     prs.save(OUT)
     print(f"SAVED: {OUT}")
