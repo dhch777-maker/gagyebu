@@ -63,7 +63,10 @@ Public Sub RefreshSummary()
     Dim d1 As Date: d1 = DateSerial(yr, mo, 1)
     Dim d2 As Date: d2 = DateSerial(yr, mo + 1, 0)
 
-    ' 기존 데이터·합계 영역 초기화 (B4:I60, 서식 유지, 값만 삭제)
+    ' 기존 데이터·합계 영역 초기화 (병합 해제 + 값 삭제 + 서식 리셋)
+    On Error Resume Next
+    wsSum.Range("B4:I60").UnMerge
+    On Error GoTo 0
     wsSum.Range("B4:I60").ClearContents
     wsSum.Range("B4:I60").Interior.ColorIndex = xlNone
     wsSum.Range("B4:I60").Borders.LineStyle = xlNone
@@ -83,9 +86,11 @@ Public Sub RefreshSummary()
         Dim mStart As Variant, mEnd As Variant
         mStart = wsMaster.Cells(mRow, 6).Value
         mEnd = wsMaster.Cells(mRow, 7).Value
-        If Not IsNumeric(mStart) Then GoTo NextIter
+        If IsEmpty(mStart) Or Not IsNumeric(mStart) Then GoTo NextIter
         If CLng(mStart) > sm Then GoTo NextIter
-        If IsNumeric(mEnd) Then
+        ' mEnd가 빈 셀이면 "현재까지" 의미 — skip 조건 검사 안 함
+        ' 주의: IsNumeric(Empty)=True 이므로 IsEmpty 먼저 확인 필요
+        If Not IsEmpty(mEnd) And IsNumeric(mEnd) Then
             If CLng(mEnd) < sm Then GoTo NextIter
         End If
 
@@ -268,10 +273,9 @@ def build_summary_sheet_v3(wb):
         ws.cell(row=3, column=i, value=h)
     apply_header_style(ws, 3, 9)
 
-    # 안내 메시지
-    ws.cell(row=4, column=2, value="※ B1 월 선택 시 자동 표시")
-    ws.cell(row=4, column=2).font = Font(italic=True, color="888888")
-    ws.merge_cells(start_row=4, start_column=2, end_row=4, end_column=9)
+    # 안내 메시지 (병합 없이 K1에만 배치 — 데이터 영역 침범 금지)
+    ws.cell(row=2, column=2, value="※ B1 월 선택 시 급여 요약 자동 갱신됨")
+    ws.cell(row=2, column=2).font = Font(italic=True, color="888888")
 
     return ws
 
