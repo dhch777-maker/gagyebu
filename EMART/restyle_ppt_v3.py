@@ -13,9 +13,11 @@ A안 보존형 리컬러: 원본 흰 배경/레이아웃 유지, 파란 계열 �
 """
 import sys
 import shutil
+from io import BytesIO
 from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.util import Pt
+from PIL import Image
 
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -179,6 +181,72 @@ def recolor_chart(shape):
         print(f"  chart warn: {e}")
 
 
+def recolor_png_blue_to_black(blob):
+    """
+    단색 파란 아이콘(PNG)을 검정으로. 반환: (new_blob, did_change).
+    사진 등 복합 이미지는 가드로 스킵:
+      - 파란 픽셀 비율이 5% 이상
+      - 파랑/투명이 아닌 다른 색 픽셀이 5% 미만
+    안티에일리어싱된 반투명 파랑 가장자리까지 포함해 RGB만 검정으로 치환,
+    알파는 그대로 유지.
+    """
+    try:
+        im = Image.open(BytesIO(blob))
+    except Exception:
+        return blob, False
+    if im.mode != "RGBA":
+        try:
+            im = im.convert("RGBA")
+        except Exception:
+            return blob, False
+
+    pixels = list(im.getdata())
+    total = len(pixels)
+    if total == 0:
+        return blob, False
+
+    blue = other = 0
+    for r, g, b, a in pixels:
+        if a < 10:
+            continue
+        if b >= 80 and b > r + 20 and b > g + 10:
+            blue += 1
+        else:
+            other += 1
+
+    if blue * 100 < 5 * total:  # 파란 비율 5% 미만이면 아이콘 아님
+        return blob, False
+    if other * 100 >= 5 * total:  # 사진/복합 이미지
+        return blob, False
+
+    new_pixels = []
+    for r, g, b, a in pixels:
+        if a >= 10 and b >= 80 and b > r + 20 and b > g + 10:
+            new_pixels.append((0x15, 0x15, 0x15, a))
+        else:
+            new_pixels.append((r, g, b, a))
+    im.putdata(new_pixels)
+    buf = BytesIO()
+    im.save(buf, format="PNG")
+    return buf.getvalue(), True
+
+
+def recolor_all_picture_parts(prs):
+    """프레젠테이션 내부 모든 image part를 순회하며 파란 아이콘을 검정화."""
+    changed = 0
+    total = 0
+    for part in prs.part.package.iter_parts():
+        ct = getattr(part, "content_type", "") or ""
+        if not ct.startswith("image/png"):
+            continue
+        total += 1
+        new_blob, did = recolor_png_blue_to_black(part.blob)
+        if did:
+            part._blob = new_blob
+            changed += 1
+    print(f"  icons: {changed}/{total} PNG parts recolored")
+
+
 def _flatten(shapes):
     out = []
     for shape in shapes:
@@ -209,6 +277,7 @@ def main():
     prs = Presentation(OUT)
     for idx, slide in enumerate(prs.slides, start=1):
         process_slide(slide)
+    recolor_all_picture_parts(prs)
     prs.save(OUT)
     print(f"SAVED: {OUT}")
     print(f"SLIDES: {len(prs.slides)}")
