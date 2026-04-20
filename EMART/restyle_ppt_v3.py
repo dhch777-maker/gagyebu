@@ -30,6 +30,19 @@ BLUE_LINES = {"002B5B", "1F6BBA", "74A9D8"}
 BORDER_WIDTH = Pt(1.25)
 
 
+def is_blueish(hx):
+    """파랑 우위 색 판정 (해석 못 한 파란 계열 텍스트까지 잡기 위함)."""
+    if not hx or len(hx) != 6:
+        return False
+    try:
+        r = int(hx[0:2], 16); g = int(hx[2:4], 16); b = int(hx[4:6], 16)
+    except Exception:
+        return False
+    if b < 80:
+        return False
+    return b > r + 20 and b > g + 10
+
+
 def _hex(rgb):
     return str(rgb).upper() if rgb is not None else None
 
@@ -88,6 +101,20 @@ def recolor_text_on_yellow_block(shape):
                 pass
 
 
+def recolor_blue_text(shape):
+    """파란 계열 텍스트 → 검정 (셰이프 전체 대상, 블록 바깥 포함)."""
+    if not shape.has_text_frame:
+        return
+    for para in shape.text_frame.paragraphs:
+        for run in para.runs:
+            try:
+                if run.font.color and run.font.color.type is not None:
+                    if is_blueish(_hex(run.font.color.rgb)):
+                        run.font.color.rgb = BLACK
+            except Exception:
+                pass
+
+
 def recolor_table(shape):
     if not shape.has_table:
         return
@@ -102,16 +129,20 @@ def recolor_table(shape):
                     changed = True
             except Exception:
                 pass
-            # 가독성: 이 셀이 파랑이었다면 흰 텍스트 → 검정
-            if changed:
-                for para in cell.text_frame.paragraphs:
-                    for run in para.runs:
-                        try:
-                            if run.font.color and run.font.color.type is not None:
-                                if _hex(run.font.color.rgb) == "FFFFFF":
-                                    run.font.color.rgb = BLACK
-                        except Exception:
-                            pass
+            # 셀 안 텍스트 정리:
+            #   - 이 셀이 파랑이었다면 흰 텍스트 → 검정 (가독성)
+            #   - 파란 계열 텍스트 → 검정 (셀 배경과 무관)
+            for para in cell.text_frame.paragraphs:
+                for run in para.runs:
+                    try:
+                        if run.font.color and run.font.color.type is not None:
+                            hx = _hex(run.font.color.rgb)
+                            if changed and hx == "FFFFFF":
+                                run.font.color.rgb = BLACK
+                            elif is_blueish(hx):
+                                run.font.color.rgb = BLACK
+                    except Exception:
+                        pass
 
 
 def recolor_chart(shape):
@@ -170,6 +201,7 @@ def process_slide(slide):
         recolor_line_only(shape)
         recolor_table(shape)
         recolor_chart(shape)
+        recolor_blue_text(shape)
 
 
 def main():
