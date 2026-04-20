@@ -418,31 +418,59 @@ def recolor_all_picture_parts(prs):
     print(f"  icons: {changed}/{total} PNG parts recolored")
 
 
-def make_cover_background(src_path, out_path, w_px, h_px):
-    """
-    사용자 제공 이마트 에브리데이 전경 사진을 표지 우측 배경으로 가공.
-    - 중앙 fit-crop 으로 타겟 비율에 맞춤
-    - 살짝 블러 (형태 알아볼 수 있을 정도)
-    """
-    img = Image.open(src_path).convert("RGB")
+def _fit_crop(img, w_px, h_px):
     sw, sh = img.size
     tgt_ar = w_px / h_px
     src_ar = sw / sh
     if src_ar >= tgt_ar:
-        # 소스가 더 가로 긴 → 세로 맞추고 좌우 크롭
         scale = h_px / sh
         new_w = int(round(sw * scale))
         img = img.resize((new_w, h_px), Image.LANCZOS)
         left = (new_w - w_px) // 2
-        img = img.crop((left, 0, left + w_px, h_px))
+        return img.crop((left, 0, left + w_px, h_px))
     else:
-        # 소스가 더 세로 긴 → 가로 맞추고 상하 크롭
         scale = w_px / sw
         new_h = int(round(sh * scale))
         img = img.resize((w_px, new_h), Image.LANCZOS)
         top = (new_h - h_px) // 2
-        img = img.crop((0, top, w_px, top + h_px))
-    img = img.filter(ImageFilter.GaussianBlur(radius=max(10, int(h_px * 0.010))))
+        return img.crop((0, top, w_px, top + h_px))
+
+
+def _duotone(img, dark, light):
+    gray = img.convert("L")
+    lut_r = [int(dark[0] + (light[0] - dark[0]) * i / 255) for i in range(256)]
+    lut_g = [int(dark[1] + (light[1] - dark[1]) * i / 255) for i in range(256)]
+    lut_b = [int(dark[2] + (light[2] - dark[2]) * i / 255) for i in range(256)]
+    r = gray.point(lut_r)
+    g = gray.point(lut_g)
+    b = gray.point(lut_b)
+    return Image.merge("RGB", (r, g, b))
+
+
+def make_cover_background(src_path, out_path, w_px, h_px):
+    """
+    표지 우측 배경: 이마트 간판 사진 → 노랑/검정 듀오톤 + 약한 블러 + 좌측 엣지 노랑 페이드.
+    알아볼 수 있는 수준의 약한 블러 (<0.3% of height).
+    """
+    img = Image.open(src_path).convert("RGB")
+    img = _fit_crop(img, w_px, h_px)
+
+    # 듀오톤 (어두움=검정, 밝음=노랑) — 원본 파랑간판의 파랑은 어두운 톤이라 검정으로,
+    # 노랑 "everyday" 는 그대로 노랑 유지 (브랜드 컬러 일관)
+    img = _duotone(img, (0x10, 0x10, 0x10), (0xFF, 0xD2, 0x00))
+
+    # 약한 블러 (로고 글자 형태는 인식 가능)
+    img = img.filter(ImageFilter.GaussianBlur(radius=max(2, int(h_px * 0.0025))))
+
+    # 좌측 20% 영역 → 노랑으로 자연스럽게 페이드 (좌측 노랑 블록과 연결감)
+    fade_w = int(w_px * 0.20)
+    fade_row = Image.new("L", (w_px, 1), 255)
+    for x in range(fade_w):
+        fade_row.putpixel((x, 0), int(255 * (x / max(fade_w - 1, 1))))
+    fade = fade_row.resize((w_px, h_px), Image.BILINEAR)
+    yellow_bg = Image.new("RGB", (w_px, h_px), (0xFF, 0xD2, 0x00))
+    img = Image.composite(img, yellow_bg, fade)
+
     img.save(out_path, "PNG")
 
 
@@ -455,58 +483,134 @@ def move_shape_to_back(shape):
     spTree.insert(2, sp)
 
 
+def _add_rect(slide, x, y, w, h, color):
+    shp = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, w, h)
+    shp.fill.solid()
+    shp.fill.fore_color.rgb = color
+    shp.line.fill.background()
+    shp.shadow.inherit = False
+    return shp
+
+
+def _add_textbox(slide, x, y, w, h, text, *, size_pt, bold=False,
+                 color=None, align=None, font_name=None):
+    from pptx.enum.text import PP_ALIGN
+    tb = slide.shapes.add_textbox(x, y, w, h)
+    tf = tb.text_frame
+    tf.auto_size = MSO_AUTO_SIZE.NONE
+    tf.word_wrap = True
+    tf.margin_left = Emu(0)
+    tf.margin_right = Emu(0)
+    tf.margin_top = Emu(0)
+    tf.margin_bottom = Emu(0)
+    p = tf.paragraphs[0]
+    if align is not None:
+        p.alignment = align
+    r = p.add_run()
+    r.text = text
+    r.font.size = Pt(size_pt)
+    r.font.bold = bold
+    if color is not None:
+        r.font.color.rgb = color
+    if font_name:
+        r.font.name = font_name
+    return tb
+
+
 def style_cover_slide(slide, prs, bg_path):
     """
-    표지(슬라이드 1): 좌측 절반 노랑 + 우측 절반 사용자 제공 사진(블러).
-    타이틀은 한 줄 유지(20pt 볼드), 서브타이틀 14pt.
+    에디토리얼/브루탈리즘 스타일 표지:
+    - 좌측 절반 노랑 솔리드 / 우측 절반 간판 듀오톤(브랜드 컬러 유지) + 좌측 페이드
+    - 상·하단 얇은 검정 바 (strong grid)
+    - 좌상단 작은 메타 레이블, 우상단 대형 "NO.01"
+    - 중앙 좌측에 대형 타이틀 한 줄 + 서브타이틀
+    - 좌하단 얇은 구분선 + 3줄 메타 정보
     """
+    from pptx.enum.text import PP_ALIGN
+
     sw = prs.slide_width
     sh = prs.slide_height
     half = sw // 2
 
-    rect = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, half, sh)
-    rect.fill.solid()
-    rect.fill.fore_color.rgb = YELLOW
-    rect.line.fill.background()
-    rect.shadow.inherit = False
-    move_shape_to_back(rect)
+    def _in(x):  # inches → EMU
+        return Emu(int(round(x * 914400)))
 
+    # 1) 좌측 절반 노랑 / 우측 절반 사진 (둘 다 맨 뒤)
+    left_rect = _add_rect(slide, 0, 0, half, sh, YELLOW)
+    move_shape_to_back(left_rect)
     pic = slide.shapes.add_picture(bg_path, half, 0, sw - half, sh)
     move_shape_to_back(pic)
 
+    # 2) 상단 두꺼운 검정 바 + 하단 얇은 검정 바
+    top_bar_h = _in(0.38)
+    _add_rect(slide, 0, 0, sw, top_bar_h, BLACK)
+    _add_rect(slide, 0, sh - _in(0.08), sw, _in(0.08), BLACK)
+
+    # 3) 상단 바 좌측: 메타 레이블 (노랑)
+    _add_textbox(
+        slide,
+        _in(0.40), _in(0.08), _in(7.0), _in(0.25),
+        "EMART EVERYDAY   ·   PROPOSAL   ·   2026.03",
+        size_pt=10, bold=True, color=YELLOW, font_name="Consolas",
+    )
+
+    # 4) 상단 바 우측: NO.01 (노랑)
+    _add_textbox(
+        slide,
+        _in(7.6), _in(0.06), _in(2.0), _in(0.28),
+        "NO.01 / 01", size_pt=12, bold=True, color=YELLOW,
+        align=PP_ALIGN.RIGHT, font_name="Consolas",
+    )
+
+    # 5) 좌측 중앙 가로 포인트 라인
+    _add_rect(slide, _in(0.42), _in(1.75), _in(0.6), _in(0.04), BLACK)
+
+    # 6) 기존 Text 1~4 재스타일링
     for shape in list(slide.shapes):
         if not shape.has_text_frame:
             continue
         name = shape.name
         if name == "Text 1":
-            shape.left = Emu(int(0.35 * 914400))
-            shape.top = Emu(int(1.40 * 914400))
-            shape.width = Emu(int(4.6 * 914400))
-            shape.height = Emu(int(2.8 * 914400))
+            shape.left = _in(0.40)
+            shape.top = _in(2.00)
+            shape.width = _in(4.50)
+            shape.height = _in(2.40)
             tf = shape.text_frame
             tf.auto_size = MSO_AUTO_SIZE.NONE
             tf.word_wrap = True
+            tf.margin_left = Emu(0)
+            tf.margin_right = Emu(0)
+            tf.margin_top = Emu(0)
+            tf.margin_bottom = Emu(0)
             for i, para in enumerate(tf.paragraphs):
                 for run in para.runs:
                     strip_text_outline(run)
                     run.font.color.rgb = BLACK
                     if i == 0:
                         run.font.bold = True
-                        run.font.size = Pt(20)
+                        run.font.size = Pt(26)
                     else:
                         run.font.bold = False
-                        run.font.size = Pt(13)
+                        run.font.size = Pt(12)
         elif name in ("Text 2", "Text 3", "Text 4"):
             idx = {"Text 2": 0, "Text 3": 1, "Text 4": 2}[name]
-            shape.left = Emu(int(0.35 * 914400))
-            shape.top = Emu(int((4.70 + 0.28 * idx) * 914400))
-            shape.width = Emu(int(4.6 * 914400))
-            shape.height = Emu(int(0.28 * 914400))
-            for para in shape.text_frame.paragraphs:
+            shape.left = _in(0.40)
+            shape.top = _in(4.75 + 0.23 * idx)
+            shape.width = _in(5.00)
+            shape.height = _in(0.22)
+            tf = shape.text_frame
+            tf.margin_left = Emu(0)
+            tf.margin_right = Emu(0)
+            tf.margin_top = Emu(0)
+            tf.margin_bottom = Emu(0)
+            for para in tf.paragraphs:
                 for run in para.runs:
                     strip_text_outline(run)
                     run.font.color.rgb = BLACK
-                    run.font.size = Pt(11)
+                    run.font.size = Pt(10)
+
+    # 7) 하단 메타 위 얇은 구분선
+    _add_rect(slide, _in(0.42), _in(4.60), _in(0.8), _in(0.03), BLACK)
 
 
 def _flatten(shapes):
@@ -542,9 +646,9 @@ def main():
     shutil.copy(SRC, OUT)
     prs = Presentation(OUT)
 
-    # 표지: 사용자가 폴더에 넣은 전경 사진을 우측 배경용으로 가공
+    # 표지: 사용자가 제공한 간판 클로즈업 사진을 듀오톤으로 가공해 우측 배경
     here = os.path.dirname(os.path.abspath(__file__))
-    src_photo = os.path.join(here, "이마트 사진.png")
+    src_photo = os.path.join(here, "이마트 간판.jpg")
     bg_path = os.path.join(here, "_cover_bg.png")
     sw_in = prs.slide_width / 914400
     sh_in = prs.slide_height / 914400
