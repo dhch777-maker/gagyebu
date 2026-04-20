@@ -222,14 +222,25 @@ def _shape_bbox(shape):
         return None
 
 
-def outline_white_text_on_yellow(slide, yellow_bboxes):
-    """자기 셰이프는 노랑이 아니지만 노랑 bbox와 겹치는(>=50%) 흰 텍스트에 검정 아웃라인."""
+def strip_text_outline(run):
+    """기존에 들어갔던 a:ln 아웃라인 제거."""
+    rPr = run._r.find(qn("a:rPr"))
+    if rPr is None:
+        return
+    for old in rPr.findall(qn("a:ln")):
+        rPr.remove(old)
+
+
+def blacken_white_text_on_yellow(slide, yellow_bboxes):
+    """
+    노랑 bbox 와 >=50% 겹치는 셰이프(자기 fill 노랑 제외) 안의 흰 텍스트 → 검정.
+    과거에 들어간 아웃라인이 있으면 제거.
+    """
     if not yellow_bboxes:
         return
     for shape in _flatten(slide.shapes):
         if not shape.has_text_frame:
             continue
-        # 자기 fill 이 노랑이면 이미 다른 규칙이 처리
         try:
             if shape.fill.type == 1 and _hex(shape.fill.fore_color.rgb) == "FFD200":
                 continue
@@ -250,10 +261,11 @@ def outline_white_text_on_yellow(slide, yellow_bboxes):
             continue
         for para in shape.text_frame.paragraphs:
             for run in para.runs:
+                strip_text_outline(run)
                 try:
                     if run.font.color and run.font.color.type is not None:
                         if _hex(run.font.color.rgb) == "FFFFFF":
-                            set_text_outline(run, "151515", 0.75)
+                            run.font.color.rgb = BLACK
                 except Exception:
                     pass
 
@@ -428,7 +440,7 @@ def process_slide(slide):
         recolor_blue_text(shape)
     # 노란 fill 셰이프 bbox 확정 후 후처리
     yellow_bboxes = collect_yellow_bboxes(slide)
-    outline_white_text_on_yellow(slide, yellow_bboxes)
+    blacken_white_text_on_yellow(slide, yellow_bboxes)
     reposition_icons(slide, yellow_bboxes)
 
 
