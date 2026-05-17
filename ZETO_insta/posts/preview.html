@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><title>ZETO Insta · Grid Preview</title>
+<style>
+  body { margin: 0; padding: 32px; background: #f4f1ea; font-family: ui-sans-serif, "Noto Sans KR", sans-serif; }
+  .frame { max-width: 1080px; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 20px 60px rgba(0,0,0,.12); padding: 32px; }
+  h1 { margin: 0 0 4px; font-size: 22px; letter-spacing: -0.01em; }
+  p.sub { margin: 0 0 24px; color: #666; font-size: 13px; letter-spacing: .04em; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #e6e1d4; padding: 4px; border-radius: 6px; }
+  .cell { aspect-ratio: 1/1; background: #ddd; position: relative; overflow: hidden; }
+  .cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .cell .miss { position:absolute; inset:0; display:grid; place-items:center; font-size: 11px; color: #999; }
+  .legend { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 16px; font-size: 11px; color: #666; }
+  .legend div { padding: 6px 4px; letter-spacing: .04em; }
+</style>
+</head><body>
+<div class="frame">
+  <h1>ZETO · 인스타 그리드 미리보기</h1>
+  <p class="sub">9장(3×3) — 좌→우, 위→아래 흐름</p>
+  <div class="grid" id="grid"></div>
+  <div class="legend" id="legend"></div>
+</div>
+<script>
+  const slots = [
+    ["01-wordmark",     "01 워드마크"],
+    ["02-slogan",       "02 슬로건"],
+    ["03-why",          "03 Why (캐러셀)"],
+    ["04-keyword-1",    "04 DRAWING (라임)"],
+    ["05-curriculum-01","05 Step 01 (캐러셀)"],
+    ["06-keyword-2",    "06 색의 언어"],
+    ["07-space",        "07 Studio (오렌지)"],
+    ["08-opening",      "08 OPENING"],
+    ["09-cta",          "09 CTA (아이보리)"],
+  ];
+  const grid = document.getElementById("grid");
+  const legend = document.getElementById("legend");
+  for (const [file, label] of slots) {
+    const cell = document.createElement("div"); cell.className = "cell";
+    const img = document.createElement("img");
+    img.src = `output/${file}.png`;
+    img.alt = label;
+    img.onerror = () => { cell.innerHTML = `<div class="miss">${file}.png<br/>(아직 캡처 안됨)</div>`; };
+    cell.appendChild(img);
+    grid.appendChild(cell);
+    const l = document.createElement("div"); l.textContent = label; legend.appendChild(l);
+  }
+</script>
+</body></html>
