@@ -1,0 +1,60 @@
+/* 1. 코너 십자 */
+.cross { position: absolute; width: 14px; height: 14px; border: 1px solid rgba(244,241,234,.35); z-index: 4; }
+.cross--dark { border-color: rgba(11,11,11,.35); }
+.cross.tl { top: var(--pad-corner); left: var(--pad-corner); border-right: none; border-bottom: none; }
+.cross.tr { top: var(--pad-corner); right: var(--pad-corner); border-left: none; border-bottom: none; }
+.cross.bl { bottom: var(--pad-corner); left: var(--pad-corner); border-right: none; border-top: none; }
+.cross.br { bottom: var(--pad-corner); right: var(--pad-corner); border-left: none; border-top: none; }
+
+/* 2. 상단/하단 메타 라인 */
+.meta {
+  position: absolute; left: var(--pad-outer); right: var(--pad-outer);
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-sans); font-size: 10px; letter-spacing: .22em;
+  text-transform: uppercase; color: rgba(244,241,234,.65); font-weight: 500;
+  z-index: 4;
+}
+.meta--dark { color: rgba(11,11,11,.65); }
+.meta.top { top: 22px; }
+.meta.bot { bottom: 22px; }
+.meta .with-dot { display: flex; align-items: center; gap: 8px; }
+
+/* 3. 라임 글로우 도트 */
+.dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent-lime); box-shadow: 0 0 12px var(--accent-lime);
+}
+
+/* 4. 세로 슬러그 (좌·우 90도) */
+.slug {
+  position: absolute; top: 50%;
+  font-family: var(--font-sans); font-size: 9px; letter-spacing: .35em;
+  text-transform: uppercase; color: rgba(244,241,234,.5); white-space: nowrap;
+  z-index: 4;
+}
+.slug--dark { color: rgba(11,11,11,.5); }
+.slug.left  { left: 22px;  transform: translateY(-50%) rotate(-90deg); transform-origin: left center; }
+.slug.right { right: 22px; transform: translateY(-50%) rotate(90deg);  transform-origin: right center; }
+
+/* 5. SVG 노이즈 텍스처 오버레이 */
+.noise {
+  position: absolute; inset: 0; pointer-events: none; z-index: 3;
+  mix-blend-mode: overlay; opacity: .55;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.08 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* 6. 워드마크 (외곽선 + 글로우) */
+.wordmark {
+  font-family: var(--font-druk); font-weight: 900;
+  color: var(--brand);
+  -webkit-text-stroke: 10px var(--stroke); paint-order: stroke fill;
+  text-shadow: 0 0 60px rgba(38,106,156,.45);
+  line-height: .82; letter-spacing: .005em;
+}
+
+/* 7. 중앙 세로 가이드 라인 (옵션) */
+.vline {
+  position: absolute; top: 12%; bottom: 12%; left: 50%; width: 1px;
+  background: linear-gradient(to bottom, transparent, rgba(244,241,234,.08) 30%, rgba(244,241,234,.08) 70%, transparent);
+  pointer-events: none; z-index: 2;
+}
