@@ -1,0 +1,26 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: #1a1a1a;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+.canvas {
+  width: var(--canvas);
+  height: var(--canvas);
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+.canvas--radial { background: var(--bg-radial); }
+.canvas--brand  { background: var(--brand); }
+.canvas--lime   { background: var(--accent-lime); color: #0b0b0b; }
+.canvas--orange { background: var(--accent-orange); color: #0b0b0b; }
+.canvas--ivory  { background: var(--ink); color: #0b0b0b; }
