@@ -1,0 +1,24 @@
+:root {
+  /* Background */
+  --bg: #0b0b0b;
+  --bg-2: #141414;
+  --bg-radial: radial-gradient(ellipse at 30% 20%, #1a1a1a 0%, #0b0b0b 60%, #050505 100%);
+
+  /* Ink */
+  --ink: #f4f1ea;
+  --ink-2: #9a978f;
+
+  /* Brand & accents */
+  --brand: #266a9c;
+  --accent-lime: #d6ff2e;
+  --accent-orange: #ff5c2a;
+  --accent-blue-2: #2e7bff;
+  --stroke: #ffffff;
+
+  /* Canvas */
+  --canvas: 1080px;
+
+  /* Inner padding band */
+  --pad-outer: 44px;
+  --pad-corner: 18px;
+}
