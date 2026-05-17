@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap");
+
 @font-face {
   font-family: "Druk Heavy";
   src: url("../../fonts/Druk-Heavy-Trial.otf") format("opentype");
@@ -5,8 +7,6 @@
   font-style: normal;
   font-display: swap;
 }
-
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700;900&display=swap");
 
 :root {
   --font-druk: "Druk Heavy", "Anton", "Impact", "Arial Black", sans-serif;
