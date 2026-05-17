@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko"><head>
+<meta charset="utf-8"><title>ZETO · 06 Color Language</title>
+<link rel="stylesheet" href="_common/tokens.css">
+<link rel="stylesheet" href="_common/fonts.css">
+<link rel="stylesheet" href="_common/base.css">
+<link rel="stylesheet" href="_common/components.css">
+<style>
+  .s06 .num-rail {
+    position:absolute; top: 230px; left: 0; right: 0; text-align: center;
+    font-family: var(--font-mono); font-size: 14px; color: rgba(244,241,234,.6); letter-spacing: .3em;
+  }
+  .s06 .copy {
+    position:absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 86%; text-align: center;
+    font-family: var(--font-kr); font-weight: 900; font-size: 110px; line-height: 1.12;
+    color: var(--ink); letter-spacing: -0.015em;
+  }
+  .s06 .copy .row { display:block; }
+  .s06 .copy b { color: var(--accent-lime); font-weight: 900; }
+  .s06 .swatch {
+    position: absolute; bottom: 130px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px;
+  }
+  .s06 .swatch span { width: 28px; height: 28px; border-radius: 50%; }
+  .s06 .swatch span:nth-child(1) { background: var(--accent-orange); }
+  .s06 .swatch span:nth-child(2) { background: var(--accent-lime); }
+  .s06 .swatch span:nth-child(3) { background: var(--brand); }
+  .s06 .swatch span:nth-child(4) { background: var(--ink); }
+</style>
+</head>
+<body>
+<div class="canvas s06">
+  <div class="noise"></div>
+  <span class="cross tl"></span><span class="cross tr"></span>
+  <span class="cross bl"></span><span class="cross br"></span>
+  <div class="meta top"><span>ZETO · Curriculum Keyword</span><span>Vol. 06 / 09</span></div>
+  <div class="meta bot"><div class="with-dot"><span class="dot"></span> Module 02 of 03</div><span>@zeto.studio</span></div>
+  <div class="slug left">Color · Tone · Mood</div>
+  <div class="slug right">Curriculum 02</div>
+  <div class="num-rail">— K E Y W O R D &nbsp; 02 / 03 —</div>
+  <div class="copy">
+    <span class="row">색의 언어를</span>
+    <span class="row"><b>가르칩니다</b></span>
+  </div>
+  <div class="swatch"><span></span><span></span><span></span><span></span></div>
+</div>
+</body></html>
