@@ -54,3 +54,24 @@ def test_compose_draws_divider_line(synthetic_bg, sample_texts):
     # #266a9c = (38, 106, 156). 정확 비교는 PIL 렌더링 anti-alias 때문에 어려우니 R<G<B 패턴만 확인
     r, g, b = px[:3]
     assert b > r and b > g, f"디바이더 픽셀이 블루가 아님: {px}"
+
+
+def test_compose_skips_missing_text_key(synthetic_bg):
+    """texts dict에 없는 layout 블록은 KeyError 없이 그냥 건너뜀."""
+    partial = {
+        "meta_top": "META",
+        "headline": "HEADLINE",
+        "kor_line1": "1",
+        "kor_line2": "2",
+        "handle": "@handle",
+    }  # wordmark omit
+    result = compose(synthetic_bg, partial, draw_divider=False)
+    # 워드마크가 그려졌어야 할 (540, 220) 영역이 배경 그대로
+    assert result.getpixel((540, 220)) == synthetic_bg.getpixel((540, 220))
+
+
+def test_compose_skips_divider_when_disabled(synthetic_bg, sample_texts):
+    """draw_divider=False면 y=300 가로 라인을 그리지 않음."""
+    result = compose(synthetic_bg, sample_texts, draw_divider=False)
+    # 디바이더가 없으면 (540, 300)은 배경 색 그대로
+    assert result.getpixel((540, 300)) == synthetic_bg.getpixel((540, 300))
