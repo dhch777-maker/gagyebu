@@ -37,7 +37,7 @@ def _generate(spec_id: str) -> Path:
         bg = bg.resize((1080, 1080), Image.Resampling.LANCZOS)
 
     # 3. 텍스트 합성
-    final = compose(bg, spec["texts"])
+    final = compose(bg, spec["texts"], draw_divider=spec.get("draw_divider", True))
 
     # 4. 저장
     out_path = _HERE / f"{spec_id}-{spec['slug']}.png"

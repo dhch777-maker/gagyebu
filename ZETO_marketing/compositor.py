@@ -56,24 +56,32 @@ def _draw_centered(draw: ImageDraw.ImageDraw, text: str, spec: BlockSpec, canvas
     draw.text((x, spec.y), text, font=font, fill=_hex_to_rgb(spec.color))
 
 
-def compose(background: Image.Image, texts: dict[str, str]) -> Image.Image:
-    """배경 위에 6개 텍스트 블록 + 디바이더 라인을 그려 새 PIL Image 반환."""
+def compose(
+    background: Image.Image,
+    texts: dict[str, str],
+    draw_divider: bool = True,
+) -> Image.Image:
+    """배경 위에 텍스트 블록 + (선택) 디바이더 라인을 그려 새 PIL Image 반환.
+
+    texts dict에 없는 layout 블록은 건너뜀.
+    draw_divider=False면 디바이더 라인도 생략.
+    """
     canvas = background.copy().convert("RGB")
     draw = ImageDraw.Draw(canvas)
     layout = get_layout(canvas.width)
 
-    # 디바이더 라인 (워드마크 아래)
-    div_x_start = (canvas.width - DIVIDER["width"]) // 2
-    div_x_end = div_x_start + DIVIDER["width"]
-    div_color = _hex_to_rgb(DIVIDER["color"])
-    draw.rectangle(
-        [(div_x_start, DIVIDER["y"]), (div_x_end, DIVIDER["y"] + DIVIDER["thickness"])],
-        fill=div_color,
-    )
+    if draw_divider:
+        div_x_start = (canvas.width - DIVIDER["width"]) // 2
+        div_x_end = div_x_start + DIVIDER["width"]
+        div_color = _hex_to_rgb(DIVIDER["color"])
+        draw.rectangle(
+            [(div_x_start, DIVIDER["y"]), (div_x_end, DIVIDER["y"] + DIVIDER["thickness"])],
+            fill=div_color,
+        )
 
-    # 6개 텍스트 블록
     for key, spec in layout.items():
-        text = texts[key]
-        _draw_centered(draw, text, spec, canvas.width)
+        if key not in texts:
+            continue
+        _draw_centered(draw, texts[key], spec, canvas.width)
 
     return canvas

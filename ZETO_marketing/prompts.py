@@ -16,9 +16,9 @@ SPECS = {
             "busy composition, photograph, realistic person, frame, border"
         ),
         "seed": 20260522,
+        "draw_divider": False,
         "texts": {
             "meta_top": "ZERO TO ART  ·  Vol. 03",
-            "wordmark": "ZETO ART",
             "headline": "MARK THE START.",
             "kor_line1": "미술이 시작되는 순간을",
             "kor_line2": "ZETO ART에서 그려갑니다.",
