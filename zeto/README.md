@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ZETO — Zero to Art
 
-## Getting Started
+ZETO 학원 브랜드 모바일 페이지. 풀스크린 스냅 스크롤 카드뉴스 6장.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router) · TypeScript
+- Tailwind CSS v4 (`@theme` in `globals.css`)
+- Framer Motion 12 (staggered reveal)
+- Vitest + Testing Library
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
+npm run test         # Vitest
+npm run build        # production build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- `lib/cards.ts` — 단일 카드 데이터 소스 (카피·색상 팔레트)
+- `components/Deck.tsx` — 스냅 컨테이너 + 키보드 nav (↓/↑/PgDn/PgUp)
+- `components/CardFrame.tsx` — 공통 외피 (snap section + Framer stagger)
+- `components/CardCover.tsx` / `CardLetter.tsx` / `CardClosing.tsx` — 카드별 콘텐츠
+- `components/motion.ts` — 공유 Framer Motion variants
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Brand colors
 
-## Learn More
+| | Color | Hex |
+|---|---|---|
+| Z (시작) | Black / White | `#000` / `#FFF` |
+| E (탐구) | Butter Lemon | `#F4E1A4` |
+| T (생각) | Dusty Blue | `#5DA0C0` |
+| O (작품) | Burnt Orange | `#C87649` |
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Vercel에 import. **Root Directory = `zeto/`**. Framework은 Next.js로 자동 감지.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+또는 Vercel CLI:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm i -g vercel
+cd zeto
+vercel --prod
+```
