@@ -57,7 +57,7 @@ export function CardCover({ indexInDeck }: Props) {
       {/* Bottom-right THINK / TO / ART */}
       <motion.div
         variants={coverLetterContainer}
-        className="absolute bottom-10 right-6 flex flex-col items-end font-noto font-bold leading-[0.95] text-white"
+        className="absolute bottom-10 right-6 flex flex-col items-end font-bebas font-bold leading-[0.95] text-white"
         style={{ fontSize: 'clamp(56px, 14vw, 86px)', letterSpacing: '-1px' }}
       >
         {['THINK', 'TO', 'ART'].map((w) => (
