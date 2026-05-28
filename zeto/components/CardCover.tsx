@@ -6,9 +6,9 @@ import { fadeUp } from './motion'
 
 const LETTERS = ['Z', 'E', 'T', 'O'] as const
 
-export function CardCover() {
+export function CardCover({ indexInDeck }: { indexInDeck: number }) {
   return (
-    <CardFrame index={0} ariaLabel="ZETO — Zero to Art" bgClassName="bg-black">
+    <CardFrame index={indexInDeck} ariaLabel="ZETO — Zero to Art" bgClassName="bg-black">
       {/* Big ZETO centered */}
       <div
         className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 font-bebas leading-[0.78] text-white"
@@ -21,8 +21,8 @@ export function CardCover() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.5 }}
             transition={{
-              delay: 0.15 + i * 0.07,
-              duration: 0.7,
+              delay: 0.25 + i * 0.13,
+              duration: 1.2,
               ease: [0.22, 1, 0.36, 1],
             }}
           >

@@ -4,13 +4,12 @@ import { motion } from 'framer-motion'
 import { CardFrame } from './CardFrame'
 import { fadeUp } from './motion'
 
-// 4색 타일 매핑은 원본 v3 그대로 유지 (의도된 swap).
-// 알파벳 카드의 primary와 다름. 수정 금지.
+// 4색 타일 매핑: 사용자 지정 순서 (Z=오렌지, E=블루, T=블루, O=옐로)
 const TILES = [
   { letter: 'Z', bg: '#C87649' }, // Burnt Orange
-  { letter: 'E', bg: '#F4E1A4' }, // Butter Lemon
+  { letter: 'E', bg: '#5DA0C0' }, // Dusty Blue
   { letter: 'T', bg: '#5DA0C0' }, // Dusty Blue
-  { letter: 'O', bg: '#5DA0C0' }, // Dusty Blue (intentional v3 mapping)
+  { letter: 'O', bg: '#F4E1A4' }, // Butter Lemon
 ]
 
 const COLOR_BAR = [
@@ -20,9 +19,9 @@ const COLOR_BAR = [
   { label: 'Output', bg: '#C87649' },
 ]
 
-export function CardClosing() {
+export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
   return (
-    <CardFrame index={5} ariaLabel="제토아트 — 생각이 예술이 되는 시간" bgClassName="bg-black">
+    <CardFrame index={indexInDeck} ariaLabel="제토미술 — 생각이 예술이 되는 시간" bgClassName="bg-black">
       <div className="grid h-full grid-rows-[1fr_2fr_0.6fr]">
         {/* Top: 4 color tiles */}
         <div className="grid grid-cols-4">
@@ -32,7 +31,7 @@ export function CardClosing() {
               initial={{ opacity: 0, scale: 0.92 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: false, amount: 0.5 }}
-              transition={{ delay: 0.05 * i, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ delay: 0.25 + 0.28 * i, duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-center"
               style={{ backgroundColor: t.bg }}
             >
@@ -47,48 +46,48 @@ export function CardClosing() {
         </div>
 
         {/* Middle: copy */}
-        <div className="flex flex-col items-center justify-center gap-3 px-10 text-center">
+        <div className="flex flex-col items-center justify-center px-10 text-center">
           <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: false, amount: 0.5 }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.4 }}
+            transition={{ delay: 0.4, duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
             className="font-bebas text-white"
             style={{ fontSize: 'clamp(48px, 13vw, 80px)', lineHeight: 0.95, letterSpacing: '-1px' }}
           >
-            생각이 <span style={{ color: '#5DA0C0' }}>예술</span>이
+            <span style={{ color: '#F4E1A4' }}>생각</span>이 <span style={{ color: '#5DA0C0' }}>예술</span>이
             <br />
             되는 시간
           </motion.div>
 
           <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: false, amount: 0.5 }}
-            className="font-bebas"
-            style={{ fontSize: 'clamp(38px, 11vw, 64px)', color: '#C87649', lineHeight: 0.95, letterSpacing: '-1px' }}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.4 }}
+            transition={{ delay: 2.2, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-12 font-bebas"
+            style={{ fontSize: 'clamp(68px, 19vw, 116px)', color: '#C87649', lineHeight: 0.95, letterSpacing: '-2px' }}
           >
-            제토아트
+            제토미술
           </motion.div>
 
           <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: false, amount: 0.5 }}
-            className="font-barlow text-[11px] font-semibold text-white/40"
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.4 }}
+            transition={{ delay: 3.8, duration: 0.9, ease: 'easeOut' }}
+            className="mt-4 font-barlow text-[11px] font-semibold text-white/45"
             style={{ letterSpacing: '4px' }}
           >
             THINKING TO ART — ZETO
           </motion.div>
 
           <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: false, amount: 0.5 }}
-            className="mt-2 border-t border-white/10 pt-3 font-noto text-[11px] font-light leading-[1.9] text-white/35"
+            initial={{ opacity: 0, y: 8 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.4 }}
+            transition={{ delay: 4.4, duration: 1.0, ease: 'easeOut' }}
+            className="mt-4 border-t border-white/10 pt-3 font-noto text-[11px] font-light leading-[1.9] text-white/40"
           >
             백지 위에 서는 것을 두려워하지 마세요.
             <br />
@@ -104,13 +103,13 @@ export function CardClosing() {
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: false, amount: 0.5 }}
-              transition={{ delay: 0.4 + 0.05 * i, duration: 0.5 }}
+              transition={{ delay: 1.6 + 0.18 * i, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-center"
               style={{ backgroundColor: c.bg }}
             >
               <span
-                className="font-barlow font-bold text-black/55"
-                style={{ fontSize: 'clamp(9px, 2.8vw, 12px)', letterSpacing: '3px', textTransform: 'uppercase' }}
+                className="font-barlow font-bold text-black/70"
+                style={{ fontSize: 'clamp(15px, 4.8vw, 20px)', letterSpacing: '3px', textTransform: 'uppercase' }}
               >
                 {c.label}
               </span>

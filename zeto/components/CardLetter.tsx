@@ -73,40 +73,40 @@ export function CardLetter({ card, indexInDeck }: Props) {
 
       {/* Bottom dark block */}
       <div
-        className="absolute bottom-0 left-0 right-0 px-5 pb-7 pt-5"
+        className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-6"
         style={{ backgroundColor: palette.bottomBg }}
       >
         <motion.div
           variants={fadeUp}
-          className="font-bebas text-[30px] leading-none"
-          style={{ color: palette.bottomFg, letterSpacing: '-0.5px' }}
+          className="font-bebas leading-none"
+          style={{ color: palette.bottomFg, fontSize: 'clamp(54px, 14vw, 72px)', letterSpacing: '-0.5px' }}
         >
           {card.en}
         </motion.div>
         <motion.div
           variants={fadeUp}
-          className="mt-1.5 font-noto text-[11px] font-medium"
-          style={{ color: palette.bottomFg, opacity: 0.75, letterSpacing: '4px' }}
+          className="mt-3 font-noto font-medium"
+          style={{ color: palette.bottomFg, opacity: 0.85, fontSize: 'clamp(18px, 4.8vw, 22px)', letterSpacing: '4px' }}
         >
           {spaced(card.ko)}
         </motion.div>
         <motion.div
           variants={fadeUp}
-          className="mt-3 font-noto text-[11px] font-light leading-[1.85]"
-          style={{ color: palette.bottomFg, opacity: 0.55 }}
+          className="mt-5 font-noto font-light leading-[1.85]"
+          style={{ color: palette.bottomFg, opacity: 0.72, fontSize: 'clamp(15px, 4vw, 18px)' }}
         >
           {card.desc.map((line, i) => (
             <div key={i}>{line}</div>
           ))}
         </motion.div>
-        <motion.div variants={fadeUp} className="mt-3 flex items-center gap-2">
+        <motion.div variants={fadeUp} className="mt-5 flex items-center gap-2">
           <span
-            className="block h-[5px] w-[5px] rounded-full"
+            className="block h-[6px] w-[6px] rounded-full"
             style={{ backgroundColor: palette.bottomFg, opacity: 0.85 }}
           />
           <span
-            className="font-barlow text-[10px] font-semibold"
-            style={{ color: palette.bottomFg, opacity: 0.5, letterSpacing: '2px' }}
+            className="font-barlow font-semibold"
+            style={{ color: palette.bottomFg, opacity: 0.6, fontSize: 'clamp(11px, 3vw, 13px)', letterSpacing: '2px' }}
           >
             {palette.chipHex}
           </span>

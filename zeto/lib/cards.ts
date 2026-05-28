@@ -23,14 +23,16 @@ export type LetterCard = {
 }
 
 export type CoverCard = { kind: 'cover' }
+export type ManifestoCard = { kind: 'manifesto' }
 export type ClosingCard = { kind: 'closing' }
-export type Card = CoverCard | LetterCard | ClosingCard
+export type Card = CoverCard | ManifestoCard | LetterCard | ClosingCard
 
 const BLACK = '#000000'
 const WHITE = '#FFFFFF'
 
 export const cards: readonly Card[] = [
   { kind: 'cover' },
+  { kind: 'manifesto' },
   {
     kind: 'letter',
     id: 'z',

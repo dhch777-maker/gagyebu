@@ -26,7 +26,7 @@ const notoKR = Noto_Sans_KR({
 
 export const metadata: Metadata = {
   title: 'ZETO — Zero to Art',
-  description: '생각이 예술이 되는 시간, 제토아트',
+  description: '생각이 예술이 되는 시간, 제토미술',
 }
 
 export const viewport: Viewport = {

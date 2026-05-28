@@ -2,10 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { cards, LETTER_TOTAL } from '@/lib/cards'
 
 describe('cards data', () => {
-  it('has exactly 6 cards: cover, 4 letters, closing', () => {
-    expect(cards).toHaveLength(6)
+  it('has exactly 7 cards: cover, manifesto, 4 letters, closing', () => {
+    expect(cards).toHaveLength(7)
     expect(cards[0].kind).toBe('cover')
-    expect(cards[5].kind).toBe('closing')
+    expect(cards[1].kind).toBe('manifesto')
+    expect(cards[6].kind).toBe('closing')
     const letters = cards.filter((c) => c.kind === 'letter')
     expect(letters).toHaveLength(LETTER_TOTAL)
     expect(LETTER_TOTAL).toBe(4)

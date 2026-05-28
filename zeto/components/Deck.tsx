@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { cards } from '@/lib/cards'
 import { CardCover } from './CardCover'
+import { CardManifesto } from './CardManifesto'
 import { CardLetter } from './CardLetter'
 import { CardClosing } from './CardClosing'
 
@@ -62,8 +63,9 @@ export function Deck() {
       className="h-screen h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory outline-none focus:outline-none"
     >
       {cards.map((card, i) => {
-        if (card.kind === 'cover') return <CardCover key="cover" />
-        if (card.kind === 'closing') return <CardClosing key="closing" />
+        if (card.kind === 'cover') return <CardCover key="cover" indexInDeck={i} />
+        if (card.kind === 'manifesto') return <CardManifesto key="manifesto" indexInDeck={i} />
+        if (card.kind === 'closing') return <CardClosing key="closing" indexInDeck={i} />
         return <CardLetter key={card.id} card={card} indexInDeck={i} />
       })}
     </div>
