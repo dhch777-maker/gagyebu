@@ -17,7 +17,7 @@ const barlow = Barlow_Condensed({
 })
 
 const notoKR = Noto_Sans_KR({
-  weight: ['300', '500', '700'],
+  weight: ['300', '500', '700', '900'],
   subsets: ['latin'],
   variable: '--font-noto',
   display: 'swap',

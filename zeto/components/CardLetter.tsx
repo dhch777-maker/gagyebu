@@ -57,11 +57,11 @@ export function CardLetter({ card, indexInDeck }: Props) {
         })}
       </motion.div>
 
-      {/* Big letter, centered ~42% */}
+      {/* Big letter, visually centered in the color area (above the dark bottom block) */}
       <motion.div
         aria-hidden
         variants={letterReveal}
-        className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 font-bebas leading-[0.78]"
+        className="absolute left-1/2 top-[32%] -translate-x-1/2 -translate-y-1/2 font-bebas leading-[0.78]"
         style={{
           fontSize: 'clamp(180px, 50vw, 280px)',
           letterSpacing: '-8px',
