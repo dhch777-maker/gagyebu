@@ -1,7 +1,9 @@
+import { CardCover } from '@/components/CardCover'
+
 export default function Page() {
   return (
-    <main className="grid h-[100dvh] place-items-center text-white">
-      <span className="font-noto opacity-50">ZETO ART · loading deck…</span>
-    </main>
+    <div className="h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory bg-black">
+      <CardCover indexInDeck={0} />
+    </div>
   )
 }
