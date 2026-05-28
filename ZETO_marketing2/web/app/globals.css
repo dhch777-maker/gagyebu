@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --color-zeto-black: #000000;
+  --color-zeto-ink: #FFFFFF;
+  --color-zeto-z: #F5F5F2;
+  --color-zeto-e: #EBD89A;
+  --color-zeto-t: #6BA2BD;
+  --color-zeto-o: #C97A4A;
+
+  --font-bebas: var(--font-bebas);
+  --font-barlow: var(--font-barlow);
+  --font-noto: var(--font-noto);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000000;
+}
+
+body {
+  overscroll-behavior: none;
+  color: #FFFFFF;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
