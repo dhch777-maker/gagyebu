@@ -73,8 +73,11 @@ export function CardLetter({ card, indexInDeck }: Props) {
 
       {/* Bottom dark block */}
       <div
-        className="absolute bottom-0 left-0 right-0 px-6 pb-8 pt-6"
-        style={{ backgroundColor: palette.bottomBg }}
+        className="absolute bottom-0 left-0 right-0 px-6 pt-6"
+        style={{
+          backgroundColor: palette.bottomBg,
+          paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))',
+        }}
       >
         <motion.div
           variants={fadeUp}

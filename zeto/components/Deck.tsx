@@ -60,7 +60,7 @@ export function Deck() {
     <div
       ref={containerRef}
       tabIndex={0}
-      className="h-screen h-[100dvh] w-full overflow-y-scroll snap-y snap-mandatory outline-none focus:outline-none"
+      className="h-screen h-[100svh] w-full overflow-y-scroll snap-y snap-mandatory outline-none focus:outline-none"
     >
       {cards.map((card, i) => {
         if (card.kind === 'cover') return <CardCover key="cover" indexInDeck={i} />

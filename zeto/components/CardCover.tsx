@@ -56,7 +56,8 @@ export function CardCover({ indexInDeck }: { indexInDeck: number }) {
 
       {/* Swipe down hint */}
       <motion.div
-        className="absolute bottom-5 left-1/2 -translate-x-1/2 font-druk text-base text-white/35"
+        className="absolute left-1/2 -translate-x-1/2 font-druk text-base text-white/35"
+        style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
         animate={{ y: [0, 6, 0] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
       >

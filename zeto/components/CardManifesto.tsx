@@ -22,7 +22,7 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
     <section
       data-index={indexInDeck}
       aria-label="ZERO TO ART — 무에서 미로"
-      className="relative h-screen h-[100dvh] w-full snap-start snap-always overflow-hidden bg-black"
+      className="relative h-screen h-[100svh] w-full snap-start snap-always overflow-hidden bg-black"
     >
       {/* Zigzag stacked words */}
       <div className="absolute inset-0 flex flex-col justify-center px-8">
@@ -70,7 +70,8 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
 
       {/* Swipe hint */}
       <motion.div
-        className="absolute bottom-5 left-1/2 -translate-x-1/2 font-druk text-base text-white/30"
+        className="absolute left-1/2 -translate-x-1/2 font-druk text-base text-white/30"
+        style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
         animate={{ y: [0, 6, 0] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
       >

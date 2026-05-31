@@ -88,7 +88,10 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
               viewport={{ once: false, amount: 0.5 }}
               transition={{ delay: 1.6 + 0.18 * i, duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
               className="flex items-center justify-center"
-              style={{ backgroundColor: c.bg }}
+              style={{
+                backgroundColor: c.bg,
+                paddingBottom: 'env(safe-area-inset-bottom)',
+              }}
             >
               <span
                 className="font-druk font-bold text-black/70"
