@@ -18,7 +18,7 @@ export type LetterCard = {
   letter: 'Z' | 'E' | 'T' | 'O'
   en: string
   ko: string
-  desc: readonly [string, string, string]
+  desc: readonly string[]
   /** Substring of desc[0] to render with heavy weight. */
   boldPhrase: string
   palette: LetterPalette
@@ -110,8 +110,7 @@ export const cards: readonly Card[] = [
     ko: '작품',
     desc: [
       '생각이 손끝을 통해 세상으로 나옵니다.',
-      '이것이 당신만의 예술,',
-      '오직 당신이 만들 수 있는 것.',
+      '이것이 우리 아이만의 예술.',
     ],
     boldPhrase: '세상으로 나옵니다',
     palette: {

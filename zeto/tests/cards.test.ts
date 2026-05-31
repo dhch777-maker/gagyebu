@@ -23,7 +23,8 @@ describe('cards data', () => {
     for (const card of letters) {
       expect(card.en).toMatch(/^[A-Z][a-z]+$/)
       expect(card.ko).toHaveLength(2)
-      expect(card.desc).toHaveLength(3)
+      expect(card.desc.length).toBeGreaterThanOrEqual(2)
+      expect(card.desc.length).toBeLessThanOrEqual(3)
       expect(card.palette.screen).toMatch(/^#[0-9A-F]{6}$/i)
       expect(card.palette.letter).toMatch(/^#[0-9A-F]{6}$/i)
       expect(card.palette.bottomBg).toMatch(/^#[0-9A-F]{6}$/i)
