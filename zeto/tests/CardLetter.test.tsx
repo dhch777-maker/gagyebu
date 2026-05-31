@@ -19,18 +19,14 @@ describe('CardLetter', () => {
     expect(screen.getByRole('region', { name: /Explore.*탐구/i })).toBeInTheDocument()
   })
 
-  it('renders the English word, Korean concept, and all 3 desc lines', () => {
+  it('renders the English word, Korean concept, and the bold-highlighted phrase', () => {
     render(<CardLetter card={eCard} indexInDeck={2} />)
     expect(screen.getByText('Explore')).toBeInTheDocument()
-    expect(screen.getByText('탐 구')).toBeInTheDocument() // spaced
-    for (const line of eCard.desc) {
+    expect(screen.getByText('탐 구')).toBeInTheDocument()
+    expect(screen.getByText(eCard.boldPhrase)).toBeInTheDocument()
+    for (const line of eCard.desc.slice(1)) {
       expect(screen.getByText(line)).toBeInTheDocument()
     }
-  })
-
-  it('renders the chip hex label', () => {
-    render(<CardLetter card={eCard} indexInDeck={2} />)
-    expect(screen.getByText(eCard.palette.chipHex)).toBeInTheDocument()
   })
 
   it('renders index marker "02 / 04"', () => {

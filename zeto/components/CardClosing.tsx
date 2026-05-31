@@ -52,10 +52,10 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.4 }}
             transition={{ delay: 0.4, duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
-            className="font-druk text-white"
-            style={{ fontSize: 'clamp(48px, 13vw, 80px)', lineHeight: 0.95, letterSpacing: '-1px' }}
+            className="font-paperlogy text-white"
+            style={{ fontSize: 'clamp(48px, 13vw, 80px)', lineHeight: 1.05, letterSpacing: '-1px', fontWeight: 500 }}
           >
-            <span style={{ color: '#F4E1A4' }}>생각</span>이 <span style={{ color: '#5DA0C0' }}>예술</span>이
+            <span style={{ color: '#F4E1A4', fontWeight: 900 }}>생각</span>이 <span style={{ color: '#5DA0C0', fontWeight: 900 }}>예술</span>이
             <br />
             되는 시간
           </motion.div>

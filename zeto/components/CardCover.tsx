@@ -31,25 +31,13 @@ export function CardCover({ indexInDeck }: { indexInDeck: number }) {
         ))}
       </div>
 
-      {/* Tagline */}
       <motion.div
         variants={fadeUp}
         initial="hidden"
         whileInView="show"
         viewport={{ once: false, amount: 0.5 }}
-        className="absolute bottom-24 left-0 right-0 text-center font-druk text-[11px] font-semibold text-white/55"
-        style={{ letterSpacing: '6px' }}
-      >
-        ZERO TO ART
-      </motion.div>
-
-      <motion.div
-        variants={fadeUp}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: false, amount: 0.5 }}
-        className="absolute bottom-14 left-0 right-0 text-center font-paperlogy text-[13px] font-medium text-white/45"
-        style={{ letterSpacing: '3px' }}
+        className="absolute bottom-16 left-0 right-0 text-center font-paperlogy text-[14px] font-medium text-white/55"
+        style={{ letterSpacing: '4px' }}
       >
         제토아트
       </motion.div>

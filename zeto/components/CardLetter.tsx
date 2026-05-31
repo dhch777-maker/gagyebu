@@ -98,21 +98,19 @@ export function CardLetter({ card, indexInDeck }: Props) {
           className="mt-5 font-paperlogy font-light leading-[1.85]"
           style={{ color: palette.bottomFg, opacity: 0.72, fontSize: 'clamp(15px, 4vw, 18px)' }}
         >
-          {card.desc.map((line, i) => (
-            <div key={i}>{line}</div>
-          ))}
-        </motion.div>
-        <motion.div variants={fadeUp} className="mt-5 flex items-center gap-2">
-          <span
-            className="block h-[6px] w-[6px] rounded-full"
-            style={{ backgroundColor: palette.bottomFg, opacity: 0.85 }}
-          />
-          <span
-            className="font-druk font-semibold"
-            style={{ color: palette.bottomFg, opacity: 0.6, fontSize: 'clamp(11px, 3vw, 13px)', letterSpacing: '2px' }}
-          >
-            {palette.chipHex}
-          </span>
+          {card.desc.map((line, i) => {
+            if (i === 0 && line.includes(card.boldPhrase)) {
+              const [before, after] = line.split(card.boldPhrase)
+              return (
+                <div key={i}>
+                  {before}
+                  <span style={{ fontWeight: 700, opacity: 1 }}>{card.boldPhrase}</span>
+                  {after}
+                </div>
+              )
+            }
+            return <div key={i}>{line}</div>
+          })}
         </motion.div>
       </div>
     </CardFrame>

@@ -28,7 +28,7 @@ describe('cards data', () => {
       expect(card.palette.letter).toMatch(/^#[0-9A-F]{6}$/i)
       expect(card.palette.bottomBg).toMatch(/^#[0-9A-F]{6}$/i)
       expect(card.palette.bottomFg).toMatch(/^#[0-9A-F]{6}$/i)
-      expect(card.palette.chipHex).toBeTruthy()
+      expect(card.desc[0]).toContain(card.boldPhrase)
     }
   })
 

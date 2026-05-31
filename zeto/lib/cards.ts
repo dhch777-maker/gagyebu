@@ -7,7 +7,6 @@ export type LetterPalette = {
   letter: string      // large letter color
   bottomBg: string    // dark block bg
   bottomFg: string    // primary text color in dark block
-  chipHex: string     // chip label text
   topInk: string      // top corner (number + bars) ink
 }
 
@@ -19,6 +18,8 @@ export type LetterCard = {
   en: string
   ko: string
   desc: readonly [string, string, string]
+  /** Substring of desc[0] to render with heavy weight. */
+  boldPhrase: string
   palette: LetterPalette
 }
 
@@ -45,12 +46,12 @@ export const cards: readonly Card[] = [
       '아무것도 없는 그 순간이',
       '가장 많은 가능성을 품고 있습니다.',
     ],
+    boldPhrase: '백지에서 시작',
     palette: {
       screen: WHITE,
       letter: BLACK,
       bottomBg: BLACK,
       bottomFg: WHITE,
-      chipHex: '#FFFFFF / #000000',
       topInk: BLACK,
     },
   },
@@ -66,12 +67,12 @@ export const cards: readonly Card[] = [
       '낯선 길에서 발견하는',
       '예상치 못한 영감들.',
     ],
+    boldPhrase: '방향 없이 걸어보는 것',
     palette: {
       screen: '#F4E1A4',
       letter: '#2A2209',
       bottomBg: BLACK,
       bottomFg: '#F4E1A4',
-      chipHex: '#F4E1A4 — Butter Lemon',
       topInk: BLACK,
     },
   },
@@ -87,12 +88,12 @@ export const cards: readonly Card[] = [
       '머릿속의 안개가 걷히고',
       '하나의 형태가 떠오릅니다.',
     ],
+    boldPhrase: '천천히 생각',
     palette: {
       screen: '#5DA0C0',
       letter: '#1A2A38',
       bottomBg: BLACK,
       bottomFg: '#5DA0C0',
-      chipHex: '#5DA0C0 — Dusty Blue',
       topInk: BLACK,
     },
   },
@@ -108,12 +109,12 @@ export const cards: readonly Card[] = [
       '이것이 당신만의 예술,',
       '오직 당신이 만들 수 있는 것.',
     ],
+    boldPhrase: '세상으로 나옵니다',
     palette: {
       screen: '#C87649',
       letter: '#1C0D04',
       bottomBg: BLACK,
       bottomFg: '#C87649',
-      chipHex: '#C87649 — Burnt Orange',
       topInk: WHITE,
     },
   },
