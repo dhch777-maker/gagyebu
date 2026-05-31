@@ -8,6 +8,7 @@ export type LetterPalette = {
   bottomBg: string    // dark block bg
   bottomFg: string    // primary text color in dark block
   topInk: string      // top corner (number + bars) ink
+  colorName: string   // display name (e.g. "Butter Lemon")
 }
 
 export type LetterCard = {
@@ -53,6 +54,7 @@ export const cards: readonly Card[] = [
       bottomBg: BLACK,
       bottomFg: WHITE,
       topInk: BLACK,
+      colorName: 'Black & White',
     },
   },
   {
@@ -74,6 +76,7 @@ export const cards: readonly Card[] = [
       bottomBg: BLACK,
       bottomFg: '#F4E1A4',
       topInk: BLACK,
+      colorName: 'Butter Lemon',
     },
   },
   {
@@ -95,6 +98,7 @@ export const cards: readonly Card[] = [
       bottomBg: BLACK,
       bottomFg: '#5DA0C0',
       topInk: BLACK,
+      colorName: 'Dusty Blue',
     },
   },
   {
@@ -116,6 +120,7 @@ export const cards: readonly Card[] = [
       bottomBg: BLACK,
       bottomFg: '#C87649',
       topInk: WHITE,
+      colorName: 'Burnt Orange',
     },
   },
   { kind: 'closing' },

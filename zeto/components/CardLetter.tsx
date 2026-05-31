@@ -112,6 +112,18 @@ export function CardLetter({ card, indexInDeck }: Props) {
             return <div key={i}>{line}</div>
           })}
         </motion.div>
+        <motion.div variants={fadeUp} className="mt-5 flex items-center gap-2">
+          <span
+            className="block h-[6px] w-[6px] rounded-full"
+            style={{ backgroundColor: palette.bottomFg, opacity: 0.85 }}
+          />
+          <span
+            className="font-druk font-semibold"
+            style={{ color: palette.bottomFg, opacity: 0.65, fontSize: 'clamp(11px, 3vw, 13px)', letterSpacing: '2px' }}
+          >
+            {palette.colorName}
+          </span>
+        </motion.div>
       </div>
     </CardFrame>
   )
