@@ -87,18 +87,6 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
           >
             THINKING TO ART — ZETO
           </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.4 }}
-            transition={{ delay: 4.4, duration: 1.0, ease: 'easeOut' }}
-            className="mt-4 border-t border-white/10 pt-3 font-noto text-[11px] font-light leading-[1.9] text-white/40"
-          >
-            백지 위에 서는 것을 두려워하지 마세요.
-            <br />
-            제토와 함께라면, 그 빈 공간이 곧 아이들의 캔버스입니다.
-          </motion.div>
         </div>
 
         {/* Bottom: color bar */}
