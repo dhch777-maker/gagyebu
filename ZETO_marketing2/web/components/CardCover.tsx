@@ -44,8 +44,8 @@ export function CardCover({ indexInDeck }: Props) {
       <motion.div
         aria-hidden
         variants={coverLetterContainer}
-        className="absolute left-[-12vw] top-[16vh] flex font-bebas leading-[0.78]"
-        style={{ fontSize: 'clamp(180px, 32vw, 300px)', letterSpacing: '-6px' }}
+        className="absolute left-[-5vw] top-[11vh] flex font-bebas leading-[0.85]"
+        style={{ fontSize: 'clamp(200px, 38vw, 300px)', letterSpacing: '-4px' }}
       >
         {LETTERS.map(({ ch, color }) => (
           <motion.span key={ch} variants={coverLetter} style={{ color }}>
@@ -57,13 +57,13 @@ export function CardCover({ indexInDeck }: Props) {
       {/* Bottom-right THINK / TO / ART */}
       <motion.div
         variants={coverLetterContainer}
-        className="absolute bottom-10 right-6 flex flex-col items-end font-bebas font-bold leading-[0.95] text-white"
-        style={{ fontSize: 'clamp(56px, 14vw, 86px)', letterSpacing: '-1px' }}
+        className="absolute bottom-10 inset-x-0 px-5 text-right font-bebas leading-[0.95] text-white"
+        style={{ fontSize: 'clamp(56px, 14vw, 88px)', letterSpacing: '-1px' }}
       >
         {['THINK', 'TO', 'ART'].map((w) => (
-          <motion.span key={w} variants={coverLetter}>
+          <motion.div key={w} variants={coverLetter}>
             {w}
-          </motion.span>
+          </motion.div>
         ))}
       </motion.div>
 

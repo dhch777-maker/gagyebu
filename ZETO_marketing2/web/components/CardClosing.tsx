@@ -37,7 +37,7 @@ export function CardClosing({ indexInDeck }: Props) {
       <motion.div
         variants={fadeUp}
         transition={{ delay: 1.5, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="absolute bottom-[18%] left-0 right-0 text-center font-bebas font-bold text-white"
+        className="absolute bottom-[18%] left-0 right-0 text-center font-bebas text-white"
         style={{ fontSize: 'clamp(40px, 10vw, 56px)', letterSpacing: '0px' }}
       >
         ZETO ART.

@@ -24,20 +24,21 @@ function anchorClass(anchor: Anchor): string {
 }
 
 function letterPositionStyle(anchor: Anchor): React.CSSProperties {
-  // The big letter sits at the named corner, half-cropped off the frame edges.
-  // We push it off-screen along the anchor edges using negative offsets equal to ~half its box.
+  // The big letter sits visibly INSIDE the corner with only a small bleed.
+  // line-height 0.85 ≈ Bebas cap height, so the element box hugs the glyph
+  // and the offsets behave intuitively.
   const base: React.CSSProperties = {
     position: 'absolute',
-    fontSize: 'clamp(360px, 95vw, 560px)',
-    letterSpacing: '-12px',
-    lineHeight: 0.78,
+    fontSize: 'clamp(280px, 80vw, 480px)',
+    letterSpacing: '-8px',
+    lineHeight: 0.85,
     fontWeight: 700,
   }
   switch (anchor) {
-    case 'top-left':     return { ...base, top: '-22vh', left: '-18vw' }
-    case 'top-right':    return { ...base, top: '-22vh', right: '-18vw' }
-    case 'bottom-left':  return { ...base, bottom: '-22vh', left: '-18vw' }
-    case 'bottom-right': return { ...base, bottom: '-22vh', right: '-18vw' }
+    case 'top-left':     return { ...base, top: '-3vh', left: '-3vw' }
+    case 'top-right':    return { ...base, top: '-3vh', right: '-3vw' }
+    case 'bottom-left':  return { ...base, bottom: '-3vh', left: '-3vw' }
+    case 'bottom-right': return { ...base, bottom: '-3vh', right: '-3vw' }
   }
 }
 
