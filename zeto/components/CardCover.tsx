@@ -11,7 +11,7 @@ export function CardCover({ indexInDeck }: { indexInDeck: number }) {
     <CardFrame index={indexInDeck} ariaLabel="ZETO — Zero to Art" bgClassName="bg-black">
       {/* Big ZETO centered */}
       <div
-        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 font-bebas leading-[0.78] text-white"
+        className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 font-druk leading-[0.78] text-white"
         style={{ fontSize: 'clamp(110px, 28vw, 200px)', letterSpacing: '-4px' }}
       >
         {LETTERS.map((l, i) => (
@@ -37,7 +37,7 @@ export function CardCover({ indexInDeck }: { indexInDeck: number }) {
         initial="hidden"
         whileInView="show"
         viewport={{ once: false, amount: 0.5 }}
-        className="absolute bottom-24 left-0 right-0 text-center font-barlow text-[11px] font-semibold text-white/55"
+        className="absolute bottom-24 left-0 right-0 text-center font-druk text-[11px] font-semibold text-white/55"
         style={{ letterSpacing: '6px' }}
       >
         ZERO TO ART
@@ -48,7 +48,7 @@ export function CardCover({ indexInDeck }: { indexInDeck: number }) {
         initial="hidden"
         whileInView="show"
         viewport={{ once: false, amount: 0.5 }}
-        className="absolute bottom-14 left-0 right-0 text-center font-noto text-[13px] font-medium text-white/45"
+        className="absolute bottom-14 left-0 right-0 text-center font-paperlogy text-[13px] font-medium text-white/45"
         style={{ letterSpacing: '3px' }}
       >
         제토아트
@@ -56,7 +56,7 @@ export function CardCover({ indexInDeck }: { indexInDeck: number }) {
 
       {/* Swipe down hint */}
       <motion.div
-        className="absolute bottom-5 left-1/2 -translate-x-1/2 font-bebas text-base text-white/35"
+        className="absolute bottom-5 left-1/2 -translate-x-1/2 font-druk text-base text-white/35"
         animate={{ y: [0, 6, 0] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
       >

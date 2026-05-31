@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/* Paperlogy — Korean display font, SIL OFL via noonnu CDN */
+@font-face {
+  font-family: 'Paperlogy';
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Paperlogy';
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-5Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Paperlogy';
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-7Bold.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Paperlogy';
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-9Black.woff2') format('woff2');
+}
+
 @theme {
   --color-zeto-black: #000000;
   --color-zeto-white: #FFFFFF;
@@ -10,9 +40,8 @@
   --color-zeto-orange: #C87649;
   --color-zeto-orange-deep: #1C0D04;
 
-  --font-bebas: var(--font-bebas);
-  --font-barlow: var(--font-barlow);
-  --font-noto: var(--font-noto);
+  --font-druk: var(--font-druk), 'Anton', system-ui, sans-serif;
+  --font-paperlogy: 'Paperlogy', 'Noto Sans KR', sans-serif;
 }
 
 html, body {

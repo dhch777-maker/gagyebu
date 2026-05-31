@@ -40,7 +40,7 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
               duration: 1.5,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className={`font-bebas text-white ${
+            className={`font-druk text-white ${
               line.align === 'right' ? 'self-end' : 'self-start'
             }`}
             style={{
@@ -55,22 +55,22 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
         ))}
       </div>
 
-      {/* Subtle tagline — zigzag */}
+      {/* Subtle tagline — tight zigzag near center */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: false, amount: 0.4 }}
         transition={{ delay: 2.5, duration: 0.9, ease: 'easeOut' }}
-        className="absolute bottom-36 left-0 right-0 flex flex-col gap-1 px-10 font-noto font-light text-white/70"
+        className="absolute bottom-36 left-0 right-0 flex flex-col items-center gap-0.5 font-paperlogy font-light text-white/75"
         style={{ fontSize: 'clamp(22px, 6vw, 28px)', letterSpacing: '4px' }}
       >
-        <span className="self-start">무[無]에서</span>
-        <span className="self-end">미[美]로</span>
+        <span style={{ transform: 'translateX(-1.2em)' }}>무[無]에서</span>
+        <span style={{ transform: 'translateX(1.2em)' }}>미[美]로</span>
       </motion.div>
 
       {/* Swipe hint */}
       <motion.div
-        className="absolute bottom-5 left-1/2 -translate-x-1/2 font-bebas text-base text-white/30"
+        className="absolute bottom-5 left-1/2 -translate-x-1/2 font-druk text-base text-white/30"
         animate={{ y: [0, 6, 0] }}
         transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
       >

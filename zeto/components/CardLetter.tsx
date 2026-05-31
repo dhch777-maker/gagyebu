@@ -32,7 +32,7 @@ export function CardLetter({ card, indexInDeck }: Props) {
       {/* Top-left: number */}
       <motion.div
         variants={fadeUp}
-        className="absolute left-5 top-6 font-barlow text-[10px] font-semibold tracking-[3px]"
+        className="absolute left-5 top-6 font-druk text-[10px] font-semibold tracking-[3px]"
         style={{ color: palette.topInk, opacity: 0.55 }}
       >
         {pad2(card.index)} / {pad2(LETTER_TOTAL)}
@@ -61,7 +61,7 @@ export function CardLetter({ card, indexInDeck }: Props) {
       <motion.div
         aria-hidden
         variants={letterReveal}
-        className="absolute left-1/2 top-[32%] -translate-x-1/2 -translate-y-1/2 font-bebas leading-[0.78]"
+        className="absolute left-1/2 top-[32%] -translate-x-1/2 -translate-y-1/2 font-druk leading-[0.78]"
         style={{
           fontSize: 'clamp(180px, 50vw, 280px)',
           letterSpacing: '-8px',
@@ -78,21 +78,21 @@ export function CardLetter({ card, indexInDeck }: Props) {
       >
         <motion.div
           variants={fadeUp}
-          className="font-bebas leading-none"
+          className="font-druk leading-none"
           style={{ color: palette.bottomFg, fontSize: 'clamp(54px, 14vw, 72px)', letterSpacing: '-0.5px' }}
         >
           {card.en}
         </motion.div>
         <motion.div
           variants={fadeUp}
-          className="mt-3 font-noto font-medium"
+          className="mt-3 font-paperlogy font-medium"
           style={{ color: palette.bottomFg, opacity: 0.85, fontSize: 'clamp(18px, 4.8vw, 22px)', letterSpacing: '4px' }}
         >
           {spaced(card.ko)}
         </motion.div>
         <motion.div
           variants={fadeUp}
-          className="mt-5 font-noto font-light leading-[1.85]"
+          className="mt-5 font-paperlogy font-light leading-[1.85]"
           style={{ color: palette.bottomFg, opacity: 0.72, fontSize: 'clamp(15px, 4vw, 18px)' }}
         >
           {card.desc.map((line, i) => (
@@ -105,7 +105,7 @@ export function CardLetter({ card, indexInDeck }: Props) {
             style={{ backgroundColor: palette.bottomFg, opacity: 0.85 }}
           />
           <span
-            className="font-barlow font-semibold"
+            className="font-druk font-semibold"
             style={{ color: palette.bottomFg, opacity: 0.6, fontSize: 'clamp(11px, 3vw, 13px)', letterSpacing: '2px' }}
           >
             {palette.chipHex}

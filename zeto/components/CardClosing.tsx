@@ -4,12 +4,12 @@ import { motion } from 'framer-motion'
 import { CardFrame } from './CardFrame'
 import { fadeUp } from './motion'
 
-// 4색 타일 매핑: 사용자 지정 순서 (Z=오렌지, E=블루, T=블루, O=옐로)
+// 4색 타일 매핑: 사용자 지정 순서 (Z=오렌지, E=옐로, T=블루, O=블루)
 const TILES = [
   { letter: 'Z', bg: '#C87649' }, // Burnt Orange
-  { letter: 'E', bg: '#5DA0C0' }, // Dusty Blue
+  { letter: 'E', bg: '#F4E1A4' }, // Butter Lemon
   { letter: 'T', bg: '#5DA0C0' }, // Dusty Blue
-  { letter: 'O', bg: '#F4E1A4' }, // Butter Lemon
+  { letter: 'O', bg: '#5DA0C0' }, // Dusty Blue
 ]
 
 const COLOR_BAR = [
@@ -36,7 +36,7 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
               style={{ backgroundColor: t.bg }}
             >
               <span
-                className="font-bebas text-black"
+                className="font-druk text-black"
                 style={{ fontSize: 'clamp(70px, 22vw, 110px)', letterSpacing: '-2px', lineHeight: 0.85 }}
               >
                 {t.letter}
@@ -52,7 +52,7 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.4 }}
             transition={{ delay: 0.4, duration: 1.3, ease: [0.22, 1, 0.36, 1] }}
-            className="font-bebas text-white"
+            className="font-druk text-white"
             style={{ fontSize: 'clamp(48px, 13vw, 80px)', lineHeight: 0.95, letterSpacing: '-1px' }}
           >
             <span style={{ color: '#F4E1A4' }}>생각</span>이 <span style={{ color: '#5DA0C0' }}>예술</span>이
@@ -65,26 +65,16 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.4 }}
             transition={{ delay: 2.2, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-12 font-bebas"
+            className="mt-12 font-paperlogy"
             style={{
               fontSize: 'clamp(68px, 19vw, 116px)',
               color: '#C87649',
               lineHeight: 0.95,
-              letterSpacing: '-2px',
+              letterSpacing: '-3px',
+              fontWeight: 900,
             }}
           >
-            ZETO ART
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, amount: 0.4 }}
-            transition={{ delay: 3.8, duration: 0.9, ease: 'easeOut' }}
-            className="mt-4 font-barlow text-[11px] font-semibold text-white/45"
-            style={{ letterSpacing: '4px' }}
-          >
-            THINKING TO ART — ZETO
+            제토미술
           </motion.div>
         </div>
 
@@ -101,7 +91,7 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
               style={{ backgroundColor: c.bg }}
             >
               <span
-                className="font-barlow font-bold text-black/70"
+                className="font-druk font-bold text-black/70"
                 style={{ fontSize: 'clamp(15px, 4.8vw, 20px)', letterSpacing: '3px', textTransform: 'uppercase' }}
               >
                 {c.label}

@@ -1,28 +1,19 @@
 import type { Metadata, Viewport } from 'next'
-import { Bebas_Neue, Barlow_Condensed, Noto_Sans_KR } from 'next/font/google'
+import { Anton } from 'next/font/google'
 import './globals.css'
 
-const bebas = Bebas_Neue({
+// English display font — Anton (free Google Fonts) as a Druk substitute.
+// Druk itself is a commercial typeface; swap in licensed woff2 files here
+// if a license is obtained.
+const druk = Anton({
   weight: '400',
   subsets: ['latin'],
-  variable: '--font-bebas',
+  variable: '--font-druk',
   display: 'swap',
 })
 
-const barlow = Barlow_Condensed({
-  weight: ['600', '700'],
-  subsets: ['latin'],
-  variable: '--font-barlow',
-  display: 'swap',
-})
-
-const notoKR = Noto_Sans_KR({
-  weight: ['300', '500', '700', '900'],
-  subsets: ['latin'],
-  variable: '--font-noto',
-  display: 'swap',
-  preload: false,
-})
+// Korean font Paperlogy is loaded via @font-face in globals.css from the
+// noonnu CDN (SIL OFL license).
 
 export const metadata: Metadata = {
   title: 'ZETO — Zero to Art',
@@ -38,7 +29,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ko" className={`${bebas.variable} ${barlow.variable} ${notoKR.variable}`}>
+    <html lang="ko" className={druk.variable}>
       <body className="antialiased bg-black text-white">{children}</body>
     </html>
   )
