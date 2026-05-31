@@ -11,6 +11,24 @@ export function Deck() {
   const containerRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
 
+  // Peg --app-vh to the actual visible viewport for iOS Safari fallback
+  // (svh is iOS 15.4+; this works on iOS 13+).
+  useEffect(() => {
+    const update = () => {
+      const h = window.visualViewport?.height ?? window.innerHeight
+      document.documentElement.style.setProperty('--app-vh', `${h}px`)
+    }
+    update()
+    window.visualViewport?.addEventListener('resize', update)
+    window.addEventListener('resize', update)
+    window.addEventListener('orientationchange', update)
+    return () => {
+      window.visualViewport?.removeEventListener('resize', update)
+      window.removeEventListener('resize', update)
+      window.removeEventListener('orientationchange', update)
+    }
+  }, [])
+
   // Track active card via IntersectionObserver (used for keyboard nav)
   useEffect(() => {
     const root = containerRef.current
@@ -60,7 +78,7 @@ export function Deck() {
     <div
       ref={containerRef}
       tabIndex={0}
-      className="h-screen h-[100svh] w-full overflow-y-scroll snap-y snap-mandatory outline-none focus:outline-none"
+      className="snap-deck outline-none focus:outline-none"
     >
       {cards.map((card, i) => {
         if (card.kind === 'cover') return <CardCover key="cover" indexInDeck={i} />

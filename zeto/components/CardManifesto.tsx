@@ -22,7 +22,7 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
     <section
       data-index={indexInDeck}
       aria-label="ZERO TO ART — 무에서 미로"
-      className="relative h-screen h-[100svh] w-full snap-start snap-always overflow-hidden bg-black"
+      className="snap-section bg-black"
     >
       {/* Zigzag stacked words */}
       <div className="absolute inset-0 flex flex-col justify-center px-8">

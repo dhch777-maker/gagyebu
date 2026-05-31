@@ -17,7 +17,7 @@ export function CardFrame({ index, ariaLabel, bgClassName = '', bgStyle, childre
     <section
       data-index={index}
       aria-label={ariaLabel}
-      className={`relative h-screen h-[100svh] w-full snap-start snap-always overflow-hidden ${bgClassName}`}
+      className={`snap-section ${bgClassName}`}
       style={bgStyle}
     >
       <motion.div

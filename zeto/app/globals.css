@@ -45,11 +45,35 @@
 }
 
 html, body {
-  height: 100%;
+  height: 100vh;
+  height: var(--app-vh, 100vh);
+  height: 100svh;
   margin: 0;
   overflow: hidden;
 }
 
 body {
   overscroll-behavior: none;
+}
+
+/* Robust full-height snap section — JS pegs --app-vh to visualViewport
+   on iOS where svh isn't supported or computes wrong. */
+.snap-section {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: var(--app-vh, 100vh);
+  height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+}
+
+.snap-deck {
+  width: 100%;
+  height: 100vh;
+  height: var(--app-vh, 100vh);
+  height: 100svh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
 }
