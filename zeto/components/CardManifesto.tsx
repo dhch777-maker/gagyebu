@@ -55,16 +55,17 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
         ))}
       </div>
 
-      {/* Subtle tagline */}
+      {/* Subtle tagline — zigzag */}
       <motion.div
         initial={{ opacity: 0, y: 6 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: false, amount: 0.4 }}
         transition={{ delay: 2.5, duration: 0.9, ease: 'easeOut' }}
-        className="absolute bottom-36 left-0 right-0 text-center font-noto font-light text-white/70"
+        className="absolute bottom-36 left-0 right-0 flex flex-col gap-1 px-10 font-noto font-light text-white/70"
         style={{ fontSize: 'clamp(22px, 6vw, 28px)', letterSpacing: '4px' }}
       >
-        무[無]에서 미[美]로
+        <span className="self-start">무[無]에서</span>
+        <span className="self-end">미[美]로</span>
       </motion.div>
 
       {/* Swipe hint */}
