@@ -65,16 +65,15 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false, amount: 0.4 }}
             transition={{ delay: 2.2, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-12 font-noto"
+            className="mt-12 font-bebas"
             style={{
               fontSize: 'clamp(68px, 19vw, 116px)',
               color: '#C87649',
               lineHeight: 0.95,
-              letterSpacing: '-3px',
-              fontWeight: 900,
+              letterSpacing: '-2px',
             }}
           >
-            제토미술
+            ZETO ART
           </motion.div>
 
           <motion.div
