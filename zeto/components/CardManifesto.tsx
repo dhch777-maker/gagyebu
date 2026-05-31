@@ -64,7 +64,7 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
         className="absolute bottom-36 left-0 right-0 text-center font-noto font-light text-white/70"
         style={{ fontSize: 'clamp(22px, 6vw, 28px)', letterSpacing: '4px' }}
       >
-        ‘무’에서 ‘미’로.
+        무[無]에서 미[美]로
       </motion.div>
 
       {/* Swipe hint */}
