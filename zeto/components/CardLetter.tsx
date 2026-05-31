@@ -99,7 +99,7 @@ export function CardLetter({ card, indexInDeck }: Props) {
           style={{ color: palette.bottomFg, opacity: 0.72, fontSize: 'clamp(15px, 4vw, 18px)' }}
         >
           {card.desc.map((line, i) => {
-            if (i === 0 && line.includes(card.boldPhrase)) {
+            if (line.includes(card.boldPhrase)) {
               const [before, after] = line.split(card.boldPhrase)
               return (
                 <div key={i}>

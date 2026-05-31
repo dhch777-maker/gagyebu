@@ -71,7 +71,7 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
               color: '#C87649',
               lineHeight: 0.95,
               letterSpacing: '-3px',
-              fontWeight: 900,
+              fontWeight: 700,
             }}
           >
             제토아트

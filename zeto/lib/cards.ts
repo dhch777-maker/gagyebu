@@ -112,7 +112,7 @@ export const cards: readonly Card[] = [
       '생각이 손끝을 통해 세상으로 나옵니다.',
       '이것이 우리 아이만의 예술.',
     ],
-    boldPhrase: '세상으로 나옵니다',
+    boldPhrase: '우리 아이만의 예술',
     palette: {
       screen: '#C87649',
       letter: '#1C0D04',
