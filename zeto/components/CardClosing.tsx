@@ -74,7 +74,7 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
               fontWeight: 900,
             }}
           >
-            제토미술
+            제토아트
           </motion.div>
         </div>
 
