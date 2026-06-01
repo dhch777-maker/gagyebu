@@ -55,7 +55,7 @@ export function CardClosing({ indexInDeck }: { indexInDeck: number }) {
             className="font-druk text-white"
             style={{ fontSize: 'clamp(48px, 13vw, 80px)', lineHeight: 0.95, letterSpacing: '-1px' }}
           >
-            <span style={{ color: '#F4E1A4' }}>생각</span>이 <span style={{ color: '#5DA0C0' }}>예술</span>이
+            <span style={{ color: '#5DA0C0' }}>생각</span>이 <span style={{ color: '#F4E1A4' }}>예술</span>이
             <br />
             되는 시간
           </motion.div>
