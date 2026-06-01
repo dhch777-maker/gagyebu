@@ -124,6 +124,25 @@ export function CardLetter({ card, indexInDeck }: Props) {
             {palette.colorName}
           </span>
         </motion.div>
+
+        {/* Bottom-right swipe hint — fades in last in the stagger, then bounces. */}
+        <motion.div
+          variants={fadeUp}
+          className="pointer-events-none absolute right-6"
+          style={{
+            bottom: 'calc(2.25rem + env(safe-area-inset-bottom))',
+            color: palette.bottomFg,
+          }}
+        >
+          <motion.span
+            className="block font-druk leading-none opacity-70"
+            style={{ fontSize: 'clamp(26px, 6vw, 32px)' }}
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            ↓
+          </motion.span>
+        </motion.div>
       </div>
     </CardFrame>
   )

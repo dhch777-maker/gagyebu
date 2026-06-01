@@ -72,14 +72,23 @@ export function CardManifesto({ indexInDeck }: { indexInDeck: number }) {
         </span>
       </motion.div>
 
-      {/* Swipe hint */}
+      {/* Swipe hint — fades in after the tagline; bounces forever */}
       <motion.div
-        className="absolute left-1/2 -translate-x-1/2 font-druk text-base text-white/30"
-        style={{ bottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
-        animate={{ y: [0, 6, 0] }}
-        transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 0.75 }}
+        viewport={{ once: false, amount: 0.5 }}
+        transition={{ delay: 3.8, duration: 0.7, ease: 'easeOut' }}
+        className="absolute left-1/2 -translate-x-1/2"
+        style={{ bottom: 'calc(1.5rem + env(safe-area-inset-bottom))' }}
       >
-        ↓
+        <motion.span
+          className="block font-druk leading-none text-white"
+          style={{ fontSize: 'clamp(28px, 6.5vw, 36px)' }}
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          ↓
+        </motion.span>
       </motion.div>
     </section>
   )
