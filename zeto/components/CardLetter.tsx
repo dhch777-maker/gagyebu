@@ -125,7 +125,7 @@ export function CardLetter({ card, indexInDeck }: Props) {
           </span>
         </motion.div>
 
-        {/* Bottom-right swipe hint — fades in last in the stagger, then bounces. */}
+        {/* Bottom-right swipe hint — label + arrow; fades in last in the stagger, then bounces. */}
         <motion.div
           variants={fadeUp}
           className="pointer-events-none absolute right-6"
@@ -134,14 +134,24 @@ export function CardLetter({ card, indexInDeck }: Props) {
             color: palette.bottomFg,
           }}
         >
-          <motion.span
-            className="block font-druk leading-none opacity-70"
-            style={{ fontSize: 'clamp(26px, 6vw, 32px)' }}
+          <motion.div
+            className="flex items-center gap-2 whitespace-nowrap opacity-80"
             animate={{ y: [0, 6, 0] }}
             transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            ↓
-          </motion.span>
+            <span
+              className="font-paperlogy font-light"
+              style={{ fontSize: 'clamp(12px, 3.2vw, 14px)', letterSpacing: '2px' }}
+            >
+              화면을 넘겨주세요
+            </span>
+            <span
+              className="font-druk leading-none"
+              style={{ fontSize: 'clamp(22px, 5vw, 28px)' }}
+            >
+              ↓
+            </span>
+          </motion.div>
         </motion.div>
       </div>
     </CardFrame>
